@@ -1,0 +1,18 @@
+[build-system]
+requires = ["flit_core >=2,<3"]
+build-backend = "flit_core.buildapi"
+
+
+[tool.black]
+line-length = 100
+
+
+[tool.flit.metadata]
+module = "functional_itertool"
+author = "Bao Wei"
+author-email = "baowei.ur521@gmail.com"
+requires = ["attrs >= 19.3", "more-itertools >= 8.2"]
+
+
+[tool.nitpick]
+style = "https://raw.githubusercontent.com/dycw/nitpick/master/nitpick-style.toml"

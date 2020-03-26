@@ -1,0 +1,22 @@
+name: functional-itertools
+
+dependencies:
+  - python=3.7.*
+  - pip
+  - pip:
+
+    - attrs >= 19.3
+    - more-itertools >= 8.2
+
+      # testing
+    - hypothesis
+    - pytest
+    - pytest-cov
+    - pytest-randomly
+    - pytest-xdist == 1.29
+
+      # publishing
+    - bump2version
+    - flit
+    - keyring
+    - pre-commit
