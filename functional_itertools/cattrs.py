@@ -8,9 +8,9 @@ from attr import asdict
 from attr import evolve
 from attr.exceptions import NotAnAttrsClassError
 
-from functional_itertools import CDict
-from functional_itertools import CIterable
-from functional_itertools import CList
+from functional_itertools.classes import CDict
+from functional_itertools.classes import CIterable
+from functional_itertools.classes import CList
 
 
 _T = TypeVar("_T")
