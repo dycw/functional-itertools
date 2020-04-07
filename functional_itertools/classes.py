@@ -523,6 +523,13 @@ class CIterable(Iterable[T]):
 class CList(List[T]):
     """A list with chainable methods."""
 
+    def __getitem__(self: "CList[_T]", item: Union[int, slice]) -> Union[_T, "CList[_T]"]:
+        out = super().__getitem__(item)
+        if isinstance(out, list):
+            return CList(out)
+        else:
+            return out
+
     # built-in
 
     def all(self: CList[Any]) -> bool:
