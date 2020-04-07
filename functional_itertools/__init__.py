@@ -1,4 +1,6 @@
 """Python collections in a functional-programming style."""
+from __future__ import annotations
+
 from functional_itertools.cattrs import CAttrs
 from functional_itertools.classes import CDict
 from functional_itertools.classes import CFrozenSet
@@ -9,7 +11,7 @@ from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 __all__ = [
     "CAttrs",
     "CDict",

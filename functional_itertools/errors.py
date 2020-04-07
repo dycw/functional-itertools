@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class UnsupportVersionError(RuntimeError):
     """Raised when the version of Python is unsupported."""
 

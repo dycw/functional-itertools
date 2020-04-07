@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 from typing import Callable
 from typing import Optional
@@ -11,14 +13,14 @@ from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 
 
-_T = TypeVar("_T")
+T = TypeVar("T")
 
 
 if VERSION in {Version.py36, Version.py37}:
-    MAX_MIN_KEY_ANNOTATION = Union[Callable[[_T], Any], Sentinel]
+    MAX_MIN_KEY_ANNOTATION = Union[Callable[[T], Any], Sentinel]
     MAX_MIN_KEY_DEFAULT = sentinel
 elif VERSION is Version.py38:
-    MAX_MIN_KEY_ANNOTATION = Optional[Callable[[_T], Any]]
+    MAX_MIN_KEY_ANNOTATION = Optional[Callable[[T], Any]]
     MAX_MIN_KEY_DEFAULT = None
 else:
     raise UnsupportVersionError(VERSION)  # pragma: no cover

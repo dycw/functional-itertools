@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import auto
 from enum import Enum
 from sys import version_info
@@ -12,7 +14,7 @@ from functional_itertools.errors import UnsupportVersionError
 
 
 class Sentinel:
-    def __repr__(self: "Sentinel") -> str:
+    def __repr__(self: Sentinel) -> str:
         return "<sentinel>"
 
     __str__ = __repr__

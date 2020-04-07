@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 from typing import Callable
 from typing import Generic
@@ -13,13 +15,13 @@ from functional_itertools.classes import CIterable
 from functional_itertools.classes import CList
 
 
-_T = TypeVar("_T")
-_U = TypeVar("_U")
+T = TypeVar("T")
+U = TypeVar("U")
 
 
-class CAttrs(Generic[_T]):
-    def dict(self: "CAttrs[_T]", *, recurse: bool = True) -> CDict[str, _T]:
-        mapping: CDict[str, _T] = asdict(
+class CAttrs(Generic[T]):
+    def dict(self: CAttrs[T], *, recurse: bool = True) -> CDict[str, T]:
+        mapping: CDict[str, T] = asdict(
             self, recurse=False, dict_factory=CDict,
         )
         if recurse:
@@ -33,12 +35,12 @@ class CAttrs(Generic[_T]):
         return mapping
 
     def map_values(
-        self: "CAttrs[_T]", func: Callable[..., _U], *attrs: "CAttrs[_U]", recurse: bool = True,
-    ) -> "CAttrs[Union[_T, _U]]":
+        self: CAttrs[T], func: Callable[..., U], *attrs: CAttrs[U], recurse: bool = True,
+    ) -> CAttrs[Union[T, U]]:
         return self._map_values(func, self, *attrs, recurse=recurse)
 
     def _map_values(
-        self: Any, func: Callable[..., _U], value: Any, *values: Any, recurse: bool,
+        self: Any, func: Callable[..., U], value: Any, *values: Any, recurse: bool,
     ) -> Any:
         try:
             asdict(value)
