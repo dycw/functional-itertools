@@ -279,10 +279,7 @@ class CIterable(Iterable[T]):
             elif isinstance(result, dict):
                 return CDict(result)
             else:
-                try:
-                    return CIterable(result)
-                except TypeError:
-                    return result
+                return result
 
     # itertools
 
