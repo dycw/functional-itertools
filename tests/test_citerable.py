@@ -34,6 +34,18 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
+from functional_itertools.classes import CDict
+from functional_itertools.classes import CFrozenSet
+from functional_itertools.classes import CIterable
+from functional_itertools.classes import CList
+from functional_itertools.classes import CSet
+from functional_itertools.errors import EmptyIterableError
+from functional_itertools.errors import MultipleElementsError
+from functional_itertools.utilities import drop_sentinel
+from functional_itertools.utilities import Sentinel
+from functional_itertools.utilities import sentinel
+from functional_itertools.utilities import VERSION
+from functional_itertools.utilities import Version
 from hypothesis import assume
 from hypothesis import example
 from hypothesis import given
@@ -58,18 +70,6 @@ from pytest import mark
 from pytest import param
 from pytest import raises
 
-from functional_itertools.classes import CDict
-from functional_itertools.classes import CFrozenSet
-from functional_itertools.classes import CIterable
-from functional_itertools.classes import CList
-from functional_itertools.classes import CSet
-from functional_itertools.errors import EmptyIterableError
-from functional_itertools.errors import MultipleElementsError
-from functional_itertools.utilities import drop_sentinel
-from functional_itertools.utilities import Sentinel
-from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from tests.test_utilities import is_even
 from tests.test_utilities import lists_or_sets
 from tests.test_utilities import small_ints

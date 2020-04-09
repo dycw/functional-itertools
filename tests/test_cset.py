@@ -6,15 +6,14 @@ from typing import Set
 from typing import Type
 from typing import Union
 
+from functional_itertools.classes import CFrozenSet
+from functional_itertools.classes import CSet
 from hypothesis import given
 from hypothesis import infer
 from hypothesis.strategies import integers
 from hypothesis.strategies import sampled_from
 from hypothesis.strategies import sets
 from pytest import raises
-
-from functional_itertools.classes import CFrozenSet
-from functional_itertools.classes import CSet
 
 
 # repr and str
