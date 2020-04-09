@@ -4,78 +4,40 @@ repos:
     hooks:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: no-commit-to-branch
+      - id: pretty-format-json
       - id: trailing-whitespace
 
-  - repo: https://github.com/python/black
-    rev: 19.10b0
-    hooks:
-      - id: black
-        args: [--safe, --quiet]
-
-  - repo: https://github.com/humitos/mirrors-autoflake
-    rev: v1.1
-    hooks:
-      - id: autoflake
-        args: [--in-place, --remove-all-unused-imports, --remove-unused-variable]
-
-  - repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.0.1
+  - repo: https://github.com/dycw/pre-commit-hooks
+    rev: 1.0.26
     hooks:
       - id: add-trailing-comma
-        args: [--py36-plus]
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v2.1.0
-    hooks:
+      - id: autoflake
+      - id: black
       - id: pyupgrade
-        args: [--py37-plus]
-
-  - repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.1.0
-    hooks:
       - id: reorder-python-imports
-        args: [--py37-plus]
-
-  - repo: https://github.com/asottile/yesqa
-    rev: v1.1.0
-    hooks:
-      - id: yesqa
-        additional_dependencies:
-          - flake8-annotations
-          - flake8-fixme
-          - flake8-unused-arguments
-          - wemake-python-styleguide
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 3.7.9
-    hooks:
+      - id: dead
       - id: flake8
-        additional_dependencies:
-          - flake8-annotations
-          - flake8-fixme
-          - flake8-unused-arguments
-          - wemake-python-styleguide
 
   - repo: https://github.com/andreoliwa/nitpick
     rev: v0.22.1
     hooks:
       - id: nitpick
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.770
-    hooks:
-      - id: mypy
-
   - repo: local
     hooks:
       - id: pytest
         name: pytest
-        entry: pytest -nauto -v
+        entry: pytest
         language: system
         pass_filenames: false
+        args: [-nauto]
         always_run: true
         stages: [push]

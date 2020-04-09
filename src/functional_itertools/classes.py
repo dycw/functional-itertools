@@ -40,6 +40,16 @@ from typing import TypeVar
 from typing import Union
 from warnings import warn
 
+from functional_itertools.compat import MAX_MIN_KEY_ANNOTATION
+from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
+from functional_itertools.errors import EmptyIterableError
+from functional_itertools.errors import MultipleElementsError
+from functional_itertools.errors import UnsupportVersionError
+from functional_itertools.utilities import drop_sentinel
+from functional_itertools.utilities import Sentinel
+from functional_itertools.utilities import sentinel
+from functional_itertools.utilities import VERSION
+from functional_itertools.utilities import Version
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -67,17 +77,6 @@ from more_itertools.recipes import tail
 from more_itertools.recipes import take
 from more_itertools.recipes import unique_everseen
 from more_itertools.recipes import unique_justseen
-
-from functional_itertools.compat import MAX_MIN_KEY_ANNOTATION
-from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
-from functional_itertools.errors import EmptyIterableError
-from functional_itertools.errors import MultipleElementsError
-from functional_itertools.errors import UnsupportVersionError
-from functional_itertools.utilities import drop_sentinel
-from functional_itertools.utilities import Sentinel
-from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 
 
 T = TypeVar("T")
@@ -1128,7 +1127,7 @@ class CFrozenSet(FrozenSet[T]):
     # pathlib
 
     @classmethod
-    def iterdir(cls: Type[CFrozenset], path: Union[Path, str]) -> CFrozenSet[Path]:
+    def iterdir(cls: Type[CFrozenSet], path: Union[Path, str]) -> CFrozenSet[Path]:
         return cls(CIterable.iterdir(path))
 
     # extra public
