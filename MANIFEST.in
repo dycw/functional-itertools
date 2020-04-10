@@ -1,2 +1,0 @@
-include versioneer.py
-include src/functional_itertools/_version.py

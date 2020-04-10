@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import chain
 from itertools import permutations
 from re import search
@@ -6,14 +8,15 @@ from typing import Set
 from typing import Type
 from typing import Union
 
-from functional_itertools.classes import CFrozenSet
-from functional_itertools.classes import CSet
 from hypothesis import given
 from hypothesis import infer
 from hypothesis.strategies import integers
 from hypothesis.strategies import sampled_from
 from hypothesis.strategies import sets
 from pytest import raises
+
+from functional_itertools import CFrozenSet
+from functional_itertools import CSet
 
 
 # repr and str

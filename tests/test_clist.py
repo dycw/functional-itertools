@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from itertools import permutations
 from typing import Callable
 from typing import List
 from typing import Optional
 
-from functional_itertools.classes import CList
 from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import integers
@@ -11,6 +12,7 @@ from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from pytest import warns
 
+from functional_itertools import CList
 from tests.test_utilities import int_to_int_funcs
 
 
