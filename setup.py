@@ -18,7 +18,7 @@ for path in Path(__file__).resolve().parent.iterdir():
             version = search(
                 r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]$', fd.read(), MULTILINE,
             ).group(1)
-    except (FileNotFoundError, NotADirectoryError):
+    except (AttributeError, FileNotFoundError, NotADirectoryError):
         pass
 with open("requirements/core.txt") as fd:
     install_requires = fd.read().strip().split("\n")
