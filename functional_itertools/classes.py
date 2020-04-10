@@ -221,7 +221,7 @@ class CIterable(Iterable[T]):
         return min(self._iterable, **kwargs)
 
     @classmethod  # noqa: A003
-    def range(
+    def range(  # noqa: A003
         cls: Type[CIterable],
         start: int,
         stop: Union[int, Sentinel] = sentinel,
@@ -571,7 +571,7 @@ class CList(List[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod  # noqa: A003
-    def range(
+    def range(  # noqa: A003
         cls: Type[CList],
         start: int,
         stop: Union[int, Sentinel] = sentinel,
@@ -825,7 +825,7 @@ class CSet(Set[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod  # noqa: A003
-    def range(
+    def range(  # noqa: A003
         cls: Type[CSet],
         start: int,
         stop: Union[int, Sentinel] = sentinel,
@@ -1024,7 +1024,7 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod  # noqa: A003
-    def range(
+    def range(  # noqa: A003
         cls: Type[CFrozenSet],
         start: int,
         stop: Union[int, Sentinel] = sentinel,

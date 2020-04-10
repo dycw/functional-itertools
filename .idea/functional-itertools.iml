@@ -2,7 +2,6 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludePattern pattern=".cache" />
       <excludePattern pattern=".cenv" />
       <excludePattern pattern=".hypothesis" />
