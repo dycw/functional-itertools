@@ -1,0 +1,8 @@
+-r core.txt
+
+pandas
+
+pytest
+pytest-cov
+pytest-randomly
+pytest-xdist == 1.29

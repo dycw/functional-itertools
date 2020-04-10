@@ -2,17 +2,17 @@ from typing import Callable
 from typing import Dict
 from typing import Tuple
 
-from functional_itertools.classes import CDict
-from functional_itertools.classes import CFrozenSet
-from functional_itertools.classes import CIterable
-from functional_itertools.classes import CList
-from functional_itertools.classes import CSet
 from hypothesis import given
 from hypothesis import infer
 from hypothesis.strategies import booleans
 from hypothesis.strategies import dictionaries
 from hypothesis.strategies import integers
 
+from functional_itertools import CDict
+from functional_itertools import CFrozenSet
+from functional_itertools import CIterable
+from functional_itertools import CList
+from functional_itertools import CSet
 from tests.test_utilities import int_and_int_to_bool_funcs
 from tests.test_utilities import int_and_int_to_int_and_int_funcs
 from tests.test_utilities import int_to_bool_funcs

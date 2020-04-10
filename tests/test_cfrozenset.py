@@ -3,11 +3,12 @@ from re import search
 from typing import FrozenSet
 from typing import Set
 
-from functional_itertools.classes import CFrozenSet
 from hypothesis import given
 from hypothesis import infer
 from hypothesis.strategies import integers
 from hypothesis.strategies import sets
+
+from functional_itertools import CFrozenSet
 
 
 @given(x=infer)

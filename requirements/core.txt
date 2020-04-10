@@ -1,0 +1,2 @@
+attrs >= 19.3
+more-itertools >= 8.2

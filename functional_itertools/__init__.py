@@ -1,4 +1,3 @@
-"""Python collections in a functional-programming style."""
 from __future__ import annotations
 
 from functional_itertools.cattrs import CAttrs
@@ -9,8 +8,6 @@ from functional_itertools.classes import CList
 from functional_itertools.classes import CSet
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
-
-from ._version import get_versions
 
 
 __all__ = [
@@ -23,5 +20,4 @@ __all__ = [
     "EmptyIterableError",
     "MultipleElementsError",
 ]
-__version__ = get_versions()["version"]
-del get_versions
+__version__ = "0.8.3"
