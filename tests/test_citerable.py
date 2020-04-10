@@ -65,8 +65,8 @@ from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
-from functional_itertools.errors import EmptyIterableError
-from functional_itertools.errors import MultipleElementsError
+from functional_itertools import EmptyIterableError
+from functional_itertools import MultipleElementsError
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
