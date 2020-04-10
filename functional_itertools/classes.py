@@ -518,7 +518,7 @@ class CIterable(Iterable[T]):
 class CList(List[T]):
     """A list with chainable methods."""
 
-    def __getitem__(self: "CList[T]", item: Union[int, slice]) -> Union[T, "CList[T]"]:
+    def __getitem__(self: CList[T], item: Union[int, slice]) -> Union[T, CList[T]]:
         out = super().__getitem__(item)
         if isinstance(out, list):
             return CList(out)
@@ -991,9 +991,9 @@ class CFrozenSet(FrozenSet[T]):
     def enumerate(self: CFrozenSet[T], start: int = 0) -> CFrozenSet[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).frozenset()
 
-    def filter(
+    def filter(  # noqa: A003
         self: CFrozenSet[T], func: Optional[Callable[[T], bool]],
-    ) -> CFrozenSet[T]:  # noqa: A003
+    ) -> CFrozenSet[T]:
         return self.iter().filter(func).frozenset()
 
     def frozenset(self: CFrozenSet[T]) -> CFrozenSet[T]:  # noqa: A003
