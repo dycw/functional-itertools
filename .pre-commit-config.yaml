@@ -25,4 +25,3 @@ repos:
       - id: reorder-python-imports
       - id: dead
       - id: flake8
-
