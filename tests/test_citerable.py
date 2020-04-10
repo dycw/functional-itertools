@@ -52,7 +52,6 @@ from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
 from hypothesis.strategies import tuples
-from more_itertools.recipes import flatten
 from more_itertools.recipes import prepend
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import take
@@ -344,23 +343,6 @@ def test_reduce_propagating_type_error(x: Tuple[int, int]) -> None:
 
     with raises(TypeError, match="Always fail"):
         CIterable(x).reduce(func)
-
-
-@mark.xfail
-@given(
-    x=lists(lists(integers())), initial=lists(integers()) | just(sentinel), n=small_ints,
-)
-def test_reduce_as_iterable(
-    x: List[List[int]], initial: Union[List[int], Sentinel], n: int,
-) -> None:
-    args, _ = drop_sentinel(initial)
-    try:
-        y = CIterable(x).reduce_as_iterable(lambda x, y: list(chain(x, y)), initial=initial)
-    except EmptyIterableError:
-        assume(False)
-    else:
-        assert isinstance(y, CIterable)
-        assert list(y[:n]) == list(islice(flatten(chain(x, args)), n))
 
 
 # itertools
