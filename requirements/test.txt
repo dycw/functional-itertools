@@ -1,7 +1,6 @@
 -r core.txt
 
-pandas
-
+hypothesis
 pytest
 pytest-cov
 pytest-randomly

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import permutations
 from typing import Callable
 from typing import List

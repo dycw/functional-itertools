@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import just
