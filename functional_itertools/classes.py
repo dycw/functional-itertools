@@ -551,7 +551,9 @@ class CList(List[T]):
     def list(self: CFrozenSet[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(self: CList[T], func: Callable[..., U], *iterables: Iterable) -> CList[U]:  # noqa: A003
+    def map(  # noqa: A003
+        self: CList[T], func: Callable[..., U], *iterables: Iterable,
+    ) -> CList[U]:
         return self.iter().map(func, *iterables).list()
 
     def max(  # noqa: A003
@@ -1183,7 +1185,9 @@ class CDict(Dict[T, U]):
 
         return self.items().filter(inner).dict()
 
-    def filter_values(self: CDict[T, U], func: Callable[[U], bool]) -> CDict[T, U]:  # dead: disable
+    def filter_values(  # dead: disable
+        self: CDict[T, U], func: Callable[[U], bool],
+    ) -> CDict[T, U]:
         def inner(item: Tuple[T, U]) -> bool:
             _, value = item
             return func(value)
