@@ -476,7 +476,7 @@ class CIterable(Iterable[T]):
 
     # extra public
 
-    def append(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
+    def append(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:  # dead: disable
         return self.chain([value])
 
     def first(self: CIterable[T]) -> T:
@@ -485,11 +485,8 @@ class CIterable(Iterable[T]):
         except StopIteration:
             raise EmptyIterableError from None
 
-    def last(self: CIterable[T]) -> T:
-        def inner(_: Any, second: T) -> T:
-            return second
-
-        return self.reduce(inner)
+    def last(self: CIterable[T]) -> T:  # dead: disable
+        return self.reduce(lambda x, y: y)
 
     def one(self: CIterable[T]) -> T:
         head: CList[T] = self.islice(2).list()
@@ -588,7 +585,7 @@ class CList(List[T]):
     def set(self: CList[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
-    def sort(
+    def sort(  # dead: disable
         self: CList[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
     ) -> CList[T]:
         warn("Use the 'sorted' method instead of 'sort'")
@@ -872,16 +869,16 @@ class CSet(Set[T]):
 
     # set methods
 
-    def update(self: CSet[T]) -> NoReturn:
+    def update(self: CSet[T]) -> NoReturn:  # dead: disable
         raise RuntimeError("Use the 'union' method instead of 'update'")
 
-    def intersection_update(self: CSet[T]) -> NoReturn:
+    def intersection_update(self: CSet[T]) -> NoReturn:  # dead: disable
         raise RuntimeError("Use the 'intersection' method instead of 'intersection_update'")
 
-    def difference_update(self: CSet[T]) -> NoReturn:
+    def difference_update(self: CSet[T]) -> NoReturn:  # dead: disable
         raise RuntimeError("Use the 'difference' method instead of 'difference_update'")
 
-    def symmetric_difference_update(self: CSet[T]) -> NoReturn:
+    def symmetric_difference_update(self: CSet[T]) -> NoReturn:  # dead: disable
         raise RuntimeError(
             "Use the 'symmetric_difference' method instead of 'symmetric_difference_update'",
         )
@@ -1161,64 +1158,66 @@ class CDict(Dict[T, U]):
 
     # built-in
 
-    def all_keys(self: CDict[Any, Any]) -> bool:
+    def all_keys(self: CDict[Any, Any]) -> bool:  # dead: disable
         return self.keys().all()
 
-    def all_values(self: CDict[Any, Any]) -> bool:
+    def all_values(self: CDict[Any, Any]) -> bool:  # dead: disable
         return self.values().all()
 
-    def all_items(self: CDict[Any, Any]) -> bool:
+    def all_items(self: CDict[Any, Any]) -> bool:  # dead: disable
         return self.items().all()
 
-    def any_keys(self: CDict[Any, Any]) -> bool:
+    def any_keys(self: CDict[Any, Any]) -> bool:  # dead: disable
         return self.keys().any()
 
-    def any_values(self: CDict[Any, Any]) -> bool:
+    def any_values(self: CDict[Any, Any]) -> bool:  # dead: disable
         return self.values().any()
 
-    def any_items(self: CDict[Any, Any]) -> bool:
+    def any_items(self: CDict[Any, Any]) -> bool:  # dead: disable
         return self.items().any()
 
-    def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:
+    def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> bool:
             key, _ = item
             return func(key)
 
         return self.items().filter(inner).dict()
 
-    def filter_values(self: CDict[T, U], func: Callable[[U], bool]) -> CDict[T, U]:
+    def filter_values(self: CDict[T, U], func: Callable[[U], bool]) -> CDict[T, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> bool:
             _, value = item
             return func(value)
 
         return self.items().filter(inner).dict()
 
-    def filter_items(self: CDict[T, U], func: Callable[[T, U], bool]) -> CDict[T, U]:
+    def filter_items(  # dead: disable
+        self: CDict[T, U], func: Callable[[T, U], bool],
+    ) -> CDict[T, U]:
         def inner(item: Tuple[T, U]) -> bool:
             key, value = item
             return func(key, value)
 
         return self.items().filter(inner).dict()
 
-    def frozenset_keys(self: CDict[T, Any]) -> CFrozenSet[T]:
+    def frozenset_keys(self: CDict[T, Any]) -> CFrozenSet[T]:  # dead: disable
         return self.keys().frozenset()
 
-    def frozenset_values(self: CDict[T, Any]) -> CFrozenSet[U]:
+    def frozenset_values(self: CDict[T, Any]) -> CFrozenSet[U]:  # dead: disable
         return self.values().frozenset()
 
-    def frozenset_items(self: CDict[T, Any]) -> CFrozenSet[Tuple[T, U]]:
+    def frozenset_items(self: CDict[T, Any]) -> CFrozenSet[Tuple[T, U]]:  # dead: disable
         return self.items().frozenset()
 
-    def list_keys(self: CDict[T, Any]) -> CList[T]:
+    def list_keys(self: CDict[T, Any]) -> CList[T]:  # dead: disable
         return self.keys().list()
 
-    def list_values(self: CDict[Any, U]) -> CList[U]:
+    def list_values(self: CDict[Any, U]) -> CList[U]:  # dead: disable
         return self.values().list()
 
-    def list_items(self: CDict[T, U]) -> CList[Tuple[T, U]]:
+    def list_items(self: CDict[T, U]) -> CList[Tuple[T, U]]:  # dead: disable
         return self.items().list()
 
-    def map_keys(self: CDict[T, U], func: Callable[[T], V]) -> CDict[V, U]:
+    def map_keys(self: CDict[T, U], func: Callable[[T], V]) -> CDict[V, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> Tuple[V, U]:
             key, value = item
             return func(key), value
@@ -1232,14 +1231,16 @@ class CDict(Dict[T, U]):
 
         return self.items().map(inner).dict()
 
-    def map_items(self: CDict[T, U], func: Callable[[T, U], Tuple[V, W]]) -> CDict[V, W]:
+    def map_items(  # dead: disable
+        self: CDict[T, U], func: Callable[[T, U], Tuple[V, W]],
+    ) -> CDict[V, W]:
         def inner(item: Tuple[T, U]) -> Tuple[V, W]:
             key, value = item
             return func(key, value)
 
         return self.items().map(inner).dict()
 
-    def max_keys(
+    def max_keys(  # dead: disable
         self: CDict[T, U],
         *,
         key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
@@ -1247,7 +1248,7 @@ class CDict(Dict[T, U]):
     ) -> T:
         return self.keys().max(key=key, default=default)
 
-    def max_values(
+    def max_values(  # dead: disable
         self: CDict[T, U],
         *,
         key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
@@ -1255,7 +1256,7 @@ class CDict(Dict[T, U]):
     ) -> U:
         return self.values().max(key=key, default=default)
 
-    def max_items(
+    def max_items(  # dead: disable
         self: CDict[T, U],
         *,
         key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
@@ -1264,11 +1265,11 @@ class CDict(Dict[T, U]):
         _, kwargs = drop_sentinel(key=key, default=default)
         return max(self.items(), **kwargs)
 
-    def set_keys(self: CDict[T, U]) -> CSet[T]:
+    def set_keys(self: CDict[T, U]) -> CSet[T]:  # dead: disable
         return self.keys().set()
 
-    def set_values(self: CDict[T, U]) -> CSet[U]:
+    def set_values(self: CDict[T, U]) -> CSet[U]:  # dead: disable
         return self.values().set()
 
-    def set_items(self: CDict[T, U]) -> CSet[Tuple[T, U]]:
+    def set_items(self: CDict[T, U]) -> CSet[Tuple[T, U]]:  # dead: disable
         return self.items().set()
