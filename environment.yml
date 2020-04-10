@@ -2,22 +2,8 @@ name: functional-itertools
 
 dependencies:
   - python=3.7.*
-
-  - attrs >= 19.3
-  - more-itertools >= 8.2
-
-  # testing
-  - hypothesis
-  - pytest
-  - pytest-cov
-  - pytest-xdist = 1.29
-
-  # publishing
+  - bump2version
   - pre-commit
-  - twine
-  - versioneer
-
-  # pip
   - pip
   - pip:
-      - pytest-randomly
+      - --requirement=requirements/test.txt

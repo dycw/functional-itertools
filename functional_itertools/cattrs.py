@@ -9,6 +9,7 @@ from typing import Union
 from attr import asdict
 from attr import evolve
 from attr.exceptions import NotAnAttrsClassError
+
 from functional_itertools.classes import CDict
 from functional_itertools.classes import CIterable
 from functional_itertools.classes import CList
@@ -19,7 +20,7 @@ U = TypeVar("U")
 
 
 class CAttrs(Generic[T]):
-    def dict(self: CAttrs[T], *, recurse: bool = True) -> CDict[str, T]:
+    def dict(self: CAttrs[T], *, recurse: bool = True) -> CDict[str, T]:  # noqa: A003
         mapping: CDict[str, T] = asdict(
             self, recurse=False, dict_factory=CDict,
         )

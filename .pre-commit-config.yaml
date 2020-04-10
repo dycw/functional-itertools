@@ -30,14 +30,3 @@ repos:
     rev: v0.22.1
     hooks:
       - id: nitpick
-
-  - repo: local
-    hooks:
-      - id: pytest
-        name: pytest
-        entry: pytest
-        language: system
-        pass_filenames: false
-        args: [-nauto]
-        always_run: true
-        stages: [push]

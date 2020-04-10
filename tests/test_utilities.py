@@ -15,11 +15,6 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-from functional_itertools.classes import CFrozenSet
-from functional_itertools.classes import CIterable
-from functional_itertools.classes import CList
-from functional_itertools.classes import CSet
-from functional_itertools.utilities import sentinel
 from hypothesis import given
 from hypothesis import infer
 from hypothesis.strategies import frozensets
@@ -30,6 +25,12 @@ from hypothesis.strategies import sampled_from
 from hypothesis.strategies import SearchStrategy
 from hypothesis.strategies import sets
 from hypothesis.strategies import tuples
+
+from functional_itertools import CFrozenSet
+from functional_itertools import CIterable
+from functional_itertools import CList
+from functional_itertools import CSet
+from functional_itertools.utilities import sentinel
 
 
 _T = TypeVar("_T")

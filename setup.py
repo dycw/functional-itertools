@@ -1,25 +1,40 @@
 from __future__ import annotations
 
+from pathlib import Path
+from re import MULTILINE
+from re import search
+
 from setuptools import find_packages
 from setuptools import setup
 
-from versioneer import get_cmdclass
-from versioneer import get_version
+
+with open("README.md") as fd:
+    long_description = fd.read()
+    header, description = long_description.splitlines()
+    name = search(r"^# ([\w-]+)$", header).group(1)
+for path in Path(__file__).resolve().parent.iterdir():
+    try:
+        with open(str(path.joinpath("__init__.py"))) as fd:
+            version = search(
+                r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]$', fd.read(), MULTILINE,
+            ).group(1)
+    except (FileNotFoundError, NotADirectoryError):
+        pass
+with open("requirements/core.txt") as fd:
+    install_requires = fd.read().strip().split("\n")
 
 
 setup(
-    # metadata
-    name="functional_itertools",
-    version=get_version(),
+    name=name,
+    version=version,
     author="Bao Wei",
     author_email="baowei.ur521@gmail.com",
-    # options
-    zip_safe=False,
-    install_requires=["attrs >= 19.3", "more-itertools >= 8.2"],
+    license="MIT",
+    description=description,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    install_requires=install_requires,
     python_requires=">=3.7",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
-    options={"bdist_wheel": {"universal": "1"}},
-    # versioneer
-    cmdclass=get_cmdclass(),
+    packages=find_packages(exclude=["tests"]),
+    include_package_data=True,
 )
