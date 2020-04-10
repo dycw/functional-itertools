@@ -16,7 +16,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/dycw/pre-commit-hooks
-    rev: 1.0.26
+    rev: 1.0.30
     hooks:
       - id: add-trailing-comma
       - id: autoflake
@@ -26,7 +26,3 @@ repos:
       - id: dead
       - id: flake8
 
-  - repo: https://github.com/andreoliwa/nitpick
-    rev: v0.22.1
-    hooks:
-      - id: nitpick
