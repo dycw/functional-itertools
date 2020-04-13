@@ -389,7 +389,7 @@ def test_repeat(cls: Type, data: DataObject, x: int) -> None:
 @given(
     data=data(),
     initial=just({})
-    if VERSION is Version.py36
+    if VERSION is Version.py37
     else fixed_dictionaries({"initial": none() | integers()}),
 )
 def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> None:
