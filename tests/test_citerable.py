@@ -220,7 +220,7 @@ def test_map(cls: Type, data: DataObject) -> None:
     key_kwargs=just({})
     | (
         just({"key": neg})
-        if VERSION in {Version.py36, Version.py37}
+        if VERSION is Version.py37
         else fixed_dictionaries({"key": none() | just(neg)})
     ),
     default_kwargs=just({}) | fixed_dictionaries({"default": integers()}),
@@ -389,7 +389,7 @@ def test_repeat(cls: Type, data: DataObject, x: int) -> None:
 @given(
     data=data(),
     initial=just({})
-    if VERSION in {Version.py36, Version.py37}
+    if VERSION is Version.py36
     else fixed_dictionaries({"initial": none() | integers()}),
 )
 def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> None:

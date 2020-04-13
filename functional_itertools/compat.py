@@ -16,7 +16,7 @@ from functional_itertools.utilities import Version
 T = TypeVar("T")
 
 
-if VERSION in {Version.py36, Version.py37}:
+if VERSION is Version.py37:
     MAX_MIN_KEY_ANNOTATION = Union[Callable[[T], Any], Sentinel]
     MAX_MIN_KEY_DEFAULT = sentinel
 elif VERSION is Version.py38:

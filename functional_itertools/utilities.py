@@ -34,7 +34,6 @@ def drop_sentinel(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 
 
 class Version(Enum):
-    py36 = auto()
     py37 = auto()
     py38 = auto()
 
@@ -43,7 +42,7 @@ def _get_version() -> Version:
     major, minor, *_ = version_info
     if major != 3:  # pragma: no cover
         raise RuntimeError(f"Expected Python 3; got {major}")
-    mapping = {6: Version.py36, 7: Version.py37, 8: Version.py38}
+    mapping = {7: Version.py37, 8: Version.py38}
     try:
         return mapping[minor]
     except KeyError:  # pragma: no cover
