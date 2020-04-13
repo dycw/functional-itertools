@@ -85,7 +85,7 @@ V = TypeVar("V")
 W = TypeVar("W")
 
 
-if VERSION in {Version.py36, Version.py37}:
+if VERSION is Version.py37:
 
     def _accumulate_citerable(
         self: CIterable[T], func: Callable[[T, U], U] = add,
