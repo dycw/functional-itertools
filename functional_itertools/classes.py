@@ -468,6 +468,15 @@ class CIterable(Iterable[T]):
         with Pool(processes=processes) as pool:
             return CIterable(pool.map(func, self._iterable))
 
+    def pstarmap(
+        self: CIterable[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        processes: Optional[int] = None,
+    ) -> CIterable[U]:
+        with Pool(processes=processes) as pool:
+            return CIterable(pool.starmap(func, self._iterable))
+
     # pathlib
 
     @classmethod
@@ -759,6 +768,14 @@ class CList(List[T]):
     ) -> CList[U]:
         return self.iter().pmap(func, processes=processes).list()
 
+    def pstarmap(
+        self: CList[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        processes: Optional[int] = None,
+    ) -> CList[U]:
+        return self.iter().pstarmap(func, processes=processes).list()
+
     # pathlib
 
     @classmethod
@@ -954,6 +971,14 @@ class CSet(Set[T]):
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
         return self.iter().pmap(func, processes=processes).set()
 
+    def pstarmap(
+        self: CSet[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        processes: Optional[int] = None,
+    ) -> CSet[U]:
+        return self.iter().pstarmap(func, processes=processes).set()
+
     # pathlib
 
     @classmethod
@@ -1122,6 +1147,14 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T], func: Callable[[T], U], *, processes: Optional[int] = None,
     ) -> CFrozenSet[U]:
         return self.iter().pmap(func, processes=processes).frozenset()
+
+    def pstarmap(
+        self: CFrozenSet[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        processes: Optional[int] = None,
+    ) -> CFrozenSet[U]:
+        return self.iter().pstarmap(func, processes=processes).frozenset()
 
     # pathlib
 

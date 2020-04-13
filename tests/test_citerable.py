@@ -601,6 +601,16 @@ def test_pmap(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(map(neg, x))
 
 
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+@settings(deadline=None)
+def test_pstarmap(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(lists_or_sets(cls, tuples(integers(), integers())))
+    y = cls(x).pstarmap(max, processes=1)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(starmap(max, x))
+
+
 # pathlib
 
 
