@@ -607,7 +607,7 @@ def test_pmap_nested(data: DataObject) -> None:
     x = data.draw(lists(lists(integers(), min_size=1, max_size=1000), min_size=1, max_size=10))
     y = CIterable(x).pmap(_pmap_neg, processes=1)
     assert isinstance(y, CIterable)
-    assert list(y) == list(max(map(neg, x_i) for x_i in x))
+    assert list(y) == [max(map(neg, x_i)) for x_i in x]
 
 
 def _pmap_neg(x: Iterable[int]) -> int:
