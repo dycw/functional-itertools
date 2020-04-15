@@ -6,6 +6,7 @@
       <excludePattern pattern=".cenv" />
       <excludePattern pattern=".hypothesis" />
       <excludePattern pattern=".idea" />
+      <excludePattern pattern=".ipynb_checkpoints" />
       <excludePattern pattern=".mypy_cache" />
       <excludePattern pattern=".pytest_cache" />
       <excludePattern pattern="dist" />
