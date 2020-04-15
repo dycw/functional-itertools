@@ -601,6 +601,19 @@ def test_pmap(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(map(neg, x))
 
 
+@given(data=data())
+@settings(deadline=None)
+def test_pmap_nested(data: DataObject) -> None:
+    x = data.draw(lists(lists(integers(), min_size=1, max_size=1000), min_size=1, max_size=10))
+    y = CIterable(x).pmap(_pmap_neg, processes=1)
+    assert isinstance(y, CIterable)
+    assert list(y) == [max(map(neg, x_i)) for x_i in x]
+
+
+def _pmap_neg(x: Iterable[int]) -> int:
+    return CIterable(x).pmap(neg, processes=1).max()
+
+
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 @settings(deadline=None)

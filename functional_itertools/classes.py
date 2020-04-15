@@ -465,8 +465,15 @@ class CIterable(Iterable[T]):
     def pmap(
         self: CIterable[T], func: Callable[[T], U], *, processes: Optional[int] = None,
     ) -> CIterable[U]:
-        with Pool(processes=processes) as pool:
-            return CIterable(pool.map(func, self._iterable))
+        try:
+            with Pool(processes=processes) as pool:
+                return CIterable(pool.map(func, self._iterable))
+        except AssertionError as error:
+            (msg,) = error.args
+            if msg == "daemonic processes are not allowed to have children":
+                return self.map(func)
+            else:
+                raise NotImplementedError(msg)
 
     def pstarmap(
         self: CIterable[Tuple[T, ...]],
