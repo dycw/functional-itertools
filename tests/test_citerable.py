@@ -550,7 +550,7 @@ def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> N
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
-@given(data=data(), repeat=small_ints)
+@given(data=data(), repeat=integers(1, 3))
 def test_product(cls: Type, data: DataObject, repeat: int) -> None:
     x, cast = data.draw(siterables(cls, integers(), max_size=3))
     xs, _ = data.draw(nested_siterables(cls, integers(), max_size=3))
