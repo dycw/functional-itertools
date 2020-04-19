@@ -54,6 +54,7 @@ from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
 from hypothesis.strategies import tuples
+from more_itertools import tail
 from more_itertools.recipes import prepend
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import take
@@ -607,6 +608,15 @@ def test_tabulate(start: int, n: int) -> None:
     x = CIterable.tabulate(neg, start=start)
     assert isinstance(x, CIterable)
     assert list(islice(x, n)) == list(islice(tabulate(neg, start=start), n))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=small_ints)
+def test_tail(cls: Type, data: DataObject, n: int) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).tail(n)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(tail(n, x))
 
 
 # multiprocessing

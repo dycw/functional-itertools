@@ -916,6 +916,7 @@ class CSet(Set[T]):
     def symmetric_difference_update(self: CSet[T], other: Iterable[U]) -> None:
         warn_non_functional(CSet, "symmetric_difference_update", "symmetric_difference")
         super().symmetric_difference_update(other)
+        return self
 
     def add(self: CSet[T], element: T) -> CSet[T]:
         super().add(element)
@@ -1012,6 +1013,9 @@ class CSet(Set[T]):
 
     def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
         return self.iter().prepend(value).set()
+
+    def tail(self: CSet[T], n: int) -> CSet[T]:
+        return self.iter().tail(n).set()
 
     # multiprocessing
 
@@ -1217,6 +1221,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
         return self.iter().prepend(value).frozenset()
+
+    def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
+        return self.iter().tail(n).frozenset()
 
     # multiprocessing
 
