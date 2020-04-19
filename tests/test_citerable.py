@@ -56,6 +56,7 @@ from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
+from more_itertools.recipes import flatten
 from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
 from more_itertools.recipes import padnone
@@ -692,6 +693,15 @@ def test_dotproduct(cls: Type, data: DataObject) -> None:
     assert isinstance(z, int)
     if cls in {CIterable, CList}:
         assert z == dotproduct(x, y)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_flatten(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(nested_siterables(cls, integers()))
+    y = cls(x).flatten()
+    assert isinstance(y, cls)
+    assert cast(y) == cast(flatten(x))
 
 
 # multiprocessing

@@ -1039,6 +1039,9 @@ class CSet(Set[T]):
     def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
+    def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
+        return self.iter().flatten().set()
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1264,6 +1267,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
+
+    def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
+        return self.iter().flatten().frozenset()
 
     # multiprocessing
 
