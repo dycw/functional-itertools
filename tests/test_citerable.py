@@ -58,6 +58,7 @@ from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import nth
 from more_itertools.recipes import prepend
+from more_itertools.recipes import quantify
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import tail
 from more_itertools.recipes import take
@@ -646,6 +647,15 @@ def test_all_equal(cls: Type, data: DataObject) -> None:
     y = cls(x).all_equal()
     assert isinstance(y, bool)
     assert y == all_equal(x)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_quantify(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(cls, integers()))
+    y = cls(x).quantify(pred=is_even)
+    assert isinstance(y, int)
+    assert y == quantify(x, pred=is_even)
 
 
 # multiprocessing
