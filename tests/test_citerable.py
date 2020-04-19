@@ -258,9 +258,9 @@ def test_max_and_min(
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
     data=data(),
-    start=small_ints,
-    stop=small_ints | just(sentinel),
-    step=small_ints | just(sentinel),
+    start=islice_ints,
+    stop=islice_ints | just(sentinel),
+    step=islice_ints | just(sentinel),
 )
 def test_range(
     cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
@@ -368,7 +368,7 @@ def test_reduce_returning_c_classes(
 # itertools
 
 
-@given(start=integers(), step=integers(), n=small_ints)
+@given(start=integers(), step=integers(), n=islice_ints)
 def test_count(start: int, step: int, n: int) -> None:
     x = CIterable.count(start=start, step=step)
     assert isinstance(x, CIterable)
@@ -383,7 +383,7 @@ def test_cycle(x: List[int], n: int) -> None:
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
-@given(data=data(), x=integers(), n=small_ints)
+@given(data=data(), x=integers(), n=islice_ints)
 def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
     if cls is CIterable:
         times = data.draw(small_ints | just(sentinel))
@@ -481,9 +481,9 @@ def test_groupby(cls: Type, data: DataObject, key: Optional[Callable[[int], int]
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
     data=data(),
-    start=small_ints,
-    stop=small_ints | just(sentinel),
-    step=small_ints | just(sentinel),
+    start=islice_ints,
+    stop=islice_ints | just(sentinel),
+    step=islice_ints | just(sentinel),
 )
 def test_islice(
     cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
@@ -608,7 +608,7 @@ def test_prepend(cls: Type, data: DataObject, value: int) -> None:
     assert cast(y) == cast(prepend(value, x))
 
 
-@given(start=integers(), n=small_ints)
+@given(start=integers(), n=islice_ints)
 def test_tabulate(start: int, n: int) -> None:
     x = CIterable.tabulate(neg, start=start)
     assert isinstance(x, CIterable)
