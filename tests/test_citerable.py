@@ -46,7 +46,6 @@ from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import fixed_dictionaries
-from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import iterables
 from hypothesis.strategies import just
@@ -103,9 +102,10 @@ def test_init(x: Union[int, List[int]]) -> None:
         assert isinstance(CIterable(iter(x)), CIterable)
 
 
-@given(x=lists(integers()), index=integers() | floats())
+@given(x=lists(integers()), index=integers())
 @example(x=[], index=-1)
 @example(x=[], index=maxsize + 1)
+@example(x=[], index=0.0)
 def test_get_item(x: List[int], index: Union[int, float]) -> None:
     y = CIterable(x)
     if isinstance(index, int):

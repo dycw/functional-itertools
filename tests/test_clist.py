@@ -5,16 +5,39 @@ from operator import neg
 from typing import Callable
 from typing import List
 from typing import Optional
+from typing import Union
 
 from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
+from hypothesis.strategies import lists
 from hypothesis.strategies import none
+from hypothesis.strategies import tuples
 from pytest import warns
 
 from functional_itertools import CList
 from tests.strategies import slists
+
+
+# magic methods
+
+
+@given(
+    x=lists(integers()), index=integers() | tuples(integers(), integers()).map(lambda x: slice(*x)),
+)
+def test_get_item(x: List[int], index: Union[int, slice]) -> None:
+    y = CList(x)
+    if isinstance(index, int):
+        try:
+            assert isinstance(y[index], int)
+        except IndexError:
+            pass
+    elif isinstance(index, slice):
+        assert isinstance(y[index], CList)
+    else:
+        raise TypeError(index)  # pragma: no cover
+
 
 # built-ins
 
