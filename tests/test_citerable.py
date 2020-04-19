@@ -319,7 +319,8 @@ def test_zip(cls: Type, data: DataObject) -> None:
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).zip(*xs)
     assert isinstance(y, cls)
-    assert cast(y) == cast(zip(x, *xs))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(zip(x, *xs))
 
 
 # functools
@@ -541,14 +542,15 @@ def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> N
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).zip_longest(*xs, fillvalue=fillvalue)
     assert isinstance(y, cls)
-    assert cast(y) == cast(zip_longest(x, *xs, fillvalue=fillvalue))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(zip_longest(x, *xs, fillvalue=fillvalue))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
-@given(data=data(), repeat=integers(1, 5))
+@given(data=data(), repeat=small_ints)
 def test_product(cls: Type, data: DataObject, repeat: int) -> None:
-    x, cast = data.draw(siterables(cls, integers()))
-    xs, _ = data.draw(nested_siterables(cls, integers()))
+    x, cast = data.draw(siterables(cls, integers(), max_size=3))
+    xs, _ = data.draw(nested_siterables(cls, integers(), max_size=3))
     y = cls(x).product(*xs, repeat=repeat)
     assert isinstance(y, cls)
     assert cast(y) == cast(product(x, *xs, repeat=repeat))
@@ -557,7 +559,7 @@ def test_product(cls: Type, data: DataObject, repeat: int) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), r=none() | small_ints)
 def test_permutations(cls: Type, data: DataObject, r: Optional[int]) -> None:
-    x, cast = data.draw(siterables(cls, integers()))
+    x, cast = data.draw(siterables(cls, integers(), max_size=3))
     y = cls(x).permutations(r=r)
     assert isinstance(y, cls)
     assert cast(y) == cast(permutations(x, r=r))
@@ -566,7 +568,7 @@ def test_permutations(cls: Type, data: DataObject, r: Optional[int]) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), r=small_ints)
 def test_combinations(cls: Type, data: DataObject, r: int) -> None:
-    x, cast = data.draw(siterables(cls, integers()))
+    x, cast = data.draw(siterables(cls, integers(), max_size=3))
     y = cls(x).combinations(r)
     assert isinstance(y, cls)
     assert cast(y) == cast(combinations(x, r))
@@ -575,7 +577,7 @@ def test_combinations(cls: Type, data: DataObject, r: int) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), r=small_ints)
 def test_combinations_with_replacement(cls: Type, data: DataObject, r: int) -> None:
-    x, cast = data.draw(siterables(cls, integers()))
+    x, cast = data.draw(siterables(cls, integers(), max_size=3))
     y = cls(x).combinations_with_replacement(r)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -591,7 +593,8 @@ def test_take(cls: Type, data: DataObject, n: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).take(n)
     assert isinstance(y, cls)
-    assert cast(y) == cast(take(n, x))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(take(n, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -616,7 +619,8 @@ def test_tail(cls: Type, data: DataObject, n: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).tail(n)
     assert isinstance(y, cls)
-    assert cast(y) == cast(tail(n, x))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(tail(n, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -625,9 +629,10 @@ def test_consume(cls: Type, data: DataObject, n: Optional[int]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).consume(n=n)
     assert isinstance(y, cls)
-    iter_x = iter(x)
-    consume(iter_x, n=n)
-    assert cast(y) == cast(iter_x)
+    if cls in {CIterable, CList}:
+        iter_x = iter(x)
+        consume(iter_x, n=n)
+        assert cast(y) == cast(iter_x)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])

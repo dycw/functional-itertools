@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: |
           pip install -r requirements/test.txt
-          pytest -nauto -v tests
+          pytest tests -nauto -v --hypothesis-profile=ci
 
   build:
     runs-on: ubuntu-latest

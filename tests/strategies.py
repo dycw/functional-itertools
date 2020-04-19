@@ -57,14 +57,14 @@ def siterables(
 
 
 def nested_siterables(
-    cls: Type, elements: SearchStrategy[T], *, min_size: int = 0,
+    cls: Type, elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = TEN,
 ) -> SearchStrategy[Tuple[Union[List[List[T]], FrozenSet[FrozenSet[T]]], Type]]:
     return siterables(
         cls,
-        siterables(cls, elements, min_size=min_size, max_size=5).map(itemgetter(0)),
+        siterables(cls, elements, min_size=min_size, max_size=max_size).map(itemgetter(0)),
         min_size=min_size,
-        max_size=5,
+        max_size=max_size,
     )
 
 
-small_ints = integers(0, TEN)
+small_ints = integers(0, 3)
