@@ -973,6 +973,11 @@ class CSet(Set[T]):
     ) -> CSet[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).set()
 
+    def product(
+        self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CSet[Tuple[Union[T, U], ...]]:
+        return self.iter().product(*iterables, repeat=repeat).set()
+
     # itertools - recipes
 
     def take(self: CSet[T], n: int) -> CSet[T]:
@@ -1155,6 +1160,11 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CFrozenSet[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
+
+    def product(
+        self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CFrozenSet[Tuple[Union[T, U], ...]]:
+        return self.iter().product(*iterables, repeat=repeat).frozenset()
 
     # itertools - recipes
 

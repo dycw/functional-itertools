@@ -40,13 +40,6 @@ def test_sentinel() -> None:
     assert repr(sentinel) == "<sentinel>"
 
 
-small_ints = integers(0, 1000)
-
-
-def small_lists(strategy: SearchStrategy[_T]) -> SearchStrategy[List[_T]]:
-    return lists(strategy, max_size=10)
-
-
 def lists_or_sets(
     cls: Type,
     elements: SearchStrategy[_T],
