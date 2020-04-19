@@ -391,15 +391,14 @@ def test_cycle(x: List[int], n: int) -> None:
 @given(data=data(), x=integers(), n=islice_ints)
 def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
     if cls is CIterable:
-        times = data.draw(small_ints | just(sentinel))
+        times = data.draw(none() | small_ints)
     else:
         times = data.draw(small_ints)
     y = cls.repeat(x, times=times)
     assert isinstance(y, cls)
     _, cast = data.draw(siterables(cls, none()))
-    args, _ = drop_sentinel(times)
-    z = repeat(x, *args)
-    if (cls is CIterable) and (times is sentinel):
+    z = repeat(x, *(() if times is None else (times,)))
+    if (cls is CIterable) and (times is None):
         assert cast(y[:n]) == cast(islice(z, n))
     else:
         assert cast(y) == cast(z)

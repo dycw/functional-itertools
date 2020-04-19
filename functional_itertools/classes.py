@@ -286,11 +286,8 @@ class CIterable(Iterable[T]):
         return CIterable(cycle(self._iterable))
 
     @classmethod
-    def repeat(
-        cls: Type[CIterable[T]], x: T, times: Union[int, Sentinel] = sentinel,
-    ) -> CIterable[T]:
-        args, _ = drop_sentinel(times)
-        return cls(repeat(x, *args))
+    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
+        return cls(repeat(x, *(() if times is None else (times,))))
 
     accumulate = _accumulate_citerable
 
