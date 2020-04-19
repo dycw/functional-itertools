@@ -68,3 +68,4 @@ def nested_siterables(
 
 
 small_ints = integers(0, 3)
+islice_ints = integers(0, 100)

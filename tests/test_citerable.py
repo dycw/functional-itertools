@@ -56,6 +56,7 @@ from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import nth
+from more_itertools.recipes import padnone
 from more_itertools.recipes import prepend
 from more_itertools.recipes import quantify
 from more_itertools.recipes import tabulate
@@ -77,8 +78,10 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from tests.strategies import islice_ints
 from tests.strategies import nested_siterables
 from tests.strategies import siterables
+from tests.strategies import slists
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
@@ -372,7 +375,7 @@ def test_count(start: int, step: int, n: int) -> None:
     assert list(x[:n]) == list(islice(count(start=start, step=step), n))
 
 
-@given(x=lists(integers()), n=small_ints)
+@given(x=slists(integers()), n=islice_ints)
 def test_cycle(x: List[int], n: int) -> None:
     y = CIterable(x).cycle()
     assert isinstance(y, CIterable)
@@ -660,6 +663,13 @@ def test_quantify(cls: Type, data: DataObject) -> None:
     y = cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
     assert y == quantify(x, pred=is_even)
+
+
+@given(x=slists(integers()), n=islice_ints)
+def test_padnone(x: List[int], n: int) -> None:
+    y = CIterable(x).padnone()
+    assert isinstance(y, CIterable)
+    assert list(y[:n]) == list(islice(padnone(x), n))
 
 
 # multiprocessing
