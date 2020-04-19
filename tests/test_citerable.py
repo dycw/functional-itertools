@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from functools import reduce
 from itertools import accumulate
 from itertools import chain
@@ -62,6 +63,7 @@ from more_itertools.recipes import nth
 from more_itertools.recipes import padnone
 from more_itertools.recipes import prepend
 from more_itertools.recipes import quantify
+from more_itertools.recipes import repeatfunc
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import tail
 from more_itertools.recipes import take
@@ -392,19 +394,15 @@ def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
         times = data.draw(small_ints | just(sentinel))
     else:
         times = data.draw(small_ints)
-    try:
-        y = cls.repeat(x, times=times)
-    except OverflowError:
-        assume(False)
+    y = cls.repeat(x, times=times)
+    assert isinstance(y, cls)
+    _, cast = data.draw(siterables(cls, none()))
+    args, _ = drop_sentinel(times)
+    z = repeat(x, *args)
+    if (cls is CIterable) and (times is sentinel):
+        assert cast(y[:n]) == cast(islice(z, n))
     else:
-        assert isinstance(y, cls)
-        _, cast = data.draw(siterables(cls, none()))
-        args, _ = drop_sentinel(times)
-        z = repeat(x, *args)
-        if (cls is CIterable) and (times is sentinel):
-            assert cast(y[:n]) == cast(islice(z, n))
-        else:
-            assert cast(y) == cast(z)
+        assert cast(y) == cast(z)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -702,6 +700,25 @@ def test_flatten(cls: Type, data: DataObject) -> None:
     y = cls(x).flatten()
     assert isinstance(y, cls)
     assert cast(y) == cast(flatten(x))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=islice_ints)
+def test_repeatfunc(cls: Type, data: DataObject, n: int) -> None:
+    add1 = partial(add, 1)
+    if cls is CIterable:
+        times = data.draw(none() | small_ints)
+    else:
+        times = data.draw(small_ints)
+
+    y = cls.repeatfunc(add1, times, 0)
+    assert isinstance(y, cls)
+    _, cast = data.draw(siterables(cls, none()))
+    z = repeatfunc(add1, times, 0)
+    if (cls is CIterable) and (times is None):
+        assert cast(y[:n]) == cast(islice(z, n))
+    else:
+        assert cast(y) == cast(z)
 
 
 # multiprocessing

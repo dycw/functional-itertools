@@ -399,7 +399,7 @@ class CIterable(Iterable[T]):
     def repeatfunc(
         cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
     ) -> CIterable[T]:
-        return cls(repeatfunc(func, times=times, *args))
+        return cls(repeatfunc(func, times, *args))
 
     def pairwise(self: CIterable[T]) -> CIterable[Tuple[T, T]]:
         return CIterable(pairwise(self._iterable))
@@ -723,8 +723,10 @@ class CList(List[T]):
         return self.iter().flatten().list()
 
     @classmethod
-    def repeatfunc(cls: Type[CList], func: Callable[..., T], times: int, *args: Any) -> CList[T]:
-        return CIterable.repeatfunc(func, times=times, *args).list()
+    def repeatfunc(
+        cls: Type[CList], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+    ) -> CList[T]:
+        return CIterable.repeatfunc(func, times, *args).list()
 
     def pairwise(self: CList[T]) -> CList[Tuple[T, T]]:
         return self.iter().pairwise().list()
@@ -1042,6 +1044,12 @@ class CSet(Set[T]):
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
 
+    @classmethod
+    def repeatfunc(
+        cls: Type[CSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+    ) -> CSet[T]:
+        return CIterable.repeatfunc(func, times, *args).set()
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1270,6 +1278,12 @@ class CFrozenSet(FrozenSet[T]):
 
     def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
         return self.iter().flatten().frozenset()
+
+    @classmethod
+    def repeatfunc(
+        cls: Type[CFrozenSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+    ) -> CFrozenSet[T]:
+        return CIterable.repeatfunc(func, times, *args).frozenset()
 
     # multiprocessing
 
