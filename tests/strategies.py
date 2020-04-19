@@ -29,7 +29,7 @@ def short_iterables(
     elements: SearchStrategy[T],
     *,
     min_size: int = 0,
-    max_size: int = 100,
+    max_size: int = 10,
     unique: bool = False,
 ) -> SearchStrategy[Tuple[Union[List[T], FrozenSet[T]], Type]]:
     if cls in {CIterable, CList}:
@@ -48,9 +48,9 @@ def short_iterables_of_iterables(
     elements: SearchStrategy[T],
     *,
     min_size_outer: int = 0,
-    max_size_outer: int = 10,
+    max_size_outer: int = 3,
     min_size_inner: int = 0,
-    max_size_inner: int = 10,
+    max_size_inner: int = 3,
 ) -> SearchStrategy[Tuple[Union[List[List[T]], FrozenSet[FrozenSet[T]]], Type]]:
     return short_iterables(
         cls,
@@ -62,4 +62,4 @@ def short_iterables_of_iterables(
     )
 
 
-small_ints = integers(0, 1000)
+small_ints = integers(0, 10)

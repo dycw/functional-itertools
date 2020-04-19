@@ -474,23 +474,26 @@ def test_groupby(cls: Type, data: DataObject, key: Optional[Callable[[int], int]
             assert list(group_y) == list(group_z)
 
 
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
-    x=lists(integers()),
+    data=data(),
     start=small_ints,
     stop=small_ints | just(sentinel),
     step=small_ints | just(sentinel),
 )
 def test_islice(
-    x: List[int], start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
+    cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
 ) -> None:
+    x, cast = data.draw(short_iterables(cls, integers()))
     if step is sentinel:
         assume(stop is not sentinel)
     else:
         assume(step != 0)
     args, _ = drop_sentinel(stop, step)
-    y = CIterable(x).islice(start, *args)
-    assert isinstance(y, CIterable)
-    assert list(y) == list(islice(x, start, *args))
+    y = cls(x).islice(start, *args)
+    assert isinstance(y, cls)
+    if cls in {CIterable, CList}:
+        assert list(y) == list(islice(x, start, *args))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -544,35 +547,38 @@ def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> N
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), repeat=integers(1, 5))
 def test_product(cls: Type, data: DataObject, repeat: int) -> None:
-    x, cast = data.draw(short_iterables(cls, integers(), max_size=5))
-    xs, _ = data.draw(
-        short_iterables_of_iterables(cls, integers(), max_size_inner=5, max_size_outer=5),
-    )
+    x, cast = data.draw(short_iterables(cls, integers()))
+    xs, _ = data.draw(short_iterables_of_iterables(cls, integers()))
     y = cls(x).product(*xs, repeat=repeat)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert list(y) == list(product(x, *xs, repeat=repeat))
+    assert cast(y) == cast(product(x, *xs, repeat=repeat))
 
 
-@given(x=lists(integers()), r=none() | small_ints, n=small_ints)
-def test_permutations(x: List[int], r: Optional[int], n: int) -> None:
-    y = CIterable(x).permutations(r=r)
-    assert isinstance(y, CIterable)
-    assert list(y[:n]) == list(islice(permutations(x, r=r), n))
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), r=none() | small_ints)
+def test_permutations(cls: Type, data: DataObject, r: Optional[int]) -> None:
+    x, cast = data.draw(short_iterables(cls, integers()))
+    y = cls(x).permutations(r=r)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(permutations(x, r=r))
 
 
-@given(x=lists(integers()), r=small_ints, n=small_ints)
-def test_combinations(x: List[int], r: int, n: int) -> None:
-    y = CIterable(x).combinations(r)
-    assert isinstance(y, CIterable)
-    assert list(y[:n]) == list(islice(combinations(x, r), n))
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), r=small_ints)
+def test_combinations(cls: Type, data: DataObject, r: int) -> None:
+    x, cast = data.draw(short_iterables(cls, integers()))
+    y = cls(x).combinations(r)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(combinations(x, r))
 
 
-@given(x=lists(integers()), r=small_ints, n=small_ints)
-def test_combinations_with_replacement(x: List[int], r: int, n: int) -> None:
-    y = CIterable(x).combinations_with_replacement(r)
-    assert isinstance(y, CIterable)
-    assert list(y[:n]) == list(islice(combinations_with_replacement(x, r), n))
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), r=small_ints)
+def test_combinations_with_replacement(cls: Type, data: DataObject, r: int) -> None:
+    x, cast = data.draw(short_iterables(cls, integers()))
+    y = cls(x).combinations_with_replacement(r)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(combinations_with_replacement(x, r))
 
 
 # itertools-recipes

@@ -653,6 +653,14 @@ class CList(List[T]):
     ) -> CList[Tuple[U, CList[T]]]:
         return self.iter().groupby(key=key).map(lambda x: (x[0], CList(x[1]))).list()
 
+    def islice(
+        self: CList[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CList[T]:
+        return self.iter().islice(start, stop=stop, step=step).list()
+
     def starmap(self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CList[U]:
         return self.iter().starmap(func).list()
 
@@ -959,6 +967,14 @@ class CSet(Set[T]):
     ) -> CSet[Tuple[U, CFrozenSet[T]]]:
         return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).set()
 
+    def islice(
+        self: CSet[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).set()
+
     def starmap(self: CSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CSet[U]:
         return self.iter().starmap(func).set()
 
@@ -977,6 +993,15 @@ class CSet(Set[T]):
         self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
     ) -> CSet[Tuple[Union[T, U], ...]]:
         return self.iter().product(*iterables, repeat=repeat).set()
+
+    def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[Tuple[T, ...]]:
+        return self.iter().permutations(r=r).set()
+
+    def combinations(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
+        return self.iter().combinations(r).set()
+
+    def combinations_with_replacement(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
+        return self.iter().combinations_with_replacement(r).set()
 
     # itertools - recipes
 
@@ -1145,6 +1170,14 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[Tuple[U, CFrozenSet[T]]]:
         return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).frozenset()
 
+    def islice(
+        self: CFrozenSet[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CFrozenSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).frozenset()
+
     def starmap(
         self: CFrozenSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
     ) -> CFrozenSet[U]:
@@ -1165,6 +1198,15 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
     ) -> CFrozenSet[Tuple[Union[T, U], ...]]:
         return self.iter().product(*iterables, repeat=repeat).frozenset()
+
+    def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().permutations(r=r).frozenset()
+
+    def combinations(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().combinations(r).frozenset()
+
+    def combinations_with_replacement(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().combinations_with_replacement(r).frozenset()
 
     # itertools - recipes
 
