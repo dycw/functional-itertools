@@ -61,6 +61,7 @@ from more_itertools.recipes import flatten
 from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
 from more_itertools.recipes import padnone
+from more_itertools.recipes import pairwise
 from more_itertools.recipes import prepend
 from more_itertools.recipes import quantify
 from more_itertools.recipes import repeatfunc
@@ -718,6 +719,16 @@ def test_repeatfunc(cls: Type, data: DataObject, n: int) -> None:
         assert cast(y[:n]) == cast(islice(z, n))
     else:
         assert cast(y) == cast(z)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_pairwise(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).pairwise()
+    assert isinstance(y, cls)
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(pairwise(x))
 
 
 # multiprocessing

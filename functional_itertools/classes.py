@@ -1047,6 +1047,9 @@ class CSet(Set[T]):
     ) -> CSet[T]:
         return CIterable.repeatfunc(func, times, *args).set()
 
+    def pairwise(self: CSet[T]) -> CSet[Tuple[T, T]]:
+        return self.iter().pairwise().set()
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1281,6 +1284,9 @@ class CFrozenSet(FrozenSet[T]):
         cls: Type[CFrozenSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
     ) -> CFrozenSet[T]:
         return CIterable.repeatfunc(func, times, *args).frozenset()
+
+    def pairwise(self: CFrozenSet[T]) -> CFrozenSet[Tuple[T, T]]:
+        return self.iter().pairwise().frozenset()
 
     # multiprocessing
 
