@@ -54,6 +54,7 @@ from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
 from hypothesis.strategies import tuples
+from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import nth
 from more_itertools.recipes import prepend
@@ -634,8 +635,17 @@ def test_nth(cls: Type, data: DataObject, n: int, default: Optional[int]) -> Non
     x, _ = data.draw(siterables(cls, integers()))
     y = cls(x).nth(n, default=default)
     assert isinstance(y, int) or (y is None)
-    if cls in {CIterable, CList, CFrozenSet}:
+    if cls in {CIterable, CList}:
         assert y == nth(x, n, default=default)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_all_equal(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(cls, integers()))
+    y = cls(x).all_equal()
+    assert isinstance(y, bool)
+    assert y == all_equal(x)
 
 
 # multiprocessing

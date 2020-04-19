@@ -1027,6 +1027,9 @@ class CSet(Set[T]):
     def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
+    def all_equal(self: CSet[Any]) -> bool:
+        return self.iter().all_equal()
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1240,6 +1243,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
+
+    def all_equal(self: CFrozenSet[Any]) -> bool:
+        return self.iter().all_equal()
 
     # multiprocessing
 
