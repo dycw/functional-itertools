@@ -25,17 +25,22 @@ T = TypeVar("T")
 
 
 def short_iterables(
-    cls: Type, elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = 100,
+    cls: Type,
+    elements: SearchStrategy[T],
+    *,
+    min_size: int = 0,
+    max_size: int = 100,
+    unique: bool = False,
 ) -> SearchStrategy[Tuple[Union[List[T], FrozenSet[T]], Type]]:
     if cls in {CIterable, CList}:
-        iterables = lists
+        strategy = lists(elements, min_size=min_size, max_size=max_size, unique=unique)
         cast = list
     elif cls in {CSet, CFrozenSet}:
-        iterables = frozensets
+        strategy = frozensets(elements, min_size=min_size, max_size=max_size)
         cast = frozenset
     else:
         raise TypeError(cls)
-    return tuples(iterables(elements, min_size=min_size, max_size=max_size), just(cast))
+    return tuples(strategy, just(cast))
 
 
 def short_iterables_of_iterables(
@@ -57,4 +62,4 @@ def short_iterables_of_iterables(
     )
 
 
-small_ints = integers(0, 10)
+small_ints = integers(0, 1000)

@@ -77,14 +77,13 @@ from tests.strategies import short_iterables
 from tests.strategies import short_iterables_of_iterables
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
-from tests.test_utilities import lists_or_sets
 
 
 @given(x=integers() | lists(integers()))
 def test_init(x: Union[int, List[int]]) -> None:
     if isinstance(x, int):
         with raises(
-            TypeError, match="CIterable expected an iterable, " "but 'int' object is not iterable",
+            TypeError, match="CIterable expected an iterable, but 'int' object is not iterable",
         ):
             CIterable(x)  # type: ignore
     else:
@@ -171,7 +170,7 @@ def test_dict(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), start=integers())
 def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).enumerate(start=start)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -181,7 +180,7 @@ def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_filter(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).filter(is_even)
     assert isinstance(y, cls)
     assert cast(y) == cast(filter(is_even, x))
@@ -190,28 +189,28 @@ def test_filter(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_frozenset(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(lists_or_sets(cls, tuples(integers(), integers())))
+    x, _ = data.draw(short_iterables(cls, tuples(integers(), integers())))
     assert isinstance(cls(x).frozenset(), CFrozenSet)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_iter(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(lists_or_sets(cls, tuples(integers(), integers())))
+    x, _ = data.draw(short_iterables(cls, tuples(integers(), integers())))
     assert isinstance(cls(x).iter(), CIterable)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_list(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(lists_or_sets(cls, integers()))
+    x, _ = data.draw(short_iterables(cls, integers()))
     assert isinstance(cls(x).list(), CList)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_map(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).map(neg)
     assert isinstance(y, cls)
     assert cast(y) == cast(map(neg, x))
@@ -236,7 +235,7 @@ def test_max_and_min(
     key_kwargs: Dict[str, int],
     default_kwargs: Dict[str, int],
 ) -> None:
-    x, _ = data.draw(lists_or_sets(cls, integers()))
+    x, _ = data.draw(short_iterables(cls, integers()))
     try:
         y = getattr(cls(x), func.__name__)(**key_kwargs, **default_kwargs)
     except ValueError:
@@ -266,14 +265,14 @@ def test_range(
     args, _ = drop_sentinel(stop, step)
     x = cls.range(start, *args)
     assert isinstance(x, cls)
-    _, cast = data.draw(lists_or_sets(cls, none()))
+    _, cast = data.draw(short_iterables(cls, none()))
     assert cast(x) == cast(range(start, *args))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_set(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(lists_or_sets(cls, integers()))
+    x, _ = data.draw(short_iterables(cls, integers()))
     assert isinstance(cls(x).set(), CSet)
 
 
@@ -282,7 +281,7 @@ def test_set(cls: Type, data: DataObject) -> None:
 def test_sorted(
     cls: Type, data: DataObject, key: Optional[Callable[[int], int]], reverse: bool,
 ) -> None:
-    x, _ = data.draw(lists_or_sets(cls, integers()))
+    x, _ = data.draw(short_iterables(cls, integers()))
     y = cls(x).sorted(key=key, reverse=reverse)
     assert isinstance(y, CList)
     assert y == sorted(x, key=key, reverse=reverse)
@@ -291,7 +290,7 @@ def test_sorted(
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), start=integers() | just(sentinel))
 def test_sum(cls: Type, data: DataObject, start: Union[int, Sentinel]) -> None:
-    x, _ = data.draw(lists_or_sets(cls, integers()))
+    x, _ = data.draw(short_iterables(cls, integers()))
     y = cls(x).sum(start=start)
     assert isinstance(y, int)
     args, _ = drop_sentinel(start)
@@ -301,7 +300,7 @@ def test_sum(cls: Type, data: DataObject, start: Union[int, Sentinel]) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_tuple(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(lists_or_sets(cls, integers()))
+    x, _ = data.draw(short_iterables(cls, integers()))
     y = cls(x).tuple()
     assert isinstance(y, tuple)
     if cls in {CIterable, CList}:
@@ -309,15 +308,14 @@ def test_tuple(cls: Type, data: DataObject) -> None:
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
-@given(
-    data=data(), iterables=lists(lists(integers(), max_size=1000), max_size=10),
-)
-def test_zip(cls: Type, data: DataObject, iterables: List[List[int]]) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers(), max_size=1000))
-    y = cls(x).zip(*iterables)
+@given(data=data())
+def test_zip(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(short_iterables(cls, integers()))
+    xs, _ = data.draw(short_iterables_of_iterables(cls, integers()))
+    y = cls(x).zip(*xs)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
-        assert list(y) == list(zip(x, *iterables))
+        assert list(y) == list(zip(x, *xs))
 
 
 # functools
@@ -326,18 +324,18 @@ def test_zip(cls: Type, data: DataObject, iterables: List[List[int]]) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), initial=integers() | just(sentinel))
 def test_reduce(cls: Type, data: DataObject, initial: Union[int, Sentinel]) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     args, _ = drop_sentinel(initial)
     try:
-        y = cls(x).reduce(max, initial=initial)
+        y = cls(x).reduce(add, initial=initial)
     except EmptyIterableError:
         with raises(
             TypeError, match=escape("reduce() of empty sequence with no initial value"),
         ):
-            reduce(max, x, *args)
+            reduce(add, x, *args)
     else:
         assert isinstance(y, int)
-        assert y == reduce(max, x, *args)
+        assert y == reduce(add, x, *args)
 
 
 @given(x=tuples(integers(), integers()))
@@ -350,13 +348,16 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
 
 
 @mark.parametrize(
-    "cls, func, expected", [(list, add, CList), (set, or_, CSet), (frozenset, or_, CFrozenSet)],
+    "cls, cls_base, func", [(CList, list, add), (CSet, set, or_), (CFrozenSet, frozenset, or_)],
 )
-@given(x=lists(lists(integers(), max_size=1000), min_size=1, max_size=10))
+@given(data=data())
 def test_reduce_returning_c_classes(
-    cls: Type, func: Callable[[Any, Any], Any], expected: Type, x: List[List[int]],
+    cls: Type, data: DataObject, cls_base: Type, func: Callable[[Any, Any], Any],
 ) -> None:
-    assert isinstance(CIterable(x).map(cls).reduce(func), expected)
+    x, cast = data.draw(
+        short_iterables_of_iterables(cls, integers(), min_size_inner=1, min_size_outer=1),
+    )
+    assert isinstance(CIterable(x).map(cls_base).reduce(func), cls)
 
 
 # itertools
@@ -377,8 +378,8 @@ def test_cycle(x: List[int], n: int) -> None:
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
-@given(data=data(), x=integers())
-def test_repeat(cls: Type, data: DataObject, x: int) -> None:
+@given(data=data(), x=integers(), n=small_ints)
+def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
     if cls is CIterable:
         times = data.draw(small_ints | just(sentinel))
     else:
@@ -389,11 +390,10 @@ def test_repeat(cls: Type, data: DataObject, x: int) -> None:
         assume(False)
     else:
         assert isinstance(y, cls)
-        _, cast = data.draw(lists_or_sets(cls, none()))
+        _, cast = data.draw(short_iterables(cls, none()))
         args, _ = drop_sentinel(times)
         z = repeat(x, *args)
         if (cls is CIterable) and (times is sentinel):
-            n = data.draw(small_ints)
             assert cast(y[:n]) == cast(islice(z, n))
         else:
             assert cast(y) == cast(z)
@@ -407,7 +407,7 @@ def test_repeat(cls: Type, data: DataObject, x: int) -> None:
     else fixed_dictionaries({"initial": none() | integers()}),
 )
 def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).accumulate(max, **initial)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -438,7 +438,7 @@ def test_compress(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_dropwhile(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).dropwhile(is_even)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -448,7 +448,7 @@ def test_dropwhile(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_filterfalse(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).filterfalse(is_even)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -460,7 +460,7 @@ def test_filterfalse(cls: Type, data: DataObject) -> None:
 )
 @given(data=data(), key=none() | just(neg))
 def test_groupby(cls: Type, data: DataObject, key: Optional[Callable[[int], int]]) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).groupby(key=key)
     assert isinstance(y, cls)
     y = cast(y)
@@ -496,7 +496,7 @@ def test_islice(
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_starmap(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, tuples(integers(), integers())))
+    x, cast = data.draw(short_iterables(cls, tuples(integers(), integers())))
     y = cls(x).starmap(max)
     assert isinstance(y, cls)
     assert cast(y) == cast(starmap(max, x))
@@ -505,7 +505,7 @@ def test_starmap(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_takewhile(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).takewhile(is_even)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -515,7 +515,7 @@ def test_takewhile(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), n=small_ints)
 def test_tee(cls: Type, data: DataObject, n: int) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).tee(n=n)
     assert isinstance(y, cls)
     y = cast(y)
@@ -581,7 +581,7 @@ def test_combinations_with_replacement(x: List[int], r: int, n: int) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), n=integers(0, maxsize))
 def test_take(cls: Type, data: DataObject, n: int) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).take(n)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -591,7 +591,7 @@ def test_take(cls: Type, data: DataObject, n: int) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), value=integers())
 def test_prepend(cls: Type, data: DataObject, value: int) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).prepend(value)
     assert isinstance(y, cls)
     if cls in {CIterable, CList}:
@@ -612,19 +612,22 @@ def test_tabulate(start: int, n: int) -> None:
 @given(data=data())
 @settings(deadline=None)
 def test_pmap(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, integers()))
+    x, cast = data.draw(short_iterables(cls, integers()))
     y = cls(x).pmap(neg, processes=1)
     assert isinstance(y, cls)
     assert cast(y) == cast(map(neg, x))
 
 
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 @settings(deadline=None)
-def test_pmap_nested(data: DataObject) -> None:
-    x = data.draw(lists(lists(integers(), min_size=1, max_size=1000), min_size=1, max_size=10))
-    y = CIterable(x).pmap(_pmap_neg, processes=1)
-    assert isinstance(y, CIterable)
-    assert list(y) == [max(map(neg, x_i)) for x_i in x]
+def test_pmap_nested(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(
+        short_iterables_of_iterables(cls, integers(), min_size_outer=1, min_size_inner=1),
+    )
+    y = cls(x).pmap(_pmap_neg, processes=1)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(max(map(neg, x_i)) for x_i in x)
 
 
 def _pmap_neg(x: Iterable[int]) -> int:
@@ -635,7 +638,7 @@ def _pmap_neg(x: Iterable[int]) -> int:
 @given(data=data())
 @settings(deadline=None)
 def test_pstarmap(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(lists_or_sets(cls, tuples(integers(), integers())))
+    x, cast = data.draw(short_iterables(cls, tuples(integers(), integers())))
     y = cls(x).pstarmap(max, processes=1)
     assert isinstance(y, cls)
     assert cast(y) == cast(starmap(max, x))
@@ -647,8 +650,8 @@ def test_pstarmap(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), use_path=booleans())
 def test_iterdir(cls: Type, data: DataObject, use_path: bool) -> None:
-    x, func = data.draw(
-        lists_or_sets(cls, text(alphabet=ascii_lowercase, min_size=1), unique=True),
+    x, cast = data.draw(
+        short_iterables(cls, text(alphabet=ascii_lowercase, min_size=1), unique=True),
     )
     with TemporaryDirectory() as temp_dir_str:
         temp_dir = Path(temp_dir_str)
