@@ -55,6 +55,7 @@ from hypothesis.strategies import text
 from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
+from more_itertools.recipes import dotproduct
 from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
 from more_itertools.recipes import padnone
@@ -680,6 +681,16 @@ def test_ncycles(cls: Type, data: DataObject, n: int) -> None:
     y = cls(x).ncycles(n)
     assert isinstance(y, cls)
     assert cast(y) == cast(ncycles(x, n))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_dotproduct(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(cls, integers()))
+    y, _ = data.draw(siterables(cls, integers(), min_size=len(x), max_size=len(x)))
+    z = cls(x).dotproduct(y)
+    assert isinstance(z, int)
+    assert z == dotproduct(x, y)
 
 
 # multiprocessing

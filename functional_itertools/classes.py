@@ -1036,6 +1036,9 @@ class CSet(Set[T]):
     def ncycles(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().ncycles(n).set()
 
+    def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
+        return self.iter().dotproduct(iterable)
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1258,6 +1261,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().ncycles(n).frozenset()
+
+    def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
+        return self.iter().dotproduct(iterable)
 
     # multiprocessing
 
