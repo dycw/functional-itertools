@@ -21,45 +21,50 @@ from functional_itertools import CList
 from functional_itertools import CSet
 
 
+TEN = 10
 T = TypeVar("T")
 
 
-def short_iterables(
+def slists(
+    elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = TEN, unique: bool = False,
+) -> SearchStrategy[List[T]]:
+    return lists(elements, min_size=min_size, max_size=max_size, unique=unique)
+
+
+def sfrozensets(
+    elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = TEN,
+) -> SearchStrategy[FrozenSet[T]]:
+    return frozensets(elements, min_size=min_size, max_size=max_size)
+
+
+def siterables(
     cls: Type,
     elements: SearchStrategy[T],
     *,
     min_size: int = 0,
-    max_size: int = 10,
+    max_size: int = TEN,
     unique: bool = False,
 ) -> SearchStrategy[Tuple[Union[List[T], FrozenSet[T]], Type]]:
     if cls in {CIterable, CList}:
-        strategy = lists(elements, min_size=min_size, max_size=max_size, unique=unique)
+        strategy = slists(elements, min_size=min_size, max_size=max_size, unique=unique)
         cast = list
     elif cls in {CSet, CFrozenSet}:
-        strategy = frozensets(elements, min_size=min_size, max_size=max_size)
+        strategy = sfrozensets(elements, min_size=min_size, max_size=max_size)
         cast = frozenset
     else:
-        raise TypeError(cls)
+        raise TypeError(cls)  # pragma: no cover
     return tuples(strategy, just(cast))
 
 
-def short_iterables_of_iterables(
-    cls: Type,
-    elements: SearchStrategy[T],
-    *,
-    min_size_outer: int = 0,
-    max_size_outer: int = 3,
-    min_size_inner: int = 0,
-    max_size_inner: int = 3,
+def nested_siterables(
+    cls: Type, elements: SearchStrategy[T], *, min_size: int = 0,
 ) -> SearchStrategy[Tuple[Union[List[List[T]], FrozenSet[FrozenSet[T]]], Type]]:
-    return short_iterables(
+    return siterables(
         cls,
-        short_iterables(cls, elements, min_size=min_size_inner, max_size=max_size_inner).map(
-            itemgetter(0),
-        ),
-        min_size=min_size_outer,
-        max_size=max_size_outer,
+        siterables(cls, elements, min_size=min_size, max_size=5).map(itemgetter(0)),
+        min_size=min_size,
+        max_size=5,
     )
 
 
-small_ints = integers(0, 10)
+small_ints = integers(0, TEN)

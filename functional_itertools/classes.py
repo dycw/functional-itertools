@@ -77,6 +77,7 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from functional_itertools.utilities import warn_non_functional
 
 
 T = TypeVar("T")
@@ -901,8 +902,9 @@ class CSet(Set[T]):
 
     # set methods
 
-    def update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError("Use the 'union' method instead of 'update'")
+    def update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "update", "union")
+        super().update(*other)
 
     def intersection_update(self: CSet[T]) -> NoReturn:  # dead: disable
         raise RuntimeError("Use the 'intersection' method instead of 'intersection_update'")

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from enum import auto
 from enum import Enum
+from lib2to3.main import warn
 from sys import version_info
 from typing import Any
 from typing import Dict
 from typing import Tuple
+from typing import Type
 
 from functional_itertools.errors import UnsupportVersionError
 
@@ -50,3 +52,13 @@ def _get_version() -> Version:
 
 
 VERSION = _get_version()
+
+
+# warn
+
+
+def warn_non_functional(cls: Type, incorrect: str, suggestion: str) -> None:
+    name = cls.__name__
+    warn(
+        f"{name}.{incorrect} is a non-functional method, did you mean {name}.{suggestion} instead?",
+    )
