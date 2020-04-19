@@ -49,7 +49,7 @@ def siterables(
         strategy = slists(elements, min_size=min_size, max_size=max_size, unique=unique)
         cast = list
     elif cls in {CSet, CFrozenSet}:
-        strategy = sfrozensets(elements, min_size=min_size, max_size=max_size)
+        strategy = frozensets(elements, min_size=min_size, max_size=max_size)
         cast = frozenset
     else:
         raise TypeError(cls)  # pragma: no cover

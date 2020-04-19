@@ -30,7 +30,6 @@ from typing import FrozenSet
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -906,16 +905,17 @@ class CSet(Set[T]):
         warn_non_functional(CSet, "update", "union")
         super().update(*other)
 
-    def intersection_update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError("Use the 'intersection' method instead of 'intersection_update'")
+    def intersection_update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "intersection_update", "intersection")
+        super().intersection_update(*other)
 
-    def difference_update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError("Use the 'difference' method instead of 'difference_update'")
+    def difference_update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "difference_update", "difference")
+        super().difference_update(*other)
 
-    def symmetric_difference_update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError(
-            "Use the 'symmetric_difference' method instead of 'symmetric_difference_update'",
-        )
+    def symmetric_difference_update(self: CSet[T], other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "symmetric_difference_update", "symmetric_difference")
+        super().symmetric_difference_update(other)
 
     def add(self: CSet[T], element: T) -> CSet[T]:
         super().add(element)

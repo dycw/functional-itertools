@@ -4,15 +4,12 @@ from itertools import chain
 from itertools import permutations
 from re import search
 from typing import FrozenSet
-from typing import Set
 from typing import Type
 
 from hypothesis import given
-from hypothesis import infer
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
-from hypothesis.strategies import sets
 from pytest import mark
 from pytest import raises
 from pytest import warns
@@ -105,83 +102,86 @@ def test_copy(cls: Type, data: DataObject) -> None:
 # set methods
 
 
-@given(x=sfrozensets(integers()), y=sfrozensets(integers()))
-def test_update(x: FrozenSet[int], y: FrozenSet[int]) -> None:
+@given(x=sfrozensets(integers()), xs=sfrozensets(sfrozensets(integers())))
+def test_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
     with warns(
         UserWarning,
         match="CSet.update is a non-functional method, did you mean CSet.union instead?",
     ):
-        CSet(x).update(*y)
+        CSet(x).update(*xs)
 
 
-@given(x=infer)
-def test_intersection_update(x: Set[int]) -> None:
-    with raises(
-        RuntimeError, match="Use the 'intersection' method instead of 'intersection_update'",
+@given(x=sfrozensets(integers()), xs=sfrozensets(sfrozensets(integers())))
+def test_intersection_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
+    with warns(
+        UserWarning,
+        match="CSet.intersection_update is a non-functional method, did you mean CSet.intersection instead?",
     ):
-        CSet(x).intersection_update()
+        CSet(x).intersection_update(*xs)
 
 
-@given(x=infer)
-def test_difference_update(x: Set[int]) -> None:
-    with raises(
-        RuntimeError, match="Use the 'difference' method instead of 'difference_update'",
+@given(x=sfrozensets(integers()), xs=sfrozensets(sfrozensets(integers())))
+def test_difference_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
+    with warns(
+        UserWarning,
+        match="CSet.difference_update is a non-functional method, did you mean CSet.difference instead?",
     ):
-        CSet(x).difference_update()
+        CSet(x).difference_update(*xs)
 
 
-@given(x=infer)
-def test_symmetric_difference_update(x: Set[int]) -> None:
-    with raises(
-        RuntimeError,
-        match="Use the 'symmetric_difference' method " "instead of 'symmetric_difference_update'",
+@given(x=sfrozensets(integers()), y=sfrozensets(integers()))
+def test_symmetric_difference_update(x: FrozenSet[int], y: FrozenSet[int]) -> None:
+    with warns(
+        UserWarning,
+        match="CSet.symmetric_difference_update is a non-functional method, "
+        "did you mean CSet.symmetric_difference instead?",
     ):
-        CSet(x).symmetric_difference_update()
+        CSet(x).symmetric_difference_update(y)
 
 
-@given(x=infer, y=infer)
-def test_add(x: Set[int], y: int) -> None:
-    cset = CSet(x).add(y)
-    assert isinstance(cset, CSet)
-    assert cset == set(chain(x, [y]))
+@given(x=sfrozensets(integers()), y=integers())
+def test_add(x: FrozenSet[int], y: int) -> None:
+    z = CSet(x).add(y)
+    assert isinstance(z, CSet)
+    assert z == set(chain(x, [y]))
 
 
-@given(x=infer, y=infer)
-def test_remove(x: Set[int], y: int) -> None:
-    cset = CSet(x)
+@given(x=sfrozensets(integers()), y=integers())
+def test_remove(x: FrozenSet[int], y: int) -> None:
+    z = CSet(x)
     if y in x:
-        new = cset.remove(y)
-        assert isinstance(new, CSet)
-        assert new == {i for i in x if i != y}
+        w = z.remove(y)
+        assert isinstance(w, CSet)
+        assert w == {i for i in x if i != y}
     else:
         with raises(KeyError, match=str(y)):
-            cset.remove(y)
+            z.remove(y)
 
 
-@given(x=infer, y=infer)
-def test_discard(x: Set[int], y: int) -> None:
-    cset = CSet(x).discard(y)
-    assert isinstance(cset, CSet)
-    assert cset == {i for i in x if i != y}
+@given(x=sfrozensets(integers()), y=integers())
+def test_discard(x: FrozenSet[int], y: int) -> None:
+    z = CSet(x).discard(y)
+    assert isinstance(z, CSet)
+    assert z == {i for i in x if i != y}
 
 
-@given(x=infer)
-def test_pop(x: Set[int]) -> None:
-    cset = CSet(x)
-    if cset:
-        new = cset.pop()
+@given(x=sfrozensets(integers()))
+def test_pop(x: FrozenSet[int]) -> None:
+    y = CSet(x)
+    if y:
+        new = y.pop()
         assert isinstance(new, CSet)
         assert len(new) == (len(x) - 1)
     else:
         with raises(KeyError, match="pop from an empty set"):
-            cset.pop()
+            y.pop()
 
 
 # extra public
 
 
-@given(x=sets(integers()))
-def test_pipe(x: Set[int]) -> None:
+@given(x=sfrozensets(integers()))
+def test_pipe(x: FrozenSet[int]) -> None:
     y = CSet(x).pipe(permutations, r=2)
     assert isinstance(y, CSet)
     assert y == set(permutations(x, r=2))

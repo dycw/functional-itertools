@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from enum import auto
 from enum import Enum
-from lib2to3.main import warn
 from sys import version_info
 from typing import Any
 from typing import Dict
 from typing import Tuple
 from typing import Type
+from warnings import warn
 
 from functional_itertools.errors import UnsupportVersionError
 
