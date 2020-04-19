@@ -55,6 +55,7 @@ from hypothesis.strategies import text
 from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
+from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
 from more_itertools.recipes import padnone
 from more_itertools.recipes import prepend
@@ -670,6 +671,15 @@ def test_padnone(x: List[int], n: int) -> None:
     y = CIterable(x).padnone()
     assert isinstance(y, CIterable)
     assert list(y[:n]) == list(islice(padnone(x), n))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=small_ints)
+def test_ncycles(cls: Type, data: DataObject, n: int) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).ncycles(n)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(ncycles(x, n))
 
 
 # multiprocessing

@@ -21,18 +21,22 @@ from functional_itertools import CList
 from functional_itertools import CSet
 
 
-TEN = 10
+MAX_SIZE = 1000
 T = TypeVar("T")
 
 
 def slists(
-    elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = TEN, unique: bool = False,
+    elements: SearchStrategy[T],
+    *,
+    min_size: int = 0,
+    max_size: int = MAX_SIZE,
+    unique: bool = False,
 ) -> SearchStrategy[List[T]]:
     return lists(elements, min_size=min_size, max_size=max_size, unique=unique)
 
 
 def sfrozensets(
-    elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = TEN,
+    elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = MAX_SIZE,
 ) -> SearchStrategy[FrozenSet[T]]:
     return frozensets(elements, min_size=min_size, max_size=max_size)
 
@@ -42,7 +46,7 @@ def siterables(
     elements: SearchStrategy[T],
     *,
     min_size: int = 0,
-    max_size: int = TEN,
+    max_size: int = MAX_SIZE,
     unique: bool = False,
 ) -> SearchStrategy[Tuple[Union[List[T], FrozenSet[T]], Type]]:
     if cls in {CIterable, CList}:
@@ -57,7 +61,7 @@ def siterables(
 
 
 def nested_siterables(
-    cls: Type, elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = TEN,
+    cls: Type, elements: SearchStrategy[T], *, min_size: int = 0, max_size: int = 10,
 ) -> SearchStrategy[Tuple[Union[List[List[T]], FrozenSet[FrozenSet[T]]], Type]]:
     return siterables(
         cls,
@@ -67,5 +71,5 @@ def nested_siterables(
     )
 
 
-small_ints = integers(0, 3)
-islice_ints = integers(0, 100)
+small_ints = integers(0, 10)
+islice_ints = integers(0, MAX_SIZE)

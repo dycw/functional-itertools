@@ -1033,6 +1033,9 @@ class CSet(Set[T]):
     def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
+    def ncycles(self: CSet[T], n: int) -> CSet[T]:
+        return self.iter().ncycles(n).set()
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1252,6 +1255,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
+
+    def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
+        return self.iter().ncycles(n).frozenset()
 
     # multiprocessing
 
