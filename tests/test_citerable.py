@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from functools import reduce
 from itertools import accumulate
 from itertools import chain
@@ -45,7 +46,6 @@ from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import fixed_dictionaries
-from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import iterables
 from hypothesis.strategies import just
@@ -55,9 +55,15 @@ from hypothesis.strategies import text
 from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
+from more_itertools.recipes import dotproduct
+from more_itertools.recipes import flatten
+from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
+from more_itertools.recipes import padnone
+from more_itertools.recipes import pairwise
 from more_itertools.recipes import prepend
 from more_itertools.recipes import quantify
+from more_itertools.recipes import repeatfunc
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import tail
 from more_itertools.recipes import take
@@ -77,8 +83,10 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from tests.strategies import islice_ints
 from tests.strategies import nested_siterables
 from tests.strategies import siterables
+from tests.strategies import slists
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
@@ -94,9 +102,10 @@ def test_init(x: Union[int, List[int]]) -> None:
         assert isinstance(CIterable(iter(x)), CIterable)
 
 
-@given(x=lists(integers()), index=integers() | floats())
+@given(x=lists(integers()), index=integers())
 @example(x=[], index=-1)
 @example(x=[], index=maxsize + 1)
+@example(x=[], index=0.0)
 def test_get_item(x: List[int], index: Union[int, float]) -> None:
     y = CIterable(x)
     if isinstance(index, int):
@@ -255,9 +264,9 @@ def test_max_and_min(
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
     data=data(),
-    start=small_ints,
-    stop=small_ints | just(sentinel),
-    step=small_ints | just(sentinel),
+    start=islice_ints,
+    stop=islice_ints | just(sentinel),
+    step=islice_ints | just(sentinel),
 )
 def test_range(
     cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
@@ -365,14 +374,14 @@ def test_reduce_returning_c_classes(
 # itertools
 
 
-@given(start=integers(), step=integers(), n=small_ints)
+@given(start=integers(), step=integers(), n=islice_ints)
 def test_count(start: int, step: int, n: int) -> None:
     x = CIterable.count(start=start, step=step)
     assert isinstance(x, CIterable)
     assert list(x[:n]) == list(islice(count(start=start, step=step), n))
 
 
-@given(x=lists(integers()), n=small_ints)
+@given(x=slists(integers()), n=islice_ints)
 def test_cycle(x: List[int], n: int) -> None:
     y = CIterable(x).cycle()
     assert isinstance(y, CIterable)
@@ -380,25 +389,20 @@ def test_cycle(x: List[int], n: int) -> None:
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
-@given(data=data(), x=integers(), n=small_ints)
+@given(data=data(), x=integers(), n=islice_ints)
 def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
     if cls is CIterable:
-        times = data.draw(small_ints | just(sentinel))
+        times = data.draw(none() | small_ints)
     else:
         times = data.draw(small_ints)
-    try:
-        y = cls.repeat(x, times=times)
-    except OverflowError:
-        assume(False)
+    y = cls.repeat(x, times=times)
+    assert isinstance(y, cls)
+    _, cast = data.draw(siterables(cls, none()))
+    z = repeat(x, *(() if times is None else (times,)))
+    if (cls is CIterable) and (times is None):
+        assert cast(y[:n]) == cast(islice(z, n))
     else:
-        assert isinstance(y, cls)
-        _, cast = data.draw(siterables(cls, none()))
-        args, _ = drop_sentinel(times)
-        z = repeat(x, *args)
-        if (cls is CIterable) and (times is sentinel):
-            assert cast(y[:n]) == cast(islice(z, n))
-        else:
-            assert cast(y) == cast(z)
+        assert cast(y) == cast(z)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -478,9 +482,9 @@ def test_groupby(cls: Type, data: DataObject, key: Optional[Callable[[int], int]
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
     data=data(),
-    start=small_ints,
-    stop=small_ints | just(sentinel),
-    step=small_ints | just(sentinel),
+    start=islice_ints,
+    stop=islice_ints | just(sentinel),
+    step=islice_ints | just(sentinel),
 )
 def test_islice(
     cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
@@ -605,7 +609,7 @@ def test_prepend(cls: Type, data: DataObject, value: int) -> None:
     assert cast(y) == cast(prepend(value, x))
 
 
-@given(start=integers(), n=small_ints)
+@given(start=integers(), n=islice_ints)
 def test_tabulate(start: int, n: int) -> None:
     x = CIterable.tabulate(neg, start=start)
     assert isinstance(x, CIterable)
@@ -660,6 +664,71 @@ def test_quantify(cls: Type, data: DataObject) -> None:
     y = cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
     assert y == quantify(x, pred=is_even)
+
+
+@given(x=slists(integers()), n=islice_ints)
+def test_padnone(x: List[int], n: int) -> None:
+    y = CIterable(x).padnone()
+    assert isinstance(y, CIterable)
+    assert list(y[:n]) == list(islice(padnone(x), n))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=small_ints)
+def test_ncycles(cls: Type, data: DataObject, n: int) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).ncycles(n)
+    assert isinstance(y, cls)
+    assert cast(y) == cast(ncycles(x, n))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_dotproduct(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(cls, integers()))
+    y, _ = data.draw(siterables(cls, integers(), min_size=len(x), max_size=len(x)))
+    z = cls(x).dotproduct(y)
+    assert isinstance(z, int)
+    if cls in {CIterable, CList}:
+        assert z == dotproduct(x, y)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_flatten(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(nested_siterables(cls, integers()))
+    y = cls(x).flatten()
+    assert isinstance(y, cls)
+    assert cast(y) == cast(flatten(x))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=islice_ints)
+def test_repeatfunc(cls: Type, data: DataObject, n: int) -> None:
+    add1 = partial(add, 1)
+    if cls is CIterable:
+        times = data.draw(none() | small_ints)
+    else:
+        times = data.draw(small_ints)
+
+    y = cls.repeatfunc(add1, times, 0)
+    assert isinstance(y, cls)
+    _, cast = data.draw(siterables(cls, none()))
+    z = repeatfunc(add1, times, 0)
+    if (cls is CIterable) and (times is None):
+        assert cast(y[:n]) == cast(islice(z, n))
+    else:
+        assert cast(y) == cast(z)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data())
+def test_pairwise(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).pairwise()
+    assert isinstance(y, cls)
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(pairwise(x))
 
 
 # multiprocessing
