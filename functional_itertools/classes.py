@@ -30,7 +30,6 @@ from typing import FrozenSet
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -77,6 +76,7 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from functional_itertools.utilities import warn_non_functional
 
 
 T = TypeVar("T")
@@ -370,8 +370,9 @@ class CIterable(Iterable[T]):
         return CIterable(tail(n, self._iterable))
 
     def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
-        consume(self._iterable, n=n)
-        return self
+        iterator = iter(self)
+        consume(iterator, n=n)
+        return CIterable(iterator)
 
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self._iterable, n, default=default)
@@ -653,6 +654,14 @@ class CList(List[T]):
     ) -> CList[Tuple[U, CList[T]]]:
         return self.iter().groupby(key=key).map(lambda x: (x[0], CList(x[1]))).list()
 
+    def islice(
+        self: CList[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CList[T]:
+        return self.iter().islice(start, stop=stop, step=step).list()
+
     def starmap(self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CList[U]:
         return self.iter().starmap(func).list()
 
@@ -663,7 +672,7 @@ class CList(List[T]):
         return self.iter().tee(n=n).list().map(CList)
 
     def zip_longest(
-        self: CList[T], *iterables: List, fillvalue: Any = None,
+        self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CList[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
 
@@ -691,6 +700,9 @@ class CList(List[T]):
 
     def tail(self: CList[T], n: int) -> CList[T]:
         return self.iter().tail(n).list()
+
+    def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
+        return self.iter().consume(n=n).list()
 
     def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
@@ -893,19 +905,22 @@ class CSet(Set[T]):
 
     # set methods
 
-    def update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError("Use the 'union' method instead of 'update'")
+    def update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "update", "union")
+        super().update(*other)
 
-    def intersection_update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError("Use the 'intersection' method instead of 'intersection_update'")
+    def intersection_update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "intersection_update", "intersection")
+        super().intersection_update(*other)
 
-    def difference_update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError("Use the 'difference' method instead of 'difference_update'")
+    def difference_update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "difference_update", "difference")
+        super().difference_update(*other)
 
-    def symmetric_difference_update(self: CSet[T]) -> NoReturn:  # dead: disable
-        raise RuntimeError(
-            "Use the 'symmetric_difference' method instead of 'symmetric_difference_update'",
-        )
+    def symmetric_difference_update(self: CSet[T], other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "symmetric_difference_update", "symmetric_difference")
+        super().symmetric_difference_update(other)
+        return self
 
     def add(self: CSet[T], element: T) -> CSet[T]:
         super().add(element)
@@ -959,6 +974,14 @@ class CSet(Set[T]):
     ) -> CSet[Tuple[U, CFrozenSet[T]]]:
         return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).set()
 
+    def islice(
+        self: CSet[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).set()
+
     def starmap(self: CSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CSet[U]:
         return self.iter().starmap(func).set()
 
@@ -968,10 +991,47 @@ class CSet(Set[T]):
     def tee(self: CSet[T], n: int = 2) -> CSet[CFrozenSet[T]]:
         return self.iter().tee(n=n).set().map(CFrozenSet)
 
+    def zip_longest(
+        self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CSet[Tuple[Union[T, U, V]]]:
+        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).set()
+
+    def product(
+        self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CSet[Tuple[Union[T, U], ...]]:
+        return self.iter().product(*iterables, repeat=repeat).set()
+
+    def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[Tuple[T, ...]]:
+        return self.iter().permutations(r=r).set()
+
+    def combinations(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
+        return self.iter().combinations(r).set()
+
+    def combinations_with_replacement(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
+        return self.iter().combinations_with_replacement(r).set()
+
     # itertools - recipes
 
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
+
+    def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
+        return self.iter().prepend(value).set()
+
+    def tail(self: CSet[T], n: int) -> CSet[T]:
+        return self.iter().tail(n).set()
+
+    def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
+        return self.iter().consume(n=n).set()
+
+    def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
+    def all_equal(self: CSet[Any]) -> bool:
+        return self.iter().all_equal()
+
+    def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
+        return self.iter().quantify(pred=pred)
 
     # multiprocessing
 
@@ -1132,6 +1192,14 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[Tuple[U, CFrozenSet[T]]]:
         return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).frozenset()
 
+    def islice(
+        self: CFrozenSet[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CFrozenSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).frozenset()
+
     def starmap(
         self: CFrozenSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
     ) -> CFrozenSet[U]:
@@ -1143,10 +1211,47 @@ class CFrozenSet(FrozenSet[T]):
     def tee(self: CFrozenSet[T], n: int = 2) -> CFrozenSet[CFrozenSet[T]]:
         return self.iter().tee(n=n).frozenset().map(CFrozenSet)
 
+    def zip_longest(
+        self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CFrozenSet[Tuple[Union[T, U, V]]]:
+        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
+
+    def product(
+        self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CFrozenSet[Tuple[Union[T, U], ...]]:
+        return self.iter().product(*iterables, repeat=repeat).frozenset()
+
+    def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().permutations(r=r).frozenset()
+
+    def combinations(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().combinations(r).frozenset()
+
+    def combinations_with_replacement(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().combinations_with_replacement(r).frozenset()
+
     # itertools - recipes
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().take(n).frozenset()
+
+    def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
+        return self.iter().prepend(value).frozenset()
+
+    def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
+        return self.iter().tail(n).frozenset()
+
+    def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
+        return self.iter().consume(n=n).frozenset()
+
+    def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
+    def all_equal(self: CFrozenSet[Any]) -> bool:
+        return self.iter().all_equal()
+
+    def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
+        return self.iter().quantify(pred=pred)
 
     # multiprocessing
 

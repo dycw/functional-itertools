@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
+from operator import neg
 from typing import Dict
 from typing import Tuple
 
@@ -15,27 +15,24 @@ from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
-from tests.test_utilities import int_and_int_to_bool_funcs
-from tests.test_utilities import int_and_int_to_int_and_int_funcs
-from tests.test_utilities import int_to_bool_funcs
-from tests.test_utilities import int_to_int_funcs
+from tests.test_utilities import is_even
 
 
-@given(x=infer)
-def test_keys(x: Dict[str, int]) -> None:
+@given(x=dictionaries(integers(), integers()))
+def test_keys(x: Dict[int, int]) -> None:
     y = CDict(x).keys()
     assert isinstance(y, CIterable)
     assert list(y) == list(x.keys())
 
 
-@given(x=infer)
-def test_values(x: Dict[str, int]) -> None:
+@given(x=dictionaries(integers(), integers()))
+def test_values(x: Dict[int, int]) -> None:
     y = CDict(x).values()
     assert isinstance(y, CIterable)
     assert list(y) == list(x.values())
 
 
-@given(x=infer)
+@given(x=dictionaries(integers(), integers()))
 def test_items(x: Dict[str, int]) -> None:
     y = CDict(x).items()
     assert isinstance(y, CIterable)
@@ -59,8 +56,8 @@ def test_all_values(x: Dict[int, bool]) -> None:
     assert y == all(x.values())
 
 
-@given(x=dictionaries(integers(), booleans()))
-def test_all_items(x: Dict[int, int]) -> None:
+@given(x=dictionaries(booleans(), booleans()))
+def test_all_items(x: Dict[bool, bool]) -> None:
     y = CDict(x).all_items()
     assert isinstance(y, bool)
     assert y == all(x.items())
@@ -74,35 +71,38 @@ def test_any_keys(x: Dict[bool, int]) -> None:
 
 
 @given(x=dictionaries(integers(), booleans()))
-def test_any_values(x: Dict[bool, bool]) -> None:
+def test_any_values(x: Dict[int, bool]) -> None:
     y = CDict(x).any_values()
     assert isinstance(y, bool)
     assert y == any(x.values())
 
 
-@given(x=dictionaries(integers(), booleans()))
-def test_any_items(x: Dict[int, bool]) -> None:
+@given(x=dictionaries(booleans(), booleans()))
+def test_any_items(x: Dict[bool, bool]) -> None:
     y = CDict(x).any_items()
     assert isinstance(y, bool)
     assert y == any(x.items())
 
 
-@given(x=dictionaries(integers(), integers()), func=int_to_bool_funcs)
-def test_filter_keys(x: Dict[int, int], func: Callable[[int], bool]) -> None:
-    y = CDict(x).filter_keys(func)
+@given(x=dictionaries(integers(), integers()))
+def test_filter_keys(x: Dict[int, int]) -> None:
+    y = CDict(x).filter_keys(is_even)
     assert isinstance(y, CDict)
-    assert y == {k: v for k, v in x.items() if func(k)}
+    assert y == {k: v for k, v in x.items() if is_even(k)}
 
 
-@given(x=dictionaries(integers(), integers()), func=int_to_bool_funcs)
-def test_filter_values(x: Dict[int, int], func: Callable[[int], bool]) -> None:
-    y = CDict(x).filter_values(func)
+@given(x=dictionaries(integers(), integers()))
+def test_filter_values(x: Dict[int, int]) -> None:
+    y = CDict(x).filter_values(is_even)
     assert isinstance(y, CDict)
-    assert y == {k: v for k, v in x.items() if func(v)}
+    assert y == {k: v for k, v in x.items() if is_even(v)}
 
 
-@given(x=dictionaries(integers(), integers()), func=int_and_int_to_bool_funcs)
-def test_filter_items(x: Dict[int, int], func: Callable[[int, int], bool]) -> None:
+@given(x=dictionaries(integers(), integers()))
+def test_filter_items(x: Dict[int, int]) -> None:
+    def func(key: int, value: int) -> bool:
+        return is_even(key) and is_even(value)
+
     y = CDict(x).filter_items(func)
     assert isinstance(y, CDict)
     assert y == {k: v for k, v in x.items() if func(k, v)}
@@ -150,24 +150,25 @@ def test_list_items(x: Dict[int, int]) -> None:
     assert y == list(x.items())
 
 
-@given(x=dictionaries(integers(), integers()), func=int_to_int_funcs)
-def test_map_keys(x: Dict[int, int], func: Callable[[int], int]) -> None:
-    y = CDict(x).map_keys(func)
+@given(x=dictionaries(integers(), integers()))
+def test_map_keys(x: Dict[int, int]) -> None:
+    y = CDict(x).map_keys(neg)
     assert isinstance(y, CDict)
-    assert y == {func(k): v for k, v in x.items()}
+    assert y == {neg(k): v for k, v in x.items()}
 
 
-@given(x=dictionaries(integers(), integers()), func=int_to_int_funcs)
-def test_map_values(x: Dict[int, int], func: Callable[[int], int]) -> None:
-    y = CDict(x).map_values(func)
+@given(x=dictionaries(integers(), integers()))
+def test_map_values(x: Dict[int, int]) -> None:
+    y = CDict(x).map_values(neg)
     assert isinstance(y, CDict)
-    assert y == {k: func(v) for k, v in x.items()}
+    assert y == {k: neg(v) for k, v in x.items()}
 
 
-@given(
-    x=dictionaries(integers(), integers()), func=int_and_int_to_int_and_int_funcs,
-)
-def test_map_items(x: Dict[int, int], func: Callable[[int, int], Tuple[int, int]]) -> None:
+@given(x=dictionaries(integers(), integers()))
+def test_map_items(x: Dict[int, int]) -> None:
+    def func(key: int, value: int) -> Tuple[int, int]:
+        return value, key
+
     y = CDict(x).map_items(func)
     assert isinstance(y, CDict)
     assert y == dict(func(k, v) for k, v in x.items())
