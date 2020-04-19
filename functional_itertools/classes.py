@@ -663,7 +663,7 @@ class CList(List[T]):
         return self.iter().tee(n=n).list().map(CList)
 
     def zip_longest(
-        self: CList[T], *iterables: List, fillvalue: Any = None,
+        self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CList[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
 
@@ -968,10 +968,18 @@ class CSet(Set[T]):
     def tee(self: CSet[T], n: int = 2) -> CSet[CFrozenSet[T]]:
         return self.iter().tee(n=n).set().map(CFrozenSet)
 
+    def zip_longest(
+        self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CSet[Tuple[Union[T, U, V]]]:
+        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).set()
+
     # itertools - recipes
 
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
+
+    def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
+        return self.iter().prepend(value).set()
 
     # multiprocessing
 
@@ -1143,10 +1151,18 @@ class CFrozenSet(FrozenSet[T]):
     def tee(self: CFrozenSet[T], n: int = 2) -> CFrozenSet[CFrozenSet[T]]:
         return self.iter().tee(n=n).frozenset().map(CFrozenSet)
 
+    def zip_longest(
+        self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CFrozenSet[Tuple[Union[T, U, V]]]:
+        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
+
     # itertools - recipes
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().take(n).frozenset()
+
+    def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
+        return self.iter().prepend(value).frozenset()
 
     # multiprocessing
 

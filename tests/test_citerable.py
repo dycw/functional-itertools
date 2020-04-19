@@ -19,7 +19,9 @@ from itertools import starmap
 from itertools import takewhile
 from itertools import tee
 from itertools import zip_longest
+from operator import add
 from operator import neg
+from operator import or_
 from pathlib import Path
 from re import escape
 from string import ascii_lowercase
@@ -337,12 +339,22 @@ def test_reduce(cls: Type, data: DataObject, initial: Union[int, Sentinel]) -> N
 
 
 @given(x=tuples(integers(), integers()))
-def test_reduce_propagating_type_error(x: Tuple[int, int]) -> None:
-    def func(*args: Any) -> NoReturn:
+def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
+    def func(x: Any, y: Any) -> NoReturn:
         raise TypeError("Always fail")
 
     with raises(TypeError, match="Always fail"):
         CIterable(x).reduce(func)
+
+
+@mark.parametrize(
+    "cls, func, expected", [(list, add, CList), (set, or_, CSet), (frozenset, or_, CFrozenSet)],
+)
+@given(xs=lists(lists(integers(), max_size=1000), min_size=1, max_size=10))
+def test_reduce_returning_c_classes(
+    xs: List[List[int]], cls: Type, func: Callable[[Any, Any], Any], expected: Type,
+) -> None:
+    assert isinstance(CIterable(xs).map(cls).reduce(func), expected)
 
 
 # itertools
@@ -515,18 +527,21 @@ def test_tee(cls: Type, data: DataObject, n: int) -> None:
         assert cast(y_i) == cast(z_i)
 
 
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
-    x=lists(integers()),
-    iterables=lists(lists(integers())),
+    data=data(),
+    xs=lists(lists(integers(), max_size=1000), max_size=10),
     fillvalue=none() | integers(),
     n=small_ints,
 )
 def test_zip_longest(
-    x: List[int], iterables: List[List[int]], fillvalue: Optional[int], n: int,
+    cls: Type, data: DataObject, xs: List[List[int]], fillvalue: Optional[int], n: int,
 ) -> None:
-    y = CIterable(x).zip_longest(*iterables, fillvalue=fillvalue)
-    assert isinstance(y, CIterable)
-    assert list(y[:n]) == list(islice(zip_longest(x, *iterables, fillvalue=fillvalue), n))
+    x, cast = data.draw(lists_or_sets(cls, integers()))
+    y = cls(x).zip_longest(*xs, fillvalue=fillvalue)
+    assert isinstance(y, cls)
+    if cls in {CIterable, CList}:
+        assert list(y[:n]) == list(islice(zip_longest(x, *xs, fillvalue=fillvalue), n))
 
 
 @given(
@@ -574,11 +589,14 @@ def test_take(cls: Type, data: DataObject, n: int) -> None:
         assert cast(y) == cast(take(n, x))
 
 
-@given(x=lists(integers()), value=integers())
-def test_prepend(x: List[int], value: int) -> None:
-    y = CIterable(x).prepend(value)
-    assert isinstance(y, CIterable)
-    assert list(y) == list(prepend(value, x))
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), value=integers())
+def test_prepend(cls: Type, data: DataObject, value: int) -> None:
+    x, cast = data.draw(lists_or_sets(cls, integers()))
+    y = cls(x).prepend(value)
+    assert isinstance(y, cls)
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(prepend(value, x))
 
 
 @given(start=integers(), n=small_ints)
