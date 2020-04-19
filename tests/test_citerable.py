@@ -54,9 +54,9 @@ from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
 from hypothesis.strategies import tuples
-from more_itertools import tail
 from more_itertools.recipes import prepend
 from more_itertools.recipes import tabulate
+from more_itertools.recipes import tail
 from more_itertools.recipes import take
 from pytest import mark
 from pytest import param
@@ -174,8 +174,7 @@ def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).enumerate(start=start)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == list(enumerate(x, start=start))
+    assert cast(y) == cast(enumerate(x, start=start))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -315,8 +314,7 @@ def test_zip(cls: Type, data: DataObject) -> None:
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).zip(*xs)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert list(y) == list(zip(x, *xs))
+    assert cast(y) == cast(zip(x, *xs))
 
 
 # functools
@@ -409,8 +407,7 @@ def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> Non
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).accumulate(max, **initial)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(accumulate(x, max, **initial))
+    assert cast(y) == cast(accumulate(x, max, **initial))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -430,8 +427,7 @@ def test_compress(cls: Type, data: DataObject) -> None:
     selectors = data.draw(lists(booleans(), min_size=len(x), max_size=len(x)))
     y = cls(x).compress(selectors)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(compress(x, selectors))
+    assert cast(y) == cast(compress(x, selectors))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -440,8 +436,7 @@ def test_dropwhile(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).dropwhile(is_even)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(dropwhile(is_even, x))
+    assert cast(y) == cast(dropwhile(is_even, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -450,8 +445,7 @@ def test_filterfalse(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).filterfalse(is_even)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(filterfalse(is_even, x))
+    assert cast(y) == cast(filterfalse(is_even, x))
 
 
 @mark.parametrize(
@@ -491,8 +485,7 @@ def test_islice(
     args, _ = drop_sentinel(stop, step)
     y = cls(x).islice(start, *args)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert list(y) == list(islice(x, start, *args))
+    assert cast(y) == cast(islice(x, start, *args))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -510,8 +503,7 @@ def test_takewhile(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).takewhile(is_even)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(takewhile(is_even, x))
+    assert cast(y) == cast(takewhile(is_even, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -539,8 +531,7 @@ def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> N
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).zip_longest(*xs, fillvalue=fillvalue)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert list(y) == list(zip_longest(x, *xs, fillvalue=fillvalue))
+    assert cast(y) == cast(zip_longest(x, *xs, fillvalue=fillvalue))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -589,8 +580,7 @@ def test_take(cls: Type, data: DataObject, n: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).take(n)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(take(n, x))
+    assert cast(y) == cast(take(n, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -599,8 +589,7 @@ def test_prepend(cls: Type, data: DataObject, value: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).prepend(value)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
-        assert cast(y) == cast(prepend(value, x))
+    assert cast(y) == cast(prepend(value, x))
 
 
 @given(start=integers(), n=small_ints)
