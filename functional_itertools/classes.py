@@ -370,8 +370,9 @@ class CIterable(Iterable[T]):
         return CIterable(tail(n, self._iterable))
 
     def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
-        consume(self._iterable, n=n)
-        return self
+        iterator = iter(self)
+        consume(iterator, n=n)
+        return CIterable(iterator)
 
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self._iterable, n, default=default)
@@ -700,6 +701,9 @@ class CList(List[T]):
     def tail(self: CList[T], n: int) -> CList[T]:
         return self.iter().tail(n).list()
 
+    def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
+        return self.iter().consume(n=n).list()
+
     def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
@@ -1017,6 +1021,9 @@ class CSet(Set[T]):
     def tail(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().tail(n).set()
 
+    def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
+        return self.iter().consume(n=n).set()
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1224,6 +1231,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().tail(n).frozenset()
+
+    def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
+        return self.iter().consume(n=n).frozenset()
 
     # multiprocessing
 

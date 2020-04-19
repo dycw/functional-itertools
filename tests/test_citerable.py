@@ -54,6 +54,7 @@ from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
 from hypothesis.strategies import tuples
+from more_itertools.recipes import consume
 from more_itertools.recipes import prepend
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import tail
@@ -174,7 +175,8 @@ def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).enumerate(start=start)
     assert isinstance(y, cls)
-    assert cast(y) == cast(enumerate(x, start=start))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(enumerate(x, start=start))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -485,7 +487,8 @@ def test_islice(
     args, _ = drop_sentinel(stop, step)
     y = cls(x).islice(start, *args)
     assert isinstance(y, cls)
-    assert cast(y) == cast(islice(x, start, *args))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(islice(x, start, *args))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -606,6 +609,17 @@ def test_tail(cls: Type, data: DataObject, n: int) -> None:
     y = cls(x).tail(n)
     assert isinstance(y, cls)
     assert cast(y) == cast(tail(n, x))
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=none() | small_ints)
+def test_consume(cls: Type, data: DataObject, n: Optional[int]) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).consume(n=n)
+    assert isinstance(y, cls)
+    iter_x = iter(x)
+    consume(iter_x, n=n)
+    assert cast(y) == cast(iter_x)
 
 
 # multiprocessing
