@@ -41,7 +41,6 @@ from typing import Union
 from hypothesis import assume
 from hypothesis import example
 from hypothesis import given
-from hypothesis import settings
 from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
@@ -668,7 +667,6 @@ def test_quantify(cls: Type, data: DataObject) -> None:
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
-@settings(deadline=None)
 def test_pmap(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).pmap(neg, processes=1)
@@ -678,7 +676,6 @@ def test_pmap(cls: Type, data: DataObject) -> None:
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
-@settings(deadline=None)
 def test_pmap_nested(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(nested_siterables(cls, integers(), min_size=1))
     y = cls(x).pmap(_pmap_neg, processes=1)
@@ -692,7 +689,6 @@ def _pmap_neg(x: Iterable[int]) -> int:
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
-@settings(deadline=None)
 def test_pstarmap(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
     y = cls(x).pstarmap(max, processes=1)
