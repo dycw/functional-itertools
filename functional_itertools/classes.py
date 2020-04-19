@@ -1024,6 +1024,9 @@ class CSet(Set[T]):
     def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
         return self.iter().consume(n=n).set()
 
+    def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1234,6 +1237,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
         return self.iter().consume(n=n).frozenset()
+
+    def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
 
     # multiprocessing
 

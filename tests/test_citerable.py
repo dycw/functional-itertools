@@ -55,6 +55,7 @@ from hypothesis.strategies import none
 from hypothesis.strategies import text
 from hypothesis.strategies import tuples
 from more_itertools.recipes import consume
+from more_itertools.recipes import nth
 from more_itertools.recipes import prepend
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import tail
@@ -407,9 +408,10 @@ def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
 )
 def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
-    y = cls(x).accumulate(max, **initial)
+    y = cls(x).accumulate(add, **initial)
     assert isinstance(y, cls)
-    assert cast(y) == cast(accumulate(x, max, **initial))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(accumulate(x, add, **initial))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -429,7 +431,8 @@ def test_compress(cls: Type, data: DataObject) -> None:
     selectors = data.draw(lists(booleans(), min_size=len(x), max_size=len(x)))
     y = cls(x).compress(selectors)
     assert isinstance(y, cls)
-    assert cast(y) == cast(compress(x, selectors))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(compress(x, selectors))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -438,7 +441,8 @@ def test_dropwhile(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).dropwhile(is_even)
     assert isinstance(y, cls)
-    assert cast(y) == cast(dropwhile(is_even, x))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(dropwhile(is_even, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -506,7 +510,8 @@ def test_takewhile(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).takewhile(is_even)
     assert isinstance(y, cls)
-    assert cast(y) == cast(takewhile(is_even, x))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(takewhile(is_even, x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -571,7 +576,8 @@ def test_combinations_with_replacement(cls: Type, data: DataObject, r: int) -> N
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).combinations_with_replacement(r)
     assert isinstance(y, cls)
-    assert cast(y) == cast(combinations_with_replacement(x, r))
+    if cls in {CIterable, CList}:
+        assert cast(y) == cast(combinations_with_replacement(x, r))
 
 
 # itertools-recipes
@@ -620,6 +626,16 @@ def test_consume(cls: Type, data: DataObject, n: Optional[int]) -> None:
     iter_x = iter(x)
     consume(iter_x, n=n)
     assert cast(y) == cast(iter_x)
+
+
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@given(data=data(), n=small_ints, default=none() | small_ints)
+def test_nth(cls: Type, data: DataObject, n: int, default: Optional[int]) -> None:
+    x, _ = data.draw(siterables(cls, integers()))
+    y = cls(x).nth(n, default=default)
+    assert isinstance(y, int) or (y is None)
+    if cls in {CIterable, CList, CFrozenSet}:
+        assert y == nth(x, n, default=default)
 
 
 # multiprocessing
