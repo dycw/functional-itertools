@@ -525,6 +525,9 @@ class CIterable(Iterable[T]):
         new_args = chain(islice(args, index), [self._iterable], islice(args, index, None))
         return CIterable(func(*new_args, **kwargs))
 
+    def unzip(self: CIterable[Tuple[T, ...]]) -> Tuple[CIterable[T], ...]:
+        return CIterable(zip(*self)).map(CIterable).tuple()
+
 
 class CList(List[T]):
     """A list with chainable methods."""
@@ -809,6 +812,9 @@ class CList(List[T]):
         self: CList[T], func: Callable[..., Iterable[U]], *args: Any, index: int = 0, **kwargs: Any,
     ) -> CList[U]:
         return self.iter().pipe(func, *args, index=index, **kwargs).list()
+
+    def unzip(self: CList[Tuple[T, ...]]) -> Tuple[CList[T], ...]:
+        return CList(self.iter().unzip()).map(CList)
 
 
 class CSet(Set[T]):
