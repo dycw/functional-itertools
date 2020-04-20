@@ -824,3 +824,13 @@ def test_pipe(x: List[int]) -> None:
     y = CIterable(x).pipe(permutations, r=2)
     assert isinstance(y, CIterable)
     assert list(y) == list(permutations(x, r=2))
+
+
+@mark.parametrize("cls", [CIterable, CList])
+@given(x=lists(integers(), min_size=1))
+def test_unzip(cls: Type, x: List[int]) -> None:
+    indices, ints = cls(x).enumerate().unzip()
+    assert isinstance(indices, cls)
+    assert list(indices) == list(range(len(x)))
+    assert isinstance(ints, cls)
+    assert list(ints) == x
