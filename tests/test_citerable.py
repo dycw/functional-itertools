@@ -263,23 +263,19 @@ def test_max_and_min(
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(
-    data=data(),
-    start=islice_ints,
-    stop=islice_ints | just(sentinel),
-    step=islice_ints | just(sentinel),
+    data=data(), start=islice_ints, stop=none() | islice_ints, step=none() | islice_ints,
 )
 def test_range(
-    cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
+    cls: Type, data: DataObject, start: int, stop: Optional[int], step: Optional[int],
 ) -> None:
-    if step is sentinel:
-        assume(stop is not sentinel)
-    else:
-        assume(step != 0)
-    args, _ = drop_sentinel(stop, step)
-    x = cls.range(start, *args)
+    if step is not None:
+        assume((stop is not None) and (step != 0))
+    x = cls.range(start, stop, step)
     assert isinstance(x, cls)
     _, cast = data.draw(siterables(cls, none()))
-    assert cast(x) == cast(range(start, *args))
+    assert cast(x) == cast(
+        range(start, *(() if stop is None else (stop,)), *(() if step is None else (step,))),
+    )
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
