@@ -222,15 +222,30 @@ class CIterable(Iterable[T]):
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
-        cls: Type[CIterable],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
+        cls: Type[CIterable], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CIterable[int]:
-        args, _ = drop_sentinel(stop, step)
-        return cls(range(start, *args))
+        """
+        >>> CIterable.range(5).list()
+        [0, 1, 2, 3, 4]
+        >>> CIterable.range(1, 5).list()
+        [1, 2, 3, 4]
+        >>> CIterable.range(1, 5, 2).list()
+        [1, 3]
+        """
+        if (stop is None) and (step is not None):
+            raise ValueError("'stop' cannot be None if 'step' is provided")
+        else:
+            return cls(
+                range(
+                    start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
+                ),
+            )
 
     def set(self: CIterable[T]) -> CSet[T]:  # noqa: A003
+        """
+        >>> CIterable([1, 2, 2, 3]).set()
+        CSet({1, 2, 3})
+        """
         return CSet(self._iterable)
 
     def sorted(  # noqa: A003
@@ -589,11 +604,16 @@ class CList(List[T]):
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
-        cls: Type[CList],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
+        cls: Type[CList], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CList[int]:
+        """
+        >>> CList.range(5)
+        [0, 1, 2, 3, 4]
+        >>> CList.range(1, 5)
+        [1, 2, 3, 4]
+        >>> CList.range(1, 5, 2)
+        [1, 3]
+        """
         return cls(CIterable.range(start, stop=stop, step=step))
 
     def reversed(self: CList[T]) -> CList[T]:  # noqa: A003
@@ -867,11 +887,16 @@ class CSet(Set[T]):
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
-        cls: Type[CSet],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
+        cls: Type[CSet], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CSet[int]:
+        """
+        >>> CSet.range(5)
+        CSet({0, 1, 2, 3, 4})
+        >>> CSet.range(1, 5)
+        CSet({1, 2, 3, 4})
+        >>> CSet.range(1, 5, 2)
+        CSet({1, 3})
+        """
         return cls(CIterable.range(start, stop=stop, step=step))
 
     def set(self: CSet[T]) -> CSet[T]:  # noqa: A003
@@ -1140,11 +1165,16 @@ class CFrozenSet(FrozenSet[T]):
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
-        cls: Type[CFrozenSet],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
+        cls: Type[CFrozenSet], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CFrozenSet[int]:
+        """
+        >>> CFrozenSet.range(5)
+        CFrozenSet({0, 1, 2, 3, 4})
+        >>> CFrozenSet.range(1, 5)
+        CFrozenSet({1, 2, 3, 4})
+        >>> CFrozenSet.range(1, 5, 2)
+        CFrozenSet({1, 3})
+        """
         return cls(CIterable.range(start, stop=stop, step=step))
 
     def set(self: CFrozenSet[T]) -> CSet[T]:  # noqa: A003
