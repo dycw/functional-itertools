@@ -2,15 +2,28 @@ from __future__ import annotations
 
 from itertools import accumulate
 from itertools import chain
+from itertools import combinations
+from itertools import combinations_with_replacement
 from itertools import compress
 from itertools import count
 from itertools import cycle
+from itertools import dropwhile
+from itertools import filterfalse
+from itertools import groupby
+from itertools import islice
+from itertools import permutations
+from itertools import product
 from itertools import repeat
+from itertools import starmap
+from itertools import takewhile
+from itertools import tee
+from itertools import zip_longest
 from operator import add
 from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import Optional
+from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -114,3 +127,69 @@ class CompressMethodBuilder(MethodBuilder):
         return method
 
     _doc = "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F"
+
+
+class DropwhileMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
+            return type(self)(dropwhile(func, self))
+
+        return method
+
+    _doc = "dropwhile(lambda x: x<5, [1,4,6,4,1]) --> 6 4 1"
+
+
+class FilterFalseMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
+            return type(self)(filterfalse(func, self))
+
+        return method
+
+    _doc = "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8"
+
+
+if 0:
+
+    def groupby(
+        self: CList[T], key: Optional[Callable[[T], U]] = None,
+    ) -> CList[Tuple[U, CList[T]]]:
+        return self.iter().groupby(key=key).map(lambda x: (x[0], CList(x[1]))).list()
+
+    def islice(
+        self: CList[T],
+        start: int,
+        stop: Union[int, Sentinel] = sentinel,
+        step: Union[int, Sentinel] = sentinel,
+    ) -> CList[T]:
+        return self.iter().islice(start, stop=stop, step=step).list()
+
+    def starmap(self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CList[U]:
+        return self.iter().starmap(func).list()
+
+    def takewhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
+        return self.iter().takewhile(func).list()
+
+    def tee(self: CList[T], n: int = 2) -> CList[CList[T]]:
+        return self.iter().tee(n=n).list().map(CList)
+
+    def zip_longest(
+        self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CList[Tuple[Union[T, U, V]]]:
+        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
+
+    def product(
+        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CList[Tuple[Union[T, U], ...]]:
+        return self.iter().product(*iterables, repeat=repeat).list()
+
+    def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
+        return self.iter().permutations(r=r).list()
+
+    def combinations(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
+        return self.iter().combinations(r).list()
+
+    def combinations_with_replacement(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
+        return self.iter().combinations_with_replacement(r).list()

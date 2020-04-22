@@ -4,8 +4,6 @@ from functools import reduce
 from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
-from itertools import dropwhile
-from itertools import filterfalse
 from itertools import groupby
 from itertools import islice
 from itertools import permutations
@@ -79,6 +77,8 @@ from functional_itertools.methods.itertools import ChainMethodBuilder
 from functional_itertools.methods.itertools import CompressMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
+from functional_itertools.methods.itertools import DropwhileMethodBuilder
+from functional_itertools.methods.itertools import FilterFalseMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
 from functional_itertools.methods.more_itertools import ChunkedMethodBuilder
 from functional_itertools.methods.more_itertools import DistributeMethodBuilder
@@ -93,6 +93,9 @@ T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
+
+
+# built-ins
 
 
 class DictMethodBuilder(MethodBuilder):
@@ -172,6 +175,31 @@ class TupleMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CTuple from the {0}."
+
+
+# itertools
+
+
+class GroupByMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[T], key: Optional[Callable[[T], U]] = None,
+        ) -> Template[CTuple[U, Template[T]]]:
+            cls = type(self)
+            return cls((CTuple((k, cls(v))) for k, v in groupby(self, key=key)))
+
+        return method
+
+    _doc = "\n".join(
+        [
+            "[k for k, g in groupby('AAAABBBCCDAABBB')] --> A B C D A B",
+            "[list(g) for k, g in groupby('AAAABBBCCD')] --> AAAA BBB CC D",
+        ],
+    )
+
+
+# classes
 
 
 class CIterable(Iterable[T]):
@@ -268,21 +296,9 @@ class CIterable(Iterable[T]):
     accumulate = AccumulateMethodBuilder("CIterable")
     chain = ChainMethodBuilder("CIterable")
     compress = CompressMethodBuilder("CIterable")
-
-    def dropwhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
-        return CIterable(dropwhile(func, self._iterable))
-
-    def filterfalse(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
-        return CIterable(filterfalse(func, self._iterable))
-
-    def groupby(
-        self: CIterable[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CIterable[Tuple[U, CIterable[T]]]:
-        def inner(x: Tuple[U, Iterator[T]]) -> Tuple[U, CIterable[T]]:
-            key, group = x
-            return key, CIterable(group)
-
-        return CIterable(groupby(self._iterable, key=key)).map(inner)
+    dropwhile = DropwhileMethodBuilder("CIterable")
+    filterfalse = FilterFalseMethodBuilder("CIterable")
+    groupby = GroupByMethodBuilder("CIterable")
 
     def islice(
         self: CIterable[T],
@@ -563,17 +579,9 @@ class CList(List[T]):
     accumulate = AccumulateMethodBuilder("CList")
     chain = ChainMethodBuilder("CList")
     compress = CompressMethodBuilder("CList")
-
-    def dropwhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
-        return self.iter().dropwhile(func).list()
-
-    def filterfalse(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
-        return self.iter().filterfalse(func).list()
-
-    def groupby(
-        self: CList[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CList[Tuple[U, CList[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CList(x[1]))).list()
+    dropwhile = DropwhileMethodBuilder("CList")
+    filterfalse = FilterFalseMethodBuilder("CList")
+    groupby = GroupByMethodBuilder("CList")
 
     def islice(
         self: CList[T],
@@ -774,6 +782,9 @@ class CTuple(Tuple[T]):
     accumulate = AccumulateMethodBuilder("CTuple")
     chain = ChainMethodBuilder("CTuple")
     compress = CompressMethodBuilder("CTuple")
+    dropwhile = DropwhileMethodBuilder("CTuple")
+    filterfalse = FilterFalseMethodBuilder("CTuple")
+    groupby = GroupByMethodBuilder("CTuple")
 
     # more-itertools
 
@@ -875,17 +886,8 @@ class CSet(Set[T]):
     accumulate = AccumulateMethodBuilder("CSet")
     chain = ChainMethodBuilder("CSet")
     compress = CompressMethodBuilder("CSet")
-
-    def dropwhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
-        return self.iter().dropwhile(func).set()
-
-    def filterfalse(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
-        return self.iter().filterfalse(func).set()
-
-    def groupby(
-        self: CSet[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CSet[Tuple[U, CFrozenSet[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).set()
+    dropwhile = DropwhileMethodBuilder("CSet")
+    filterfalse = FilterFalseMethodBuilder("CSet")
 
     def islice(
         self: CSet[T],
@@ -1048,17 +1050,8 @@ class CFrozenSet(FrozenSet[T]):
     accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
     chain = ChainMethodBuilder("CFrozenSet")
     compress = CompressMethodBuilder("CFrozenSet")
-
-    def dropwhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
-        return self.iter().dropwhile(func).frozenset()
-
-    def filterfalse(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
-        return self.iter().filterfalse(func).frozenset()
-
-    def groupby(
-        self: CFrozenSet[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CFrozenSet[Tuple[U, CFrozenSet[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).frozenset()
+    dropwhile = DropwhileMethodBuilder("CFrozenSet")
+    filterfalse = FilterFalseMethodBuilder("CFrozenSet")
 
     def islice(
         self: CFrozenSet[T],
