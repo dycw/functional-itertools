@@ -44,7 +44,7 @@ class RepeatMethodBuilder(MethodBuilder):
         if allow_infinite:
 
             def method(cls: Type[Template[T]], x: T, times: Optional[int] = None) -> Template[T]:
-                return cls(repeat(x, times=times))
+                return cls(repeat(x, **({} if times is None else {"times": times})))
 
         else:
 

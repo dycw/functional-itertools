@@ -67,12 +67,12 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from tests.strategies import CLASSES
 from tests.strategies import islice_ints
 from tests.strategies import nested_siterables
 from tests.strategies import siterables
 from tests.strategies import slists
 from tests.strategies import small_ints
-from tests.test_citerable import CLASSES
 from tests.test_utilities import is_even
 
 
