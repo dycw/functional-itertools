@@ -35,14 +35,22 @@ T = TypeVar("T")
 class Case:
     cls: Type
     cast: Type
+    ordered: bool
 
 
 CASES = [
-    Case(CIterable, list),
-    Case(CList, list),
-    Case(CTuple, tuple),
-    Case(CSet, set),
-    Case(CFrozenSet, frozenset),
+    Case(cls=CIterable, cast=list, ordered=True),
+    Case(cls=CList, cast=list, ordered=True),
+    Case(cls=CTuple, cast=tuple, ordered=True),
+    Case(cls=CSet, cast=set, ordered=False),
+    Case(cls=CFrozenSet, cast=frozenset, ordered=False),
+]
+CLASSES = [
+    CIterable,
+    CList,
+    CTuple,
+    CSet,
+    CFrozenSet,
 ]
 
 

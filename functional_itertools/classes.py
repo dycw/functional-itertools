@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 from functools import reduce
 from itertools import accumulate
 from itertools import chain
@@ -23,6 +24,7 @@ from multiprocessing import Pool
 from operator import add
 from pathlib import Path
 from sys import maxsize
+from types import FunctionType
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -38,6 +40,7 @@ from typing import TypeVar
 from typing import Union
 from warnings import warn
 
+import more_itertools
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -72,9 +75,6 @@ from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods.base import MethodBuilder
 from functional_itertools.methods.base import Template
-from functional_itertools.methods.more_itertools import ChunkedMethodBuilder
-from functional_itertools.methods.more_itertools import DistributeMethodBuilder
-from functional_itertools.methods.more_itertools import DivideMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -87,31 +87,49 @@ T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
+_CIterable = "CIterable"
+_CList = "CList"
+_CTuple = "CTuple"
+_CSet = "CSet"
+_CFrozenSet = "CFrozenSet"
 
 
 # built-ins
 
 
-class AllMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[AllMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T]) -> bool:
-            return all(self)
+def defines_method_factory(doc: str) -> Callable[[str], FunctionType]:
+    def decorator(factory):
+        def wrapped(name: str) -> FunctionType:
+            method = factory(name)
+            method.__annotations__ = {
+                k: v.strip("'").format(name=name) for k, v in method.__annotations__.items()
+            }
+            method.__doc__ = doc.format(name=name)
+            return method
 
-        return method
+        return wrapped
 
-    _doc = "Return `True` if all elements of the {0} are true (or if the {0} is empty)."
+    return decorator
 
 
-class AnyMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[AnyMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T]) -> bool:
-            return any(self)
+@defines_method_factory(
+    "Return `True` if all elements of the {name} are true (or if the {name} is empty)."
+)
+def _build_all(name: str) -> Callable[..., Any]:
+    def all(self: "{name}[T]") -> bool:  # noqa: A003
+        return builtins.all(self)
 
-        return method
+    return all
 
-    _doc = "Return `True` if any element of {0} is true. If the {0} is empty, return `False`."
+
+@defines_method_factory(
+    "Return `True` if all elements of the {name} are true (or if the {name} is empty)."
+)
+def _build_any(name: str) -> Callable[..., bool]:
+    def any(self: "{name}[T]") -> bool:  # noqa: A003
+        return builtins.any(self)
+
+    return any
 
 
 class DictMethodBuilder(MethodBuilder):
@@ -598,6 +616,42 @@ class ZipLongestMethodBuilder(MethodBuilder):
     _doc = "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-"
 
 
+# more-itertools
+
+
+def _build_chunked(name: str) -> Callable[..., Any]:
+    is_citerable = name == _CIterable
+    ann = _CIterable if is_citerable else _CList
+
+    def chunked(self: f"{name}[T]", n: int) -> f"{ann}[{ann}[T]]":
+        cls = CIterable if is_citerable else CList
+        return cls(map(cls, more_itertools.chunked(self, n)))
+
+    return chunked
+
+
+def _build_distribute(name: str) -> Callable[..., Any]:
+    is_citerable = name == _CIterable
+    ann = _CIterable if is_citerable else _CList
+
+    def distribute(self: f"{name}[T]", n: int) -> f"{ann}[{ann}[T]]":
+        cls = CIterable if is_citerable else CList
+        return cls(map(cls, more_itertools.distribute(n, self)))
+
+    return distribute
+
+
+def _build_divide(name: str) -> Callable[..., Any]:
+    is_citerable = name == _CIterable
+    ann = _CIterable if is_citerable else _CList
+
+    def divide(self: f"{name}[T]", n: int) -> f"{ann}[{ann}[T]]":
+        cls = CIterable if is_citerable else CList
+        return cls(map(cls, more_itertools.divide(n, list(self))))
+
+    return divide
+
+
 # classes
 
 
@@ -641,23 +695,23 @@ class CIterable(Iterable[T]):
 
     # built-ins
 
-    all = AllMethodBuilder("CIterable")  # noqa: A003
-    any = AnyMethodBuilder("CIterable")  # noqa: A003
-    dict = DictMethodBuilder("CIterable")  # noqa: A003
-    enumerate = EnumerateMethodBuilder("CIterable")  # noqa: A003
-    filter = FilterMethodBuilder("CIterable")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CIterable")  # noqa: A003
-    iter = IterMethodBuilder("CIterable")  # noqa: A003
-    list = ListMethodBuilder("CIterable")  # noqa: A003
-    map = MapMethodBuilder("CIterable")  # noqa: A003
-    max = MaxMinMethodBuilder("CIterable", func=max)  # noqa: A003
-    min = MaxMinMethodBuilder("CIterable", func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder("CIterable"))  # noqa: A003
-    set = SetMethodBuilder("CIterable")  # noqa: A003
-    sorted = SortedMethodBuilder("CIterable")  # noqa: A003
-    sum = SumMethodBuilder("CIterable")  # noqa: A003
-    tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-    zip = ZipMethodBuilder("CIterable")  # noqa: A003
+    all = _build_all(_CIterable)  # noqa: A003
+    any = _build_any(_CIterable)  # noqa: A003
+    dict = DictMethodBuilder(_CIterable)  # noqa: A003
+    enumerate = EnumerateMethodBuilder(_CIterable)  # noqa: A003
+    filter = FilterMethodBuilder(_CIterable)  # noqa: A003
+    frozenset = FrozenSetMethodBuilder(_CIterable)  # noqa: A003
+    iter = IterMethodBuilder(_CIterable)  # noqa: A003
+    list = ListMethodBuilder(_CIterable)  # noqa: A003
+    map = MapMethodBuilder(_CIterable)  # noqa: A003
+    max = MaxMinMethodBuilder(_CIterable, func=max)  # noqa: A003
+    min = MaxMinMethodBuilder(_CIterable, func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder(_CIterable))  # noqa: A003
+    set = SetMethodBuilder(_CIterable)  # noqa: A003
+    sorted = SortedMethodBuilder(_CIterable)  # noqa: A003
+    sum = SumMethodBuilder(_CIterable)  # noqa: A003
+    tuple = TupleMethodBuilder(_CIterable)  # noqa: A003
+    zip = ZipMethodBuilder(_CIterable)  # noqa: A003
 
     # functools
 
@@ -689,24 +743,24 @@ class CIterable(Iterable[T]):
 
     # itertools
 
-    combinations = CombinationsMethodBuilder("CIterable")
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CIterable")
-    count = classmethod(CountMethodBuilder("CIterable"))
-    cycle = CycleMethodBuilder("CIterable")
-    repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
-    accumulate = AccumulateMethodBuilder("CIterable")
-    chain = ChainMethodBuilder("CIterable")
-    compress = CompressMethodBuilder("CIterable")
-    dropwhile = DropWhileMethodBuilder("CIterable")
-    filterfalse = FilterFalseMethodBuilder("CIterable")
-    groupby = GroupByMethodBuilder("CIterable")
-    islice = ISliceMethodBuilder("CIterable")
-    permutations = PermutationsBuilder("CIterable")
-    product = ProductMethodBuilder("CIterable")
-    starmap = StarMapMethodBuilder("CIterable")
-    takewhile = TakeWhileMethodBuilder("CIterable")
-    tee = TeeMethodBuilder("CIterable")
-    zip_longest = ZipLongestMethodBuilder("CIterable")
+    combinations = CombinationsMethodBuilder(_CIterable)
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CIterable)
+    count = classmethod(CountMethodBuilder(_CIterable))
+    cycle = CycleMethodBuilder(_CIterable)
+    repeat = classmethod(RepeatMethodBuilder(_CIterable, allow_infinite=True))
+    accumulate = AccumulateMethodBuilder(_CIterable)
+    chain = ChainMethodBuilder(_CIterable)
+    compress = CompressMethodBuilder(_CIterable)
+    dropwhile = DropWhileMethodBuilder(_CIterable)
+    filterfalse = FilterFalseMethodBuilder(_CIterable)
+    groupby = GroupByMethodBuilder(_CIterable)
+    islice = ISliceMethodBuilder(_CIterable)
+    permutations = PermutationsBuilder(_CIterable)
+    product = ProductMethodBuilder(_CIterable)
+    starmap = StarMapMethodBuilder(_CIterable)
+    takewhile = TakeWhileMethodBuilder(_CIterable)
+    tee = TeeMethodBuilder(_CIterable)
+    zip_longest = ZipLongestMethodBuilder(_CIterable)
 
     # itertools-recipes
 
@@ -817,9 +871,9 @@ class CIterable(Iterable[T]):
 
     # more-itertools
 
-    chunked = ChunkedMethodBuilder("CIterable")  # dead: disable
-    distribute = DistributeMethodBuilder("CIterable")
-    divide = DivideMethodBuilder("CIterable")
+    chunked = _build_chunked(_CIterable)
+    distribute = _build_distribute(_CIterable)
+    divide = _build_divide(_CIterable)
 
     # multiprocessing
 
@@ -904,24 +958,24 @@ class CList(List[T]):
 
     # built-ins
 
-    all = AllMethodBuilder("CList")  # noqa: A003
-    any = AnyMethodBuilder("CList")  # noqa: A003
-    dict = DictMethodBuilder("CList")  # noqa: A003
-    enumerate = EnumerateMethodBuilder("CList")  # noqa: A003
-    filter = FilterMethodBuilder("CList")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CList")  # noqa: A003
-    iter = IterMethodBuilder("CList")  # noqa: A003
-    len = LenMethodBuilder("CList")  # noqa: A003
-    list = ListMethodBuilder("CList")  # noqa: A003
-    map = MapMethodBuilder("CList")  # noqa: A003
-    max = MaxMinMethodBuilder("CList", func=max)  # noqa: A003
-    min = MaxMinMethodBuilder("CList", func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder("CList"))  # noqa: A003
-    set = SetMethodBuilder("CList")  # noqa: A003
-    sorted = SortedMethodBuilder("CList")  # noqa: A003
-    sum = SumMethodBuilder("CList")  # noqa: A003
-    tuple = TupleMethodBuilder("CList")  # noqa: A003
-    zip = ZipMethodBuilder("CList")  # noqa: A003
+    all = _build_all(_CList)  # noqa: A003
+    any = _build_any(_CList)  # noqa: A003
+    dict = DictMethodBuilder(_CList)  # noqa: A003
+    enumerate = EnumerateMethodBuilder(_CList)  # noqa: A003
+    filter = FilterMethodBuilder(_CList)  # noqa: A003
+    frozenset = FrozenSetMethodBuilder(_CList)  # noqa: A003
+    iter = IterMethodBuilder(_CList)  # noqa: A003
+    len = LenMethodBuilder(_CList)  # noqa: A003
+    list = ListMethodBuilder(_CList)  # noqa: A003
+    map = MapMethodBuilder(_CList)  # noqa: A003
+    max = MaxMinMethodBuilder(_CList, func=max)  # noqa: A003
+    min = MaxMinMethodBuilder(_CList, func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder(_CList))  # noqa: A003
+    set = SetMethodBuilder(_CList)  # noqa: A003
+    sorted = SortedMethodBuilder(_CList)  # noqa: A003
+    sum = SumMethodBuilder(_CList)  # noqa: A003
+    tuple = TupleMethodBuilder(_CList)  # noqa: A003
+    zip = ZipMethodBuilder(_CList)  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
@@ -932,7 +986,7 @@ class CList(List[T]):
     def sort(  # dead: disable
         self: CList[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
     ) -> CList[T]:
-        warn("Use the 'sorted' method instead of 'sort'")
+        warn("Use the 'sorted' name instead of 'sort'")
         return self.sorted(key=key, reverse=reverse)
 
     # functools
@@ -944,22 +998,22 @@ class CList(List[T]):
 
     # itertools
 
-    combinations = CombinationsMethodBuilder("CList")
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CList")
-    repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
-    accumulate = AccumulateMethodBuilder("CList")
-    chain = ChainMethodBuilder("CList")
-    compress = CompressMethodBuilder("CList")
-    dropwhile = DropWhileMethodBuilder("CList")
-    filterfalse = FilterFalseMethodBuilder("CList")
-    groupby = GroupByMethodBuilder("CList")
-    islice = ISliceMethodBuilder("CList")
-    permutations = PermutationsBuilder("CList")
-    product = ProductMethodBuilder("CList")
-    starmap = StarMapMethodBuilder("CList")
-    takewhile = TakeWhileMethodBuilder("CList")
-    tee = TeeMethodBuilder("CList")
-    zip_longest = ZipLongestMethodBuilder("CList")
+    combinations = CombinationsMethodBuilder(_CList)
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CList)
+    repeat = classmethod(RepeatMethodBuilder(_CList, allow_infinite=False))
+    accumulate = AccumulateMethodBuilder(_CList)
+    chain = ChainMethodBuilder(_CList)
+    compress = CompressMethodBuilder(_CList)
+    dropwhile = DropWhileMethodBuilder(_CList)
+    filterfalse = FilterFalseMethodBuilder(_CList)
+    groupby = GroupByMethodBuilder(_CList)
+    islice = ISliceMethodBuilder(_CList)
+    permutations = PermutationsBuilder(_CList)
+    product = ProductMethodBuilder(_CList)
+    starmap = StarMapMethodBuilder(_CList)
+    takewhile = TakeWhileMethodBuilder(_CList)
+    tee = TeeMethodBuilder(_CList)
+    zip_longest = ZipLongestMethodBuilder(_CList)
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
@@ -1058,9 +1112,9 @@ class CList(List[T]):
 
     # more-itertools
 
-    chunked = ChunkedMethodBuilder("CList")  # dead: disable
-    distribute = DistributeMethodBuilder("CList")
-    divide = DivideMethodBuilder("CList")
+    chunked = _build_chunked(_CList)
+    distribute = _build_distribute(_CList)
+    divide = _build_divide(_CList)
 
     # multiprocessing
 
@@ -1102,49 +1156,49 @@ class CTuple(Tuple[T]):
 
     # built-ins
 
-    all = AllMethodBuilder("CTuple")  # noqa: A003
-    any = AnyMethodBuilder("CTuple")  # noqa: A003
-    dict = DictMethodBuilder("CTuple")  # noqa: A003
-    enumerate = EnumerateMethodBuilder("CTuple")  # noqa: A003
-    filter = FilterMethodBuilder("CTuple")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CTuple")  # noqa: A003
-    iter = IterMethodBuilder("CTuple")  # noqa: A003
-    len = LenMethodBuilder("CTuple")  # noqa: A003
-    list = ListMethodBuilder("CTuple")  # noqa: A003
-    map = MapMethodBuilder("CTuple")  # noqa: A003
-    max = MaxMinMethodBuilder("CTuple", func=max)  # noqa: A003
-    min = MaxMinMethodBuilder("CTuple", func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder("CTuple"))  # noqa: A003
-    set = SetMethodBuilder("CTuple")  # noqa: A003
-    sorted = SortedMethodBuilder("CTuple")  # noqa: A003
-    sum = SumMethodBuilder("CTuple")  # noqa: A003
-    tuple = TupleMethodBuilder("CTuple")  # noqa: A003
-    zip = ZipMethodBuilder("CTuple")  # noqa: A003
+    all = _build_all(_CTuple)  # noqa: A003
+    any = _build_any(_CTuple)  # noqa: A003
+    dict = DictMethodBuilder(_CTuple)  # noqa: A003
+    enumerate = EnumerateMethodBuilder(_CTuple)  # noqa: A003
+    filter = FilterMethodBuilder(_CTuple)  # noqa: A003
+    frozenset = FrozenSetMethodBuilder(_CTuple)  # noqa: A003
+    iter = IterMethodBuilder(_CTuple)  # noqa: A003
+    len = LenMethodBuilder(_CTuple)  # noqa: A003
+    list = ListMethodBuilder(_CTuple)  # noqa: A003
+    map = MapMethodBuilder(_CTuple)  # noqa: A003
+    max = MaxMinMethodBuilder(_CTuple, func=max)  # noqa: A003
+    min = MaxMinMethodBuilder(_CTuple, func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder(_CTuple))  # noqa: A003
+    set = SetMethodBuilder(_CTuple)  # noqa: A003
+    sorted = SortedMethodBuilder(_CTuple)  # noqa: A003
+    sum = SumMethodBuilder(_CTuple)  # noqa: A003
+    tuple = TupleMethodBuilder(_CTuple)  # noqa: A003
+    zip = ZipMethodBuilder(_CTuple)  # noqa: A003
 
     # itertools
 
-    combinations = CombinationsMethodBuilder("CTuple")
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CTuple")
-    repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
-    accumulate = AccumulateMethodBuilder("CTuple")
-    chain = ChainMethodBuilder("CTuple")
-    compress = CompressMethodBuilder("CTuple")
-    dropwhile = DropWhileMethodBuilder("CTuple")
-    filterfalse = FilterFalseMethodBuilder("CTuple")
-    groupby = GroupByMethodBuilder("CTuple")
-    islice = ISliceMethodBuilder("CTuple")
-    permutations = PermutationsBuilder("CTuple")
-    product = ProductMethodBuilder("CTuple")
-    starmap = StarMapMethodBuilder("CTuple")
-    takewhile = TakeWhileMethodBuilder("CTuple")
-    tee = TeeMethodBuilder("CTuple")
-    zip_longest = ZipLongestMethodBuilder("CTuple")
+    combinations = CombinationsMethodBuilder(_CTuple)
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CTuple)
+    repeat = classmethod(RepeatMethodBuilder(_CTuple, allow_infinite=False))
+    accumulate = AccumulateMethodBuilder(_CTuple)
+    chain = ChainMethodBuilder(_CTuple)
+    compress = CompressMethodBuilder(_CTuple)
+    dropwhile = DropWhileMethodBuilder(_CTuple)
+    filterfalse = FilterFalseMethodBuilder(_CTuple)
+    groupby = GroupByMethodBuilder(_CTuple)
+    islice = ISliceMethodBuilder(_CTuple)
+    permutations = PermutationsBuilder(_CTuple)
+    product = ProductMethodBuilder(_CTuple)
+    starmap = StarMapMethodBuilder(_CTuple)
+    takewhile = TakeWhileMethodBuilder(_CTuple)
+    tee = TeeMethodBuilder(_CTuple)
+    zip_longest = ZipLongestMethodBuilder(_CTuple)
 
     # more-itertools
 
-    chunked = ChunkedMethodBuilder("CTuple")  # dead: disable
-    distribute = DistributeMethodBuilder("CTuple")
-    divide = DivideMethodBuilder("CTuple")
+    chunked = _build_chunked(_CTuple)
+    distribute = _build_distribute(_CTuple)
+    divide = _build_divide(_CTuple)
 
 
 class CSet(Set[T]):
@@ -1152,24 +1206,24 @@ class CSet(Set[T]):
 
     # built-ins
 
-    all = AllMethodBuilder("CSet")  # noqa: A003
-    any = AnyMethodBuilder("CSet")  # noqa: A003
-    dict = DictMethodBuilder("CSet")  # noqa: A003
-    enumerate = EnumerateMethodBuilder("CSet")  # noqa: A003
-    filter = FilterMethodBuilder("CSet")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CSet")  # noqa: A003
-    iter = IterMethodBuilder("CSet")  # noqa: A003
-    len = LenMethodBuilder("CSet")  # noqa: A003
-    list = ListMethodBuilder("CSet")  # noqa: A003
-    map = MapMethodBuilder("CSet")  # noqa: A003
-    max = MaxMinMethodBuilder("CSet", func=max)  # noqa: A003
-    min = MaxMinMethodBuilder("CSet", func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder("CSet"))  # noqa: A003
-    set = SetMethodBuilder("CSet")  # noqa: A003
-    sorted = SortedMethodBuilder("CSet")  # noqa: A003
-    sum = SumMethodBuilder("CSet")  # noqa: A003
-    tuple = TupleMethodBuilder("CSet")  # noqa: A003
-    zip = ZipMethodBuilder("CSet")  # noqa: A003
+    all = _build_all(_CSet)  # noqa: A003
+    any = _build_any(_CSet)  # noqa: A003
+    dict = DictMethodBuilder(_CSet)  # noqa: A003
+    enumerate = EnumerateMethodBuilder(_CSet)  # noqa: A003
+    filter = FilterMethodBuilder(_CSet)  # noqa: A003
+    frozenset = FrozenSetMethodBuilder(_CSet)  # noqa: A003
+    iter = IterMethodBuilder(_CSet)  # noqa: A003
+    len = LenMethodBuilder(_CSet)  # noqa: A003
+    list = ListMethodBuilder(_CSet)  # noqa: A003
+    map = MapMethodBuilder(_CSet)  # noqa: A003
+    max = MaxMinMethodBuilder(_CSet, func=max)  # noqa: A003
+    min = MaxMinMethodBuilder(_CSet, func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder(_CSet))  # noqa: A003
+    set = SetMethodBuilder(_CSet)  # noqa: A003
+    sorted = SortedMethodBuilder(_CSet)  # noqa: A003
+    sum = SumMethodBuilder(_CSet)  # noqa: A003
+    tuple = TupleMethodBuilder(_CSet)  # noqa: A003
+    zip = ZipMethodBuilder(_CSet)  # noqa: A003
 
     # set & frozenset methods
 
@@ -1236,22 +1290,22 @@ class CSet(Set[T]):
 
     # itertools
 
-    accumulate = AccumulateMethodBuilder("CSet")
-    chain = ChainMethodBuilder("CSet")
-    combinations = CombinationsMethodBuilder("CSet")
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CSet")
-    compress = CompressMethodBuilder("CSet")
-    dropwhile = DropWhileMethodBuilder("CSet")
-    filterfalse = FilterFalseMethodBuilder("CSet")
-    groupby = GroupByMethodBuilder("CSet")
-    islice = ISliceMethodBuilder("CSet")
-    permutations = PermutationsBuilder("CSet")
-    product = ProductMethodBuilder("CSet")
-    repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
-    starmap = StarMapMethodBuilder("CSet")
-    takewhile = TakeWhileMethodBuilder("CSet")
-    tee = TeeMethodBuilder("CSet")
-    zip_longest = ZipLongestMethodBuilder("CSet")
+    accumulate = AccumulateMethodBuilder(_CSet)
+    chain = ChainMethodBuilder(_CSet)
+    combinations = CombinationsMethodBuilder(_CSet)
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CSet)
+    compress = CompressMethodBuilder(_CSet)
+    dropwhile = DropWhileMethodBuilder(_CSet)
+    filterfalse = FilterFalseMethodBuilder(_CSet)
+    groupby = GroupByMethodBuilder(_CSet)
+    islice = ISliceMethodBuilder(_CSet)
+    permutations = PermutationsBuilder(_CSet)
+    product = ProductMethodBuilder(_CSet)
+    repeat = classmethod(RepeatMethodBuilder(_CSet, allow_infinite=False))
+    starmap = StarMapMethodBuilder(_CSet)
+    takewhile = TakeWhileMethodBuilder(_CSet)
+    tee = TeeMethodBuilder(_CSet)
+    zip_longest = ZipLongestMethodBuilder(_CSet)
 
     # itertools - recipes
 
@@ -1294,6 +1348,12 @@ class CSet(Set[T]):
     def pairwise(self: CSet[T]) -> CSet[Tuple[T, T]]:
         return self.iter().pairwise().set()
 
+    # more-itertools
+
+    chunked = _build_chunked(_CSet)
+    distribute = _build_distribute(_CSet)
+    divide = _build_divide(_CSet)
+
     # multiprocessing
 
     def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
@@ -1329,24 +1389,24 @@ class CFrozenSet(FrozenSet[T]):
 
     # built-ins
 
-    all = AllMethodBuilder("CFrozenSet")  # noqa: A003
-    any = AnyMethodBuilder("CFrozenSet")  # noqa: A003
-    dict = DictMethodBuilder("CFrozenSet")  # noqa: A003
-    enumerate = EnumerateMethodBuilder("CFrozenSet")  # noqa: A003
-    filter = FilterMethodBuilder("CFrozenSet")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CFrozenSet")  # noqa: A003
-    iter = IterMethodBuilder("CFrozenSet")  # noqa: A003
-    len = LenMethodBuilder("CFrozenSet")  # noqa: A003
-    list = ListMethodBuilder("CFrozenSet")  # noqa: A003
-    map = MapMethodBuilder("CFrozenSet")  # noqa: A003
-    max = MaxMinMethodBuilder("CFrozenSet", func=max)  # noqa: A003
-    min = MaxMinMethodBuilder("CFrozenSet", func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder("CFrozenSet"))  # noqa: A003
-    set = SetMethodBuilder("CFrozenSet")  # noqa: A003
-    sorted = SortedMethodBuilder("CFrozenSet")  # noqa: A003
-    sum = SumMethodBuilder("CFrozenSet")  # noqa: A003
-    tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-    zip = ZipMethodBuilder("CFrozenSet")  # noqa: A003
+    all = _build_all(_CFrozenSet)  # noqa: A003
+    any = _build_any(_CFrozenSet)  # noqa: A003
+    dict = DictMethodBuilder(_CFrozenSet)  # noqa: A003
+    enumerate = EnumerateMethodBuilder(_CFrozenSet)  # noqa: A003
+    filter = FilterMethodBuilder(_CFrozenSet)  # noqa: A003
+    frozenset = FrozenSetMethodBuilder(_CFrozenSet)  # noqa: A003
+    iter = IterMethodBuilder(_CFrozenSet)  # noqa: A003
+    len = LenMethodBuilder(_CFrozenSet)  # noqa: A003
+    list = ListMethodBuilder(_CFrozenSet)  # noqa: A003
+    map = MapMethodBuilder(_CFrozenSet)  # noqa: A003
+    max = MaxMinMethodBuilder(_CFrozenSet, func=max)  # noqa: A003
+    min = MaxMinMethodBuilder(_CFrozenSet, func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder(_CFrozenSet))  # noqa: A003
+    set = SetMethodBuilder(_CFrozenSet)  # noqa: A003
+    sorted = SortedMethodBuilder(_CFrozenSet)  # noqa: A003
+    sum = SumMethodBuilder(_CFrozenSet)  # noqa: A003
+    tuple = TupleMethodBuilder(_CFrozenSet)  # noqa: A003
+    zip = ZipMethodBuilder(_CFrozenSet)  # noqa: A003
 
     # set & frozenset methods
 
@@ -1374,22 +1434,22 @@ class CFrozenSet(FrozenSet[T]):
 
     # itertools
 
-    accumulate = AccumulateMethodBuilder("CFrozenSet")
-    chain = ChainMethodBuilder("CFrozenSet")
-    combinations = CombinationsMethodBuilder("CFrozenSet")
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CFrozenSet")
-    compress = CompressMethodBuilder("CFrozenSet")
-    dropwhile = DropWhileMethodBuilder("CFrozenSet")
-    filterfalse = FilterFalseMethodBuilder("CFrozenSet")
-    groupby = GroupByMethodBuilder("CFrozenSet")
-    islice = ISliceMethodBuilder("CFrozenSet")
-    permutations = PermutationsBuilder("CFrozenSet")
-    product = ProductMethodBuilder("CFrozenSet")
-    repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
-    starmap = StarMapMethodBuilder("CFrozenSet")
-    takewhile = TakeWhileMethodBuilder("CFrozenSet")
-    tee = TeeMethodBuilder("CFrozenSet")
-    zip_longest = ZipLongestMethodBuilder("CFrozenSet")
+    accumulate = AccumulateMethodBuilder(_CFrozenSet)
+    chain = ChainMethodBuilder(_CFrozenSet)
+    combinations = CombinationsMethodBuilder(_CFrozenSet)
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CFrozenSet)
+    compress = CompressMethodBuilder(_CFrozenSet)
+    dropwhile = DropWhileMethodBuilder(_CFrozenSet)
+    filterfalse = FilterFalseMethodBuilder(_CFrozenSet)
+    groupby = GroupByMethodBuilder(_CFrozenSet)
+    islice = ISliceMethodBuilder(_CFrozenSet)
+    permutations = PermutationsBuilder(_CFrozenSet)
+    product = ProductMethodBuilder(_CFrozenSet)
+    repeat = classmethod(RepeatMethodBuilder(_CFrozenSet, allow_infinite=False))
+    starmap = StarMapMethodBuilder(_CFrozenSet)
+    takewhile = TakeWhileMethodBuilder(_CFrozenSet)
+    tee = TeeMethodBuilder(_CFrozenSet)
+    zip_longest = ZipLongestMethodBuilder(_CFrozenSet)
 
     # itertools - recipes
 
@@ -1432,6 +1492,11 @@ class CFrozenSet(FrozenSet[T]):
     def pairwise(self: CFrozenSet[T]) -> CFrozenSet[Tuple[T, T]]:
         return self.iter().pairwise().frozenset()
 
+    # more-itertools
+
+    chunked = _build_chunked(_CFrozenSet)
+    distribute = _build_distribute(_CFrozenSet)
+    divide = _build_divide(_CFrozenSet)
     # multiprocessing
 
     def pmap(
