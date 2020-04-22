@@ -4,7 +4,6 @@ from functools import reduce
 from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
-from itertools import compress
 from itertools import dropwhile
 from itertools import filterfalse
 from itertools import groupby
@@ -77,6 +76,7 @@ from functional_itertools.methods.builtins import Template
 from functional_itertools.methods.builtins import ZipMethodBuilder
 from functional_itertools.methods.itertools import AccumulateMethodBuilder
 from functional_itertools.methods.itertools import ChainMethodBuilder
+from functional_itertools.methods.itertools import CompressMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
@@ -267,9 +267,7 @@ class CIterable(Iterable[T]):
     repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
     accumulate = AccumulateMethodBuilder("CIterable")
     chain = ChainMethodBuilder("CIterable")
-
-    def compress(self: CIterable[T], selectors: Iterable[Any]) -> CIterable[T]:
-        return CIterable(compress(self._iterable, selectors))
+    compress = CompressMethodBuilder("CIterable")
 
     def dropwhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(dropwhile(func, self._iterable))
@@ -564,9 +562,7 @@ class CList(List[T]):
     repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CList")
     chain = ChainMethodBuilder("CList")
-
-    def compress(self: CList[T], selectors: Iterable[Any]) -> CList[T]:
-        return self.iter().compress(selectors).list()
+    compress = CompressMethodBuilder("CList")
 
     def dropwhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
         return self.iter().dropwhile(func).list()
@@ -777,6 +773,7 @@ class CTuple(Tuple[T]):
     repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CTuple")
     chain = ChainMethodBuilder("CTuple")
+    compress = CompressMethodBuilder("CTuple")
 
     # more-itertools
 
@@ -877,9 +874,7 @@ class CSet(Set[T]):
     repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CSet")
     chain = ChainMethodBuilder("CSet")
-
-    def compress(self: CSet[T], selectors: Iterable[Any]) -> CSet[T]:
-        return self.iter().compress(selectors).set()
+    compress = CompressMethodBuilder("CSet")
 
     def dropwhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
         return self.iter().dropwhile(func).set()
@@ -1052,9 +1047,7 @@ class CFrozenSet(FrozenSet[T]):
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
     accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
     chain = ChainMethodBuilder("CFrozenSet")
-
-    def compress(self: CFrozenSet[T], selectors: Iterable[Any]) -> CFrozenSet[T]:
-        return self.iter().compress(selectors).frozenset()
+    compress = CompressMethodBuilder("CFrozenSet")
 
     def dropwhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().dropwhile(func).frozenset()

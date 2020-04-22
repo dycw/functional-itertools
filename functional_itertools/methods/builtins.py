@@ -24,7 +24,7 @@ U = TypeVar("U")
 
 class AllMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+    def _build_method(cls: Type[AllMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T]) -> bool:
             return all(self)
 
@@ -35,7 +35,7 @@ class AllMethodBuilder(MethodBuilder):
 
 class AnyMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+    def _build_method(cls: Type[AnyMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T]) -> bool:
             return any(self)
 
@@ -46,7 +46,7 @@ class AnyMethodBuilder(MethodBuilder):
 
 class EnumerateMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+    def _build_method(cls: Type[EnumerateMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], start: int = 0) -> Template[Tuple[int, T]]:
             return type(self)(enumerate(self, start=start))
 
@@ -57,7 +57,7 @@ class EnumerateMethodBuilder(MethodBuilder):
 
 class FilterMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+    def _build_method(cls: Type[FilterMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], func: Optional[Callable[[T], bool]]) -> Template[T]:
             return type(self)(filter(func, self))
 
@@ -68,7 +68,7 @@ class FilterMethodBuilder(MethodBuilder):
 
 class LenMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+    def _build_method(cls: Type[LenMethodBuilder]) -> Callable[..., int]:
         def method(self: Template[T]) -> int:
             return len(self)
 
@@ -79,7 +79,7 @@ class LenMethodBuilder(MethodBuilder):
 
 class MapMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+    def _build_method(cls: Type[MapMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], func: Callable[..., U], *iterables: Iterable) -> Template[U]:
             return type(self)(map(func, self, *iterables))
 
@@ -90,7 +90,9 @@ class MapMethodBuilder(MethodBuilder):
 
 class MaxMinMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder, func: Callable[..., Any]) -> Callable[..., Any]:
+    def _build_method(
+        cls: Type[MaxMinMethodBuilder], func: Callable[..., Any],
+    ) -> Callable[..., Any]:
         if VERSION is Version.py37:
 
             def method(
@@ -125,7 +127,7 @@ class MaxMinMethodBuilder(MethodBuilder):
 
 class RangeMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+    def _build_method(cls: Type[RangeMethodBuilder]) -> Callable[..., Any]:
         def method(
             cls: Type[Template[T]],
             start: int,
@@ -150,7 +152,7 @@ class RangeMethodBuilder(MethodBuilder):
 
 class SumMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+    def _build_method(cls: Type[SumMethodBuilder]) -> Callable[..., int]:
         def method(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:
             return sum(self, *(() if start is sentinel else (start,)))
 
@@ -161,7 +163,7 @@ class SumMethodBuilder(MethodBuilder):
 
 class ZipMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+    def _build_method(cls: Type[ZipMethodBuilder]) -> Callable[..., int]:
         def method(self: Template[T], *iterables: Iterable[U]) -> Template[Tuple[Union[T, U]]]:
             return type(self)(zip(self, *iterables))
 

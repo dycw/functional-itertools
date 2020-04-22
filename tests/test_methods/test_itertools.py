@@ -123,7 +123,7 @@ def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> Non
         assert cast(y) == cast(accumulate(x, add, **initial))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_chain(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -133,14 +133,14 @@ def test_chain(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(chain(x, *xs))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_compress(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     selectors = data.draw(lists(booleans(), min_size=len(x), max_size=len(x)))
     y = cls(x).compress(selectors)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
+    if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(compress(x, selectors))
 
 

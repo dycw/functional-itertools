@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from itertools import accumulate
 from itertools import chain
+from itertools import compress
 from itertools import count
 from itertools import cycle
 from itertools import repeat
@@ -102,3 +103,14 @@ class ChainMethodBuilder(MethodBuilder):
         return method
 
     _doc = "chain('ABC', 'DEF') --> A B C D E F"
+
+
+class CompressMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], selectors: Iterable[Any]) -> Template[T]:
+            return type(self)(compress(self, selectors))
+
+        return method
+
+    _doc = "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F"
