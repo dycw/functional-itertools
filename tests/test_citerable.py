@@ -218,7 +218,7 @@ def test_iter(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(iter(x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", [CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_len(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
