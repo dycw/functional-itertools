@@ -203,22 +203,37 @@ def test_filter(cls: Type, data: DataObject) -> None:
 @mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_frozenset(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(cls, tuples(integers(), integers())))
-    assert isinstance(cls(x).frozenset(), CFrozenSet)
+    x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
+    y = cls(x).frozenset()
+    assert isinstance(y, CFrozenSet)
+    assert cast(y) == cast(frozenset(x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_iter(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(cls, tuples(integers(), integers())))
-    assert isinstance(cls(x).iter(), CIterable)
+    x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
+    y = cls(x).iter()
+    assert isinstance(y, CIterable)
+    assert cast(y) == cast(iter(x))
+
+
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@given(data=data())
+def test_len(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(cls, integers()))
+    y = cls(x).len()
+    assert isinstance(y, int)
+    assert y == len(x)
 
 
 @mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_list(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(cls, integers()))
-    assert isinstance(cls(x).list(), CList)
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).list()
+    assert isinstance(y, CList)
+    assert cast(y) == cast(list(x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
@@ -282,8 +297,10 @@ def test_range(
 @mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_set(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(cls, integers()))
-    assert isinstance(cls(x).set(), CSet)
+    x, cast = data.draw(siterables(cls, integers()))
+    y = cls(x).set()
+    assert isinstance(y, CSet)
+    assert cast(y) == cast(set(x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
@@ -313,7 +330,7 @@ def test_tuple(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).tuple()
     assert isinstance(y, CTuple)
-    assert cast(y) == cast(x)
+    assert cast(y) == cast(tuple(x))
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])

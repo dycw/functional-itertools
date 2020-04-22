@@ -81,6 +81,17 @@ class FilterMethodBuilder(MethodBuilder):
     _doc = "Construct a {0} from those elements of the {0} for which function returns true."
 
 
+class LenMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+        def method(self: Template[T]) -> int:
+            return len(self)
+
+        return method
+
+    _doc = "Return the length of the {0}."
+
+
 class MapMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
