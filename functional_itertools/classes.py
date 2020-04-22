@@ -8,9 +8,6 @@ from itertools import groupby
 from itertools import islice
 from itertools import permutations
 from itertools import product
-from itertools import starmap
-from itertools import takewhile
-from itertools import tee
 from itertools import zip_longest
 from multiprocessing import Pool
 from pathlib import Path
@@ -79,7 +76,11 @@ from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import DropwhileMethodBuilder
 from functional_itertools.methods.itertools import FilterFalseMethodBuilder
+from functional_itertools.methods.itertools import ISliceMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
+from functional_itertools.methods.itertools import StarMapMethodBuilder
+from functional_itertools.methods.itertools import TakeWhileMethodBuilder
+from functional_itertools.methods.itertools import TeeMethodBuilder
 from functional_itertools.methods.more_itertools import ChunkedMethodBuilder
 from functional_itertools.methods.more_itertools import DistributeMethodBuilder
 from functional_itertools.methods.more_itertools import DivideMethodBuilder
@@ -299,26 +300,10 @@ class CIterable(Iterable[T]):
     dropwhile = DropwhileMethodBuilder("CIterable")
     filterfalse = FilterFalseMethodBuilder("CIterable")
     groupby = GroupByMethodBuilder("CIterable")
-
-    def islice(
-        self: CIterable[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CIterable[T]:
-        args, _ = drop_sentinel(stop, step)
-        return CIterable(islice(self._iterable, start, *args))
-
-    def starmap(
-        self: CIterable[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
-    ) -> CIterable[U]:
-        return CIterable(starmap(func, self._iterable))
-
-    def takewhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
-        return CIterable(takewhile(func, self._iterable))
-
-    def tee(self: CIterable[T], n: int = 2) -> CIterable[Iterator[T]]:
-        return CIterable(tee(self._iterable, n)).map(CIterable)
+    islice = ISliceMethodBuilder("CIterable")
+    starmap = StarMapMethodBuilder("CIterable")
+    takewhile = TakeWhileMethodBuilder("CIterable")
+    tee = TeeMethodBuilder("CIterable")
 
     def zip_longest(
         self: CIterable[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -582,23 +567,10 @@ class CList(List[T]):
     dropwhile = DropwhileMethodBuilder("CList")
     filterfalse = FilterFalseMethodBuilder("CList")
     groupby = GroupByMethodBuilder("CList")
-
-    def islice(
-        self: CList[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CList[T]:
-        return self.iter().islice(start, stop=stop, step=step).list()
-
-    def starmap(self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CList[U]:
-        return self.iter().starmap(func).list()
-
-    def takewhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
-        return self.iter().takewhile(func).list()
-
-    def tee(self: CList[T], n: int = 2) -> CList[CList[T]]:
-        return self.iter().tee(n=n).list().map(CList)
+    islice = ISliceMethodBuilder("CList")
+    starmap = StarMapMethodBuilder("CList")
+    takewhile = TakeWhileMethodBuilder("CList")
+    tee = TeeMethodBuilder("CList")
 
     def zip_longest(
         self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -785,6 +757,10 @@ class CTuple(Tuple[T]):
     dropwhile = DropwhileMethodBuilder("CTuple")
     filterfalse = FilterFalseMethodBuilder("CTuple")
     groupby = GroupByMethodBuilder("CTuple")
+    islice = ISliceMethodBuilder("CTuple")
+    starmap = StarMapMethodBuilder("CTuple")
+    takewhile = TakeWhileMethodBuilder("CTuple")
+    tee = TeeMethodBuilder("CTuple")
 
     # more-itertools
 
@@ -888,23 +864,9 @@ class CSet(Set[T]):
     compress = CompressMethodBuilder("CSet")
     dropwhile = DropwhileMethodBuilder("CSet")
     filterfalse = FilterFalseMethodBuilder("CSet")
-
-    def islice(
-        self: CSet[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CSet[T]:
-        return self.iter().islice(start, stop=stop, step=step).set()
-
-    def starmap(self: CSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CSet[U]:
-        return self.iter().starmap(func).set()
-
-    def takewhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
-        return self.iter().takewhile(func).set()
-
-    def tee(self: CSet[T], n: int = 2) -> CSet[CFrozenSet[T]]:
-        return self.iter().tee(n=n).set().map(CFrozenSet)
+    islice = ISliceMethodBuilder("CSet")
+    starmap = StarMapMethodBuilder("CSet")
+    takewhile = TakeWhileMethodBuilder("CSet")
 
     def zip_longest(
         self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -1052,25 +1014,9 @@ class CFrozenSet(FrozenSet[T]):
     compress = CompressMethodBuilder("CFrozenSet")
     dropwhile = DropwhileMethodBuilder("CFrozenSet")
     filterfalse = FilterFalseMethodBuilder("CFrozenSet")
-
-    def islice(
-        self: CFrozenSet[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CFrozenSet[T]:
-        return self.iter().islice(start, stop=stop, step=step).frozenset()
-
-    def starmap(
-        self: CFrozenSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
-    ) -> CFrozenSet[U]:
-        return self.iter().starmap(func).frozenset()
-
-    def takewhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
-        return self.iter().takewhile(func).frozenset()
-
-    def tee(self: CFrozenSet[T], n: int = 2) -> CFrozenSet[CFrozenSet[T]]:
-        return self.iter().tee(n=n).frozenset().map(CFrozenSet)
+    islice = ISliceMethodBuilder("CFrozenSet")
+    starmap = StarMapMethodBuilder("CFrozenSet")
+    takewhile = TakeWhileMethodBuilder("CFrozenSet")
 
     def zip_longest(
         self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,

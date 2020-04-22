@@ -9,6 +9,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods.base import MethodBuilder
 from functional_itertools.methods.base import Template
@@ -133,9 +134,9 @@ class RangeMethodBuilder(MethodBuilder):
             start: int,
             stop: Optional[int] = None,
             step: Optional[int] = None,
-        ) -> Template[T]:
+        ) -> Template[int]:
             if (stop is None) and (step is not None):
-                raise ValueError("'stop' cannot be None if 'step' is provided")
+                raise StopArgumentMissing()
             else:
                 return cls(
                     range(

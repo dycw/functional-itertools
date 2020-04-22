@@ -17,7 +17,6 @@ from itertools import product
 from itertools import repeat
 from itertools import starmap
 from itertools import takewhile
-from itertools import tee
 from itertools import zip_longest
 from operator import add
 from operator import neg
@@ -28,7 +27,6 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
-from typing import Union
 
 from hypothesis import assume
 from hypothesis import given
@@ -57,14 +55,9 @@ from more_itertools import tail
 from more_itertools import take
 from pytest import mark
 
-from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
-from functional_itertools import CSet
 from functional_itertools import CTuple
-from functional_itertools.utilities import drop_sentinel
-from functional_itertools.utilities import Sentinel
-from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from tests.strategies import CLASSES
@@ -182,24 +175,22 @@ def test_groupby(cls: Type, data: DataObject, key: Optional[Callable[[int], int]
 
 @mark.parametrize("cls", CLASSES)
 @given(
-    data=data(),
-    start=islice_ints,
-    stop=islice_ints | just(sentinel),
-    step=islice_ints | just(sentinel),
+    data=data(), start=islice_ints, stop=none() | islice_ints, step=none() | islice_ints,
 )
 def test_islice(
-    cls: Type, data: DataObject, start: int, stop: Union[int, Sentinel], step: Union[int, Sentinel],
+    cls: Type, data: DataObject, start: int, stop: Optional[int], step: Optional[int],
 ) -> None:
     x, cast = data.draw(siterables(cls, integers()))
-    if step is sentinel:
-        assume(stop is not sentinel)
-    else:
-        assume(step != 0)
-    args, _ = drop_sentinel(stop, step)
-    y = cls(x).islice(start, *args)
+    if step is not None:
+        assume((stop is not None) and (step != 0))
+    y = cls(x).islice(start, stop, step)
     assert isinstance(y, cls)
     if cls in {CIterable, CList, CTuple}:
-        assert cast(y) == cast(islice(x, start, *args))
+        assert cast(y) == cast(
+            islice(
+                x, start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
+            ),
+        )
 
 
 @mark.parametrize("cls", CLASSES)
@@ -221,22 +212,15 @@ def test_takewhile(cls: Type, data: DataObject) -> None:
         assert cast(y) == cast(takewhile(is_even, x))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("cls", [CIterable, CList, CTuple])
 @given(data=data(), n=small_ints)
 def test_tee(cls: Type, data: DataObject, n: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).tee(n=n)
     assert isinstance(y, cls)
-    y = cast(y)
-    z = cast(tee(x, n))
-    if cls in {CIterable, CList, CTuple}:
-        assert len(y) == len(z)
-    for y_i, z_i in zip(y, z):
-        if cls is CSet:
-            assert isinstance(y_i, CFrozenSet)
-        else:
-            assert isinstance(y_i, cls)
-        assert cast(y_i) == cast(z_i)
+    for y_i in y:
+        assert isinstance(y_i, cls)
+        assert cast(y_i) == cast(x)
 
 
 @mark.parametrize("cls", CLASSES)

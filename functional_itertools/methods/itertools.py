@@ -9,7 +9,6 @@ from itertools import count
 from itertools import cycle
 from itertools import dropwhile
 from itertools import filterfalse
-from itertools import groupby
 from itertools import islice
 from itertools import permutations
 from itertools import product
@@ -28,6 +27,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods.base import MethodBuilder
 from functional_itertools.methods.base import Template
@@ -151,26 +151,73 @@ class FilterFalseMethodBuilder(MethodBuilder):
     _doc = "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8"
 
 
+class ISliceMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+        ) -> Template[T]:
+            if (stop is None) and (step is not None):
+                raise StopArgumentMissing()
+            else:
+                return type(self)(
+                    islice(
+                        self,
+                        start,
+                        *(() if stop is None else (stop,)),
+                        *(() if step is None else (step,)),
+                    ),
+                )
+
+        return method
+
+    _doc = "\n".join(
+        [
+            "islice('ABCDEFG', 2) --> A B",
+            "islice('ABCDEFG', 2, 4) --> C D",
+            "islice('ABCDEFG', 2, None) --> C D E F G",
+            "islice('ABCDEFG', 0, None, 2) --> A C E G",
+        ],
+    )
+
+
+class StarMapMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
+        ) -> Template[U]:
+            return type(self)(starmap(func, self))
+
+        return method
+
+    _doc = "starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000"
+
+
+class TakeWhileMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
+            return type(self)(takewhile(func, self))
+
+        return method
+
+    _doc = "takewhile(lambda x: x<5, [1,4,6,4,1]) --> 1 4"
+
+
+class TeeMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], n: int = 2) -> Template[Template[T]]:
+            cls = type(self)
+            return cls(tee(self, n)).map(cls)
+
+        return method
+
+    _doc = "Return n independent iterators from a single iterable."
+
+
 if 0:
-
-    def groupby(
-        self: CList[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CList[Tuple[U, CList[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CList(x[1]))).list()
-
-    def islice(
-        self: CList[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CList[T]:
-        return self.iter().islice(start, stop=stop, step=step).list()
-
-    def starmap(self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CList[U]:
-        return self.iter().starmap(func).list()
-
-    def takewhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
-        return self.iter().takewhile(func).list()
 
     def tee(self: CList[T], n: int = 2) -> CList[CList[T]]:
         return self.iter().tee(n=n).list().map(CList)
