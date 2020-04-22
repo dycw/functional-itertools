@@ -79,6 +79,9 @@ from functional_itertools.methods.itertools import AccumulateMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
+from functional_itertools.methods.more_itertools import ChunkedMethodBuilder
+from functional_itertools.methods.more_itertools import DistributeMethodBuilder
+from functional_itertools.methods.more_itertools import DivideMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -430,6 +433,12 @@ class CIterable(Iterable[T]):
     def nth_combination(self: CIterable[T], r: int, index: int) -> Tuple[T, ...]:
         return nth_combination(self._iterable, r, index)
 
+    # more-itertools
+
+    chunked = ChunkedMethodBuilder("CIterable")  # dead: disable
+    distribute = DistributeMethodBuilder("CIterable")
+    divide = DivideMethodBuilder("CIterable")
+
     # multiprocessing
 
     def pmap(
@@ -701,6 +710,12 @@ class CList(List[T]):
     def nth_combination(self: CList[T], r: int, index: int) -> Tuple[T, ...]:
         return self.iter().nth_combination(r, index)
 
+    # more-itertools
+
+    chunked = ChunkedMethodBuilder("CList")  # dead: disable
+    distribute = DistributeMethodBuilder("CList")
+    divide = DivideMethodBuilder("CList")
+
     # multiprocessing
 
     def pmap(
@@ -764,6 +779,12 @@ class CTuple(Tuple[T]):
 
     repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CTuple")
+
+    # more-itertools
+
+    chunked = ChunkedMethodBuilder("CTuple")  # dead: disable
+    distribute = DistributeMethodBuilder("CTuple")
+    divide = DivideMethodBuilder("CTuple")
 
 
 class CSet(Set[T]):
