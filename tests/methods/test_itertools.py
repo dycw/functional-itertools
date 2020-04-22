@@ -47,10 +47,8 @@ from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import islice_ints
-from tests.strategies import nested_siterables
 from tests.strategies import range_args
 from tests.strategies import real_iterables
-from tests.strategies import siterables
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
@@ -148,18 +146,18 @@ def test_filterfalse(case: Case, x: Iterable[int]) -> None:
 def test_groupby(case: Case, x: Iterable[int], key: Optional[Callable[[int], int]]) -> None:
     y = case.cls(x).groupby(key=key)
     assert isinstance(y, case.cls)
-    for zi in case.cast(y):
-        assert isinstance(zi, tuple)
-        zi0, zi1 = zi
-        assert isinstance(zi0, int)
+    for yi in y:
+        assert isinstance(yi, tuple)
+        yi0, yi1 = yi
+        assert isinstance(yi0, int)
         if case.cls is CSet:
-            assert isinstance(zi1, CFrozenSet)
+            assert isinstance(yi1, CFrozenSet)
         else:
-            assert isinstance(zi1, case.cls)
+            assert isinstance(yi1, case.cls)
     if case.cls in {CIterable, CList, CTuple}:
-        for (zi0, zi1), (wi0, wi1) in zip(case.cls(x).groupby(key=key), groupby(x, key=key)):
-            assert zi0 == wi0
-            assert case.cast(zi1) == case.cast(wi1)
+        for (yi0, yi1), (wi0, wi1) in zip(case.cls(x).groupby(key=key), groupby(x, key=key)):
+            assert yi0 == wi0
+            assert case.cast(yi1) == case.cast(wi1)
 
 
 @mark.parametrize("case", CASES)
@@ -215,7 +213,6 @@ def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
         times = data.draw(small_ints)
     y = case.cls.repeat(x, times=times)
     assert isinstance(y, case.cls)
-    _, case.cast = data.draw(siterables(case.cls, none()))
     z = repeat(x, *(() if times is None else (times,)))
     if (case.cls is CIterable) and (times is None):
         assert case.cast(y[:n]) == case.cast(islice(z, n))
@@ -224,45 +221,46 @@ def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(data=data())
-def test_starmap(case: Case, data: DataObject) -> None:
-    x, case.cast = data.draw(siterables(case.cls, tuples(integers(), integers())))
+@given(x=real_iterables(tuples(integers(), integers())))
+def test_starmap(case: Case, x: Iterable[Tuple[int, int]]) -> None:
     y = case.cls(x).starmap(max)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(starmap(max, x))
 
 
 @mark.parametrize("case", CASES)
-@given(data=data())
-def test_takewhile(case: Case, data: DataObject) -> None:
-    x, case.cast = data.draw(siterables(case.cls, integers()))
+@given(x=real_iterables(integers()))
+def test_takewhile(case: Case, x: Iterable[int]) -> None:
     y = case.cls(x).takewhile(is_even)
     assert isinstance(y, case.cls)
     if case.cls in {CIterable, CList, CTuple}:
         assert case.cast(y) == case.cast(takewhile(is_even, x))
 
 
-@mark.parametrize("case", [CIterable, CList, CTuple])
-@given(data=data(), n=small_ints)
-def test_tee(case: Case, data: DataObject, n: int) -> None:
-    x, case.cast = data.draw(siterables(case.cls, integers()))
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()), n=integers(0, 10))
+def test_tee(case: Case, x: Iterable[int], n: int) -> None:
     y = case.cls(x).tee(n=n)
     assert isinstance(y, case.cls)
-    for y_i in y:
-        assert isinstance(y_i, case.cls)
-        assert case.cast(y_i) == case.cast(x)
+    for yi in y:
+        if case.cls is CSet:
+            assert isinstance(yi, CFrozenSet)
+        else:
+            assert isinstance(yi, case.cls)
 
 
-@mark.parametrize("case", [CIterable, CList, CTuple])
-@given(data=data(), fillvalue=none() | integers())
-def test_zip_longest(case: Case, data: DataObject, fillvalue: Optional[int]) -> None:
-    x, case.cast = data.draw(siterables(case.cls, integers()))
-    xs, _ = data.draw(nested_siterables(case.cls, integers()))
-    y1, y2 = [cls(x).zip_longest(*xs, fillvalue=fillvalue) for _ in range(2)]
-    assert isinstance(y1, case.cls)
-    z1, z2 = [zip_longest(x, *xs, fillvalue=fillvalue) for _ in range(2)]
-    assert len(case.cast(y1)) == len(case.cast(z1))
-    for y_i, z_i in zip(y2, z2):
-        assert isinstance(y_i, case.cls)
-        if case.cls in {CIterable, CList, CTuple}:
-            assert case.cast(y_i) == case.cast(z_i)
+@mark.parametrize("case", CASES)
+@given(
+    x=real_iterables(integers()),
+    xs=real_iterables(real_iterables(integers())),
+    fillvalue=none() | integers(),
+)
+def test_zip_longest(
+    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], fillvalue: Optional[int],
+) -> None:
+    y = case.cls(x).zip_longest(*xs, fillvalue=fillvalue)
+    assert isinstance(y, case.cls)
+    z = case.cast(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert z == case.cast(zip_longest(x, *xs, fillvalue=fillvalue))

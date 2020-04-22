@@ -574,7 +574,11 @@ class TeeMethodBuilder(MethodBuilder):
     def _build_method(cls: Type[TeeMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], n: int = 2) -> Template[Template[T]]:
             cls = type(self)
-            return cls(tee(self, n)).map(cls)
+            if cls is CSet:
+                inner_cls = CFrozenSet
+            else:
+                inner_cls = cls
+            return cls(map(inner_cls, tee(self, n)))
 
         return method
 
@@ -586,9 +590,8 @@ class ZipLongestMethodBuilder(MethodBuilder):
     def _build_method(cls: Type[ZipLongestMethodBuilder]) -> Callable[..., Any]:
         def method(
             self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
-        ) -> Template[Template[T]]:
-            cls = type(self)
-            return cls(zip_longest(self, *iterables, fillvalue=fillvalue)).map(cls)
+        ) -> Template[CTuple[T]]:
+            return type(self)(map(CTuple, zip_longest(self, *iterables, fillvalue=fillvalue)))
 
         return method
 
@@ -1247,6 +1250,8 @@ class CSet(Set[T]):
     repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
     starmap = StarMapMethodBuilder("CSet")
     takewhile = TakeWhileMethodBuilder("CSet")
+    tee = TeeMethodBuilder("CSet")
+    zip_longest = ZipLongestMethodBuilder("CSet")
 
     # itertools - recipes
 
@@ -1383,6 +1388,8 @@ class CFrozenSet(FrozenSet[T]):
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
     starmap = StarMapMethodBuilder("CFrozenSet")
     takewhile = TakeWhileMethodBuilder("CFrozenSet")
+    tee = TeeMethodBuilder("CFrozenSet")
+    zip_longest = ZipLongestMethodBuilder("CFrozenSet")
 
     # itertools - recipes
 
