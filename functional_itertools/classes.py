@@ -78,7 +78,9 @@ from functional_itertools.methods import MapMethodBuilder
 from functional_itertools.methods import MaxMinMethodBuilder
 from functional_itertools.methods import MethodBuilder
 from functional_itertools.methods import RangeMethodBuilder
+from functional_itertools.methods import SumMethodBuilder
 from functional_itertools.methods import Template
+from functional_itertools.methods import ZipMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -272,16 +274,9 @@ class CIterable(Iterable[T]):
     range = classmethod(RangeMethodBuilder("CIterable"))  # noqa: A003
     set = SetMethodBuilder("CIterable")  # noqa: A003
     sorted = SortedMethodBuilder("CIterable")  # noqa: A003
+    sum = SumMethodBuilder("CIterable")  # noqa: A003
     tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-
-    def sum(self: CIterable[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        args, _ = drop_sentinel(start)
-        return sum(self._iterable, *args)
-
-    def zip(  # noqa: A003
-        self: CIterable[T], *iterables: Iterable[U],
-    ) -> CIterable[Tuple[Union[T, U]]]:
-        return CIterable(zip(self._iterable, *iterables))
+    zip = ZipMethodBuilder("CIterable")  # noqa: A003
 
     # functools
 
@@ -591,7 +586,9 @@ class CList(List[T]):
     range = classmethod(RangeMethodBuilder("CList"))  # noqa: A003
     set = SetMethodBuilder("CList")  # noqa: A003
     sorted = SortedMethodBuilder("CList")  # noqa: A003
+    sum = SumMethodBuilder("CList")  # noqa: A003
     tuple = TupleMethodBuilder("CList")  # noqa: A003
+    zip = ZipMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
@@ -604,12 +601,6 @@ class CList(List[T]):
     ) -> CList[T]:
         warn("Use the 'sorted' method instead of 'sort'")
         return self.sorted(key=key, reverse=reverse)
-
-    def sum(self: CList[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        return self.iter().sum(start=start)
-
-    def zip(self: CList[T], *iterables: Iterable[U]) -> CList[Tuple[Union[T, U]]]:  # noqa: A003
-        return self.iter().zip(*iterables).list()
 
     # functools
 
@@ -824,7 +815,9 @@ class CTuple(Tuple[T]):
     range = classmethod(RangeMethodBuilder("CTuple"))  # noqa: A003
     set = SetMethodBuilder("CTuple")  # noqa: A003
     sorted = SortedMethodBuilder("CTuple")  # noqa: A003
+    sum = SumMethodBuilder("CTuple")  # noqa: A003
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
+    zip = ZipMethodBuilder("CTuple")  # noqa: A003
 
 
 class CSet(Set[T]):
@@ -847,13 +840,9 @@ class CSet(Set[T]):
     range = classmethod(RangeMethodBuilder("CSet"))  # noqa: A003
     set = SetMethodBuilder("CSet")  # noqa: A003
     sorted = SortedMethodBuilder("CSet")  # noqa: A003
+    sum = SumMethodBuilder("CSet")  # noqa: A003
     tuple = TupleMethodBuilder("CSet")  # noqa: A003
-
-    def sum(self: CSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        return self.iter().sum(start=start)
-
-    def zip(self: CSet[T], *iterables: Iterable[U]) -> CSet[Tuple[Union[T, U]]]:  # noqa: A003
-        return self.iter().zip(*iterables).set()
+    zip = ZipMethodBuilder("CSet")  # noqa: A003
 
     # set & frozenset methods
 
@@ -1070,15 +1059,9 @@ class CFrozenSet(FrozenSet[T]):
     range = classmethod(RangeMethodBuilder("CFrozenSet"))  # noqa: A003
     set = SetMethodBuilder("CFrozenSet")  # noqa: A003
     sorted = SortedMethodBuilder("CFrozenSet")  # noqa: A003
+    sum = SumMethodBuilder("CFrozenSet")  # noqa: A003
     tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-
-    def sum(self: CFrozenSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        return self.iter().sum(start=start)
-
-    def zip(  # noqa: A003
-        self: CFrozenSet[T], *iterables: Iterable[U],
-    ) -> CFrozenSet[Tuple[Union[T, U]]]:
-        return self.iter().zip(*iterables).frozenset()
+    zip = ZipMethodBuilder("CFrozenSet")  # noqa: A003
 
     # set & frozenset methods
 

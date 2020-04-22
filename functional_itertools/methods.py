@@ -169,3 +169,25 @@ class RangeMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Return a range of integers as a {0}."
+
+
+class SumMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+        def method(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+            return sum(self, *(() if start is sentinel else (start,)))
+
+        return method
+
+    _doc = "Return the sum of the elements in {0}."
+
+
+class ZipMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+        def method(self: Template[T], *iterables: Iterable[U]) -> Template[Tuple[Union[T, U]]]:
+            return type(self)(zip(self, *iterables))
+
+        return method
+
+    _doc = "Return an iterator that aggregates elements from the {0} and the input iterables."

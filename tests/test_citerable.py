@@ -190,7 +190,7 @@ def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).enumerate(start=start)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
+    if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(enumerate(x, start=start))
 
 
@@ -317,14 +317,13 @@ def test_sorted(
     assert y == sorted(x, key=key, reverse=reverse)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), start=integers() | just(sentinel))
 def test_sum(cls: Type, data: DataObject, start: Union[int, Sentinel]) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     y = cls(x).sum(start=start)
     assert isinstance(y, int)
-    args, _ = drop_sentinel(start)
-    assert y == sum(x, *args)
+    assert y == sum(x, *(() if start is sentinel else (start,)))
 
 
 @mark.parametrize("cls", CLASSES)
@@ -336,14 +335,14 @@ def test_tuple(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(tuple(x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_zip(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).zip(*xs)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
+    if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(zip(x, *xs))
 
 
