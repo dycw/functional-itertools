@@ -108,7 +108,7 @@ def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
         assert cast(y) == cast(z)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple])
+@mark.parametrize("cls", CLASSES)
 @given(
     data=data(),
     initial=just({})
@@ -119,10 +119,11 @@ def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> Non
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).accumulate(add, **initial)
     assert isinstance(y, cls)
-    assert cast(y) == cast(accumulate(x, add, **initial))
+    if cls in {CIterable, CList, CTuple}:
+        assert cast(y) == cast(accumulate(x, add, **initial))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data())
 def test_chain(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
