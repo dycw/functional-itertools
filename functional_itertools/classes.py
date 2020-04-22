@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import reduce
-from itertools import accumulate
 from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
@@ -17,7 +16,6 @@ from itertools import takewhile
 from itertools import tee
 from itertools import zip_longest
 from multiprocessing import Pool
-from operator import add
 from pathlib import Path
 from sys import maxsize
 from typing import Any
@@ -65,7 +63,6 @@ from more_itertools.recipes import unique_justseen
 
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
-from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods.builtins import AllMethodBuilder
 from functional_itertools.methods.builtins import AnyMethodBuilder
 from functional_itertools.methods.builtins import EnumerateMethodBuilder
@@ -78,14 +75,13 @@ from functional_itertools.methods.builtins import RangeMethodBuilder
 from functional_itertools.methods.builtins import SumMethodBuilder
 from functional_itertools.methods.builtins import Template
 from functional_itertools.methods.builtins import ZipMethodBuilder
+from functional_itertools.methods.itertools import AccumulateMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from functional_itertools.utilities import warn_non_functional
 
 
@@ -172,52 +168,6 @@ class TupleMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CTuple from the {0}."
-
-
-if VERSION is Version.py37:
-
-    def _accumulate_citerable(
-        self: CIterable[T], func: Callable[[T, U], U] = add,
-    ) -> CIterable[Union[T, U]]:
-        return CIterable(accumulate(self._iterable, func))
-
-    def _accumulate_clist(self: CList[T], func: Callable[[T, U], U] = add) -> CList[Union[T, U]]:
-        return self.iter().accumulate(func=func).list()
-
-    def _accumulate_cset(self: CSet[T], func: Callable[[T, U], U] = add) -> CSet[Union[T, U]]:
-        return self.iter().accumulate(func=func).set()
-
-    def _accumulate_cfrozenset(
-        self: CFrozenSet[T], func: Callable[[T, U], U] = add,
-    ) -> CFrozenSet[Union[T, U]]:
-        return self.iter().accumulate(func=func).frozenset()
-
-
-elif VERSION is Version.py38:
-
-    def _accumulate_citerable(
-        self: CIterable[T], func: Callable[[T, U], U] = add, *, initial: Optional[U] = None,
-    ) -> CIterable[Union[T, U]]:
-        return CIterable(accumulate(self._iterable, func, initial=initial))
-
-    def _accumulate_clist(
-        self: CList[T], func: Callable[[T, U], U] = add, *, initial: Optional[U] = None,
-    ) -> CList[Union[T, U]]:
-        return self.iter().accumulate(func=func, initial=initial).list()
-
-    def _accumulate_cset(
-        self: CSet[T], func: Callable[[T, T], T] = add, *, initial: Optional[U] = None,
-    ) -> CSet[T]:
-        return self.iter().accumulate(func=func, initial=initial).set()
-
-    def _accumulate_cfrozenset(
-        self: CFrozenSet[T], func: Callable[[T, T], T] = add, *, initial: Optional[U] = None,
-    ) -> CFrozenSet[T]:
-        return self.iter().accumulate(func=func, initial=initial).frozenset()
-
-
-else:
-    raise UnsupportVersionError(VERSION)  # pragma: no cover
 
 
 class CIterable(Iterable[T]):
@@ -311,8 +261,7 @@ class CIterable(Iterable[T]):
     count = classmethod(CountMethodBuilder("CIterable"))
     cycle = CycleMethodBuilder("CIterable")
     repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
-
-    accumulate = _accumulate_citerable
+    accumulate = AccumulateMethodBuilder("CIterable")
 
     def chain(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
         return CIterable(chain(self._iterable, *iterables))
@@ -605,7 +554,7 @@ class CList(List[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
-    accumulate = _accumulate_clist
+    accumulate = AccumulateMethodBuilder("CList")
 
     def chain(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
         return self.iter().chain(*iterables).list()
@@ -814,12 +763,13 @@ class CTuple(Tuple[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
+    accumulate = AccumulateMethodBuilder("CTuple")
 
 
 class CSet(Set[T]):
     """A set with chainable methods."""
 
-    # built-
+    # built-ins
 
     all = AllMethodBuilder("CSet")  # noqa: A003
     any = AnyMethodBuilder("CSet")  # noqa: A003
@@ -906,8 +856,7 @@ class CSet(Set[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
-
-    accumulate = _accumulate_cset
+    accumulate = AccumulateMethodBuilder("CSet")
 
     def chain(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
         return self.iter().chain(*iterables).set()
@@ -1084,7 +1033,7 @@ class CFrozenSet(FrozenSet[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
-    accumulate = _accumulate_cfrozenset
+    accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
 
     def chain(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
         return self.iter().chain(*iterables).frozenset()

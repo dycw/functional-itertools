@@ -107,7 +107,7 @@ def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
         assert cast(y) == cast(z)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(
     data=data(),
     initial=just({})
