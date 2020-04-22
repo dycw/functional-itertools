@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from typing import Callable
 from typing import Iterable
+from typing import Tuple
 from typing import TypeVar
 
 
@@ -46,4 +47,15 @@ class AnyMethodBuilder(MethodBuilder):
 
         return method
 
-    _doc = "Return `True` if all elements of the {0} are true (or if the {0} is empty)."
+    _doc = "Return `True` if any element of {0} is true. If the {0} is empty, return `False`."
+
+
+class EnumerateMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., T]:
+        def method(self: Iterable[T], start: int = 0) -> Iterable[Tuple[int, T]]:
+            return type(self)(enumerate(self, start=start))
+
+        return method
+
+    _doc = "Return an enumerate object, cast as a {0}."

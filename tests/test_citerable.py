@@ -181,7 +181,7 @@ def test_dict(cls: Type, data: DataObject) -> None:
     assert isinstance(cls(x).dict(), CDict)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data(), start=integers())
 def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
