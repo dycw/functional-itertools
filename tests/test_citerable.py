@@ -207,14 +207,14 @@ def test_frozenset(cls: Type, data: DataObject) -> None:
     assert isinstance(cls(x).frozenset(), CFrozenSet)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_iter(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, tuples(integers(), integers())))
     assert isinstance(cls(x).iter(), CIterable)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_list(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
@@ -279,7 +279,7 @@ def test_range(
     )
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_set(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
@@ -307,14 +307,13 @@ def test_sum(cls: Type, data: DataObject, start: Union[int, Sentinel]) -> None:
     assert y == sum(x, *args)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_tuple(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(cls, integers()))
+    x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).tuple()
-    assert isinstance(y, tuple)
-    if cls in {CIterable, CList}:
-        assert y == tuple(x)
+    assert isinstance(y, CTuple)
+    assert cast(y) == cast(x)
 
 
 @mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])

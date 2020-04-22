@@ -22,7 +22,7 @@ class MethodBuilderMeta(type):
 
 class MethodBuilder(metaclass=MethodBuilderMeta):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., T]:  # noqa: U100
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:  # noqa: U100
         raise NotImplementedError
 
     _doc = NotImplemented
@@ -30,7 +30,7 @@ class MethodBuilder(metaclass=MethodBuilderMeta):
 
 class AllMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., T]:
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
         def method(self: Iterable[T]) -> bool:
             return all(self)
 
@@ -41,7 +41,7 @@ class AllMethodBuilder(MethodBuilder):
 
 class AnyMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., T]:
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
         def method(self: Iterable[T]) -> bool:
             return any(self)
 
@@ -52,7 +52,7 @@ class AnyMethodBuilder(MethodBuilder):
 
 class EnumerateMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., T]:
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
         def method(self: Iterable[T], start: int = 0) -> Iterable[Tuple[int, T]]:
             return type(self)(enumerate(self, start=start))
 
