@@ -6,7 +6,6 @@ from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import compress
-from itertools import count
 from itertools import cycle
 from itertools import dropwhile
 from itertools import filterfalse
@@ -81,6 +80,7 @@ from functional_itertools.methods.builtins import RangeMethodBuilder
 from functional_itertools.methods.builtins import SumMethodBuilder
 from functional_itertools.methods.builtins import Template
 from functional_itertools.methods.builtins import ZipMethodBuilder
+from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -308,9 +308,7 @@ class CIterable(Iterable[T]):
 
     # itertools
 
-    @classmethod
-    def count(cls: Type[CIterable], start: int = 0, step: int = 1) -> CIterable[int]:
-        return cls(count(start=start, step=step))
+    count = classmethod(CountMethodBuilder("CIterable"))
 
     def cycle(self: CIterable[T]) -> CIterable[T]:
         return CIterable(cycle(self._iterable))
