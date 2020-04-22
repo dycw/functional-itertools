@@ -8,10 +8,12 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+from attr import attrs
 from hypothesis.strategies import frozensets
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
+from hypothesis.strategies import none
 from hypothesis.strategies import SearchStrategy
 from hypothesis.strategies import tuples
 
@@ -22,9 +24,23 @@ from functional_itertools import CSet
 from functional_itertools import CTuple
 
 
-CLASSES = [CIterable, CList, CTuple, CSet, CFrozenSet]
 MAX_SIZE = 1000
 T = TypeVar("T")
+
+
+@attrs(auto_attribs=True)
+class Case:
+    cls: Type
+    cast: Type
+
+
+CASES = [
+    Case(CIterable, list),
+    Case(CList, list),
+    Case(CTuple, tuple),
+    Case(CSet, set),
+    Case(CFrozenSet, frozenset),
+]
 
 
 def slists(
@@ -78,3 +94,9 @@ def nested_siterables(
 
 small_ints = integers(0, 10)
 islice_ints = integers(0, MAX_SIZE)
+
+range_args = (
+    tuples(integers(0, MAX_SIZE), none(), none())
+    | tuples(integers(-MAX_SIZE, 0), integers(0, MAX_SIZE), none())
+    | tuples(integers(-MAX_SIZE, 0), integers(0, MAX_SIZE), integers(1, 10))
+)

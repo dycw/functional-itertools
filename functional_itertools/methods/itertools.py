@@ -5,10 +5,11 @@ from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import compress
-from itertools import count,groupby ,zip_longest
+from itertools import count
 from itertools import cycle
 from itertools import dropwhile
 from itertools import filterfalse
+from itertools import groupby
 from itertools import islice
 from itertools import permutations
 from itertools import product
@@ -16,6 +17,7 @@ from itertools import repeat
 from itertools import starmap
 from itertools import takewhile
 from itertools import tee
+from itertools import zip_longest
 from operator import add
 from typing import Any
 from typing import Callable
@@ -73,6 +75,35 @@ class ChainMethodBuilder(MethodBuilder):
         return method
 
     _doc = "chain('ABC', 'DEF') --> A B C D E F"
+
+
+class CombinationsMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CombinationsMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], r: int) -> Template[Template[T]]:
+            cls = type(self)
+            return cls(combinations(self, r)).map(cls)
+
+        return method
+
+    _doc = "\n".join(
+        [
+            "combinations('ABCD', 2) --> AB AC AD BC BD CD",
+            "combinations(range(4), 3) --> 012 013 023 123",
+        ],
+    )
+
+
+class CombinationsWithReplacementMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CombinationsWithReplacement]) -> Callable[..., Any]:
+        def method(self: Template[T], r: int) -> Template[Template[T]]:
+            cls = type(self)
+            return cls(combinations_with_replacement(self, r)).map(cls)
+
+        return method
+
+    _doc = "combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC"
 
 
 class CompressMethodBuilder(MethodBuilder):
@@ -267,9 +298,3 @@ if 0:
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
-
-    def combinations(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
-        return self.iter().combinations(r).list()
-
-    def combinations_with_replacement(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).list()

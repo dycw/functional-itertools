@@ -23,39 +23,6 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
-class AllMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[AllMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T]) -> bool:
-            return all(self)
-
-        return method
-
-    _doc = "Return `True` if all elements of the {0} are true (or if the {0} is empty)."
-
-
-class AnyMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[AnyMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T]) -> bool:
-            return any(self)
-
-        return method
-
-    _doc = "Return `True` if any element of {0} is true. If the {0} is empty, return `False`."
-
-
-class EnumerateMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[EnumerateMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], start: int = 0) -> Template[Tuple[int, T]]:
-            return type(self)(enumerate(self, start=start))
-
-        return method
-
-    _doc = "Return an enumerate object, cast as a {0}."
-
-
 class FilterMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: Type[FilterMethodBuilder]) -> Callable[..., Any]:

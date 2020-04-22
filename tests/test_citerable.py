@@ -109,9 +109,9 @@ def test_str(x: Iterable[int]) -> None:
 # functools
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("case", [CIterable, CList, CSet, CFrozenSet])
 @given(data=data(), initial=integers() | just(sentinel))
-def test_reduce(cls: Type, data: DataObject, initial: Union[int, Sentinel]) -> None:
+def test_reduce(case: Case, data: DataObject, initial: Union[int, Sentinel]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     args, _ = drop_sentinel(initial)
     try:
@@ -136,11 +136,11 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
 
 
 @mark.parametrize(
-    "cls, cls_base, func", [(CList, list, add), (CSet, set, or_), (CFrozenSet, frozenset, or_)],
+    "case, cls_base, func", [(CList, list, add), (CSet, set, or_), (CFrozenSet, frozenset, or_)],
 )
 @given(data=data())
 def test_reduce_returning_c_classes(
-    cls: Type, data: DataObject, cls_base: Type, func: Callable[[Any, Any], Any],
+    case: Case, data: DataObject, cls_base: Type, func: Callable[[Any, Any], Any],
 ) -> None:
     x, cast = data.draw(nested_siterables(cls, integers(), min_size=1))
     assert isinstance(CIterable(x).map(cls_base).reduce(func), cls)
@@ -149,10 +149,10 @@ def test_reduce_returning_c_classes(
 # pathlib
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("case", [CIterable, CList, CSet, CFrozenSet])
 @mark.parametrize("use_path", [True, False])
 @given(data=data())
-def test_iterdir(cls: Type, data: DataObject, use_path: bool) -> None:
+def test_iterdir(case: Case, data: DataObject, use_path: bool) -> None:
     x, cast = data.draw(siterables(cls, text(alphabet=ascii_lowercase, min_size=1), unique=True))
     with TemporaryDirectory() as temp_dir_str:
         temp_dir = Path(temp_dir_str)
@@ -162,7 +162,7 @@ def test_iterdir(cls: Type, data: DataObject, use_path: bool) -> None:
             y = cls.iterdir(temp_dir)
         else:
             y = cls.iterdir(temp_dir_str)
-        assert isinstance(y, cls)
+        assert isinstance(y, case.cls)
         assert set(y) == {temp_dir.joinpath(i) for i in x}
 
 
@@ -207,11 +207,11 @@ def test_pipe(x: List[int]) -> None:
     assert list(y) == list(permutations(x, r=2))
 
 
-@mark.parametrize("cls", [CIterable, CList])
+@mark.parametrize("case", [CIterable, CList])
 @given(x=lists(integers(), min_size=1))
-def test_unzip(cls: Type, x: List[int]) -> None:
+def test_unzip(case: Case, x: List[int]) -> None:
     indices, ints = cls(x).enumerate().unzip()
-    assert isinstance(indices, cls)
+    assert isinstance(indices, case.cls)
     assert list(indices) == list(range(len(x)))
-    assert isinstance(ints, cls)
+    assert isinstance(ints, case.cls)
     assert list(ints) == x

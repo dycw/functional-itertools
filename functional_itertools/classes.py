@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from functools import reduce
 from itertools import chain
-from itertools import combinations
-from itertools import combinations_with_replacement
 from itertools import islice
 from itertools import permutations
 from multiprocessing import Pool
@@ -54,9 +52,6 @@ from more_itertools.recipes import unique_justseen
 
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
-from functional_itertools.methods.builtins import AllMethodBuilder
-from functional_itertools.methods.builtins import AnyMethodBuilder
-from functional_itertools.methods.builtins import EnumerateMethodBuilder
 from functional_itertools.methods.builtins import FilterMethodBuilder
 from functional_itertools.methods.builtins import LenMethodBuilder
 from functional_itertools.methods.builtins import MapMethodBuilder
@@ -68,6 +63,8 @@ from functional_itertools.methods.builtins import Template
 from functional_itertools.methods.builtins import ZipMethodBuilder
 from functional_itertools.methods.itertools import AccumulateMethodBuilder
 from functional_itertools.methods.itertools import ChainMethodBuilder
+from functional_itertools.methods.itertools import CombinationsMethodBuilder
+from functional_itertools.methods.itertools import CombinationsWithReplacementMethodBuilder
 from functional_itertools.methods.itertools import CompressMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
@@ -99,6 +96,28 @@ W = TypeVar("W")
 # built-ins
 
 
+class AllMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[AllMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T]) -> bool:
+            return all(self)
+
+        return method
+
+    _doc = "Return `True` if all elements of the {0} are true (or if the {0} is empty)."
+
+
+class AnyMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[AnyMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T]) -> bool:
+            return any(self)
+
+        return method
+
+    _doc = "Return `True` if any element of {0} is true. If the {0} is empty, return `False`."
+
+
 class DictMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: DictMethodBuilder) -> Callable[..., CDict]:
@@ -108,6 +127,17 @@ class DictMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CDict from the {0}."
+
+
+class EnumerateMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[EnumerateMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], start: int = 0) -> Template[CTuple[int, T]]:
+            return type(self)(map(CTuple, enumerate(self, start=start)))
+
+        return method
+
+    _doc = "Return an enumerate object, cast as a {0}."
 
 
 class IterMethodBuilder(MethodBuilder):
@@ -269,6 +299,8 @@ class CIterable(Iterable[T]):
 
     # itertools
 
+    combinations = CombinationsMethodBuilder("CIterable")
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CIterable")
     count = classmethod(CountMethodBuilder("CIterable"))
     cycle = CycleMethodBuilder("CIterable")
     repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
@@ -287,12 +319,6 @@ class CIterable(Iterable[T]):
 
     def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[Tuple[T, ...]]:
         return CIterable(permutations(self._iterable, r=r))
-
-    def combinations(self: CIterable[T], r: int) -> CIterable[Tuple[T, ...]]:
-        return CIterable(combinations(self._iterable, r))
-
-    def combinations_with_replacement(self: CIterable[T], r: int) -> CIterable[Tuple[T, ...]]:
-        return CIterable(combinations_with_replacement(self._iterable, r))
 
     # itertools-recipes
 
@@ -530,6 +556,8 @@ class CList(List[T]):
 
     # itertools
 
+    combinations = CombinationsMethodBuilder("CList")
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CList")
     repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CList")
     chain = ChainMethodBuilder("CList")
@@ -546,12 +574,6 @@ class CList(List[T]):
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
-
-    def combinations(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
-        return self.iter().combinations(r).list()
-
-    def combinations_with_replacement(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).list()
 
     # itertools-recipes
 
@@ -712,6 +734,8 @@ class CTuple(Tuple[T]):
 
     # itertools
 
+    combinations = CombinationsMethodBuilder("CTuple")
+    combinations_with_replacement = CombinationsWithReplacementMethodBuilder("CTuple")
     repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CTuple")
     chain = ChainMethodBuilder("CTuple")
@@ -831,16 +855,9 @@ class CSet(Set[T]):
     islice = ISliceMethodBuilder("CSet")
     starmap = StarMapMethodBuilder("CSet")
     takewhile = TakeWhileMethodBuilder("CSet")
-    zip_longest = ZipLongestMethodBuilder("CSet")
 
     def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[Tuple[T, ...]]:
         return self.iter().permutations(r=r).set()
-
-    def combinations(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
-        return self.iter().combinations(r).set()
-
-    def combinations_with_replacement(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).set()
 
     # itertools - recipes
 
@@ -964,7 +981,7 @@ class CFrozenSet(FrozenSet[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
-    accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
+    accumulate = AccumulateMethodBuilder("CFrozenSet")
     chain = ChainMethodBuilder("CFrozenSet")
     compress = CompressMethodBuilder("CFrozenSet")
     dropwhile = DropWhileMethodBuilder("CFrozenSet")
@@ -972,16 +989,9 @@ class CFrozenSet(FrozenSet[T]):
     islice = ISliceMethodBuilder("CFrozenSet")
     starmap = StarMapMethodBuilder("CFrozenSet")
     takewhile = TakeWhileMethodBuilder("CFrozenSet")
-    zip_longest = ZipLongestMethodBuilder("CFrozenSet")
 
     def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[Tuple[T, ...]]:
         return self.iter().permutations(r=r).frozenset()
-
-    def combinations(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
-        return self.iter().combinations(r).frozenset()
-
-    def combinations_with_replacement(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).frozenset()
 
     # itertools - recipes
 

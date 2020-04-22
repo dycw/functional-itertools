@@ -24,7 +24,6 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Type
 
 from hypothesis import assume
 from hypothesis import given
@@ -44,7 +43,7 @@ from functional_itertools import CList
 from functional_itertools import CTuple
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
-from tests.strategies import CLASSES
+from tests.strategies import CASES
 from tests.strategies import islice_ints
 from tests.strategies import nested_siterables
 from tests.strategies import siterables
@@ -53,57 +52,63 @@ from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(
     data=data(),
     initial=just({})
     if VERSION is Version.py37
     else fixed_dictionaries({"initial": none() | integers()}),
 )
-def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> None:
+def test_accumulate(case: Case, data: DataObject, initial: Dict[str, Any]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).accumulate(add, **initial)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(accumulate(x, add, **initial))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data())
-def test_chain(cls: Type, data: DataObject) -> None:
+def test_chain(case: Case, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).chain(*xs)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     assert cast(y) == cast(chain(x, *xs))
 
 
-@mark.parametrize("cls", CLASSES)
-@given(data=data(), r=small_ints)
-def test_combinations(cls: Type, data: DataObject, r: int) -> None:
-    x, cast = data.draw(siterables(cls, integers(), max_size=3))
-    y = cls(x).combinations(r)
-    assert isinstance(y, cls)
-    assert cast(y) == cast(combinations(x, r))
+@mark.parametrize("case", [CIterable, CList, CTuple])
+@given(x=lists(integers(), max_size=100), r=integers(1, 10))
+def test_combinations(case: Case, x: List[int], r: int) -> None:
+    y1, y2 = [cls(x).combinations(r) for _ in range(2)]
+    assert isinstance(y1, case.cls)
+    z1, z2 = [combinations(x, r) for _ in range(2)]
+    assert len(list(y1)) == len(list(z1))
+    for y_i, z_i in zip(y2, z2):
+        assert isinstance(y_i, case.cls)
+        assert list(y_i) == list(z_i)
 
 
-@mark.parametrize("cls", CLASSES)
-@given(data=data(), r=small_ints)
-def test_combinations_with_replacement(cls: Type, data: DataObject, r: int) -> None:
-    x, cast = data.draw(siterables(cls, integers(), max_size=3))
-    y = cls(x).combinations_with_replacement(r)
-    assert isinstance(y, cls)
-    if cls in {CIterable, CList, CTuple}:
-        assert cast(y) == cast(combinations_with_replacement(x, r))
+@mark.parametrize("case", CASES)
+@given(data=data(), r=integers(1, 10))
+def test_combinations_with_replacement(case: Case, data: DataObject, r: int) -> None:
+    x, cast = data.draw(siterables(cls, integers()))
+    y1, y2 = [cls(x).combinations_with_replacement(r) for _ in range(2)]
+    assert isinstance(y1, case.cls)
+    z1, z2 = [combinations_with_replacement(x, r) for _ in range(2)]
+    assert len(list(y1)) == len(list(z1))
+    for y_i, z_i in zip(y2, z2):
+        assert isinstance(y_i, CTuple)
+        assert cast(y_i) == cast(z_i)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data())
-def test_compress(cls: Type, data: DataObject) -> None:
+def test_compress(case: Case, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     selectors = data.draw(lists(booleans(), min_size=len(x), max_size=len(x)))
     y = cls(x).compress(selectors)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(compress(x, selectors))
 
@@ -122,55 +127,55 @@ def test_cycle(x: List[int], n: int) -> None:
     assert list(y[:n]) == list(islice(cycle(x), n))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data())
-def test_dropwhile(cls: Type, data: DataObject) -> None:
+def test_dropwhile(case: Case, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).dropwhile(is_even)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(dropwhile(is_even, x))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data())
-def test_filterfalse(cls: Type, data: DataObject) -> None:
+def test_filterfalse(case: Case, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).filterfalse(is_even)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(filterfalse(is_even, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple])
+@mark.parametrize("case", [CIterable, CList, CTuple])
 @given(data=data(), key=none() | just(neg))
-def test_groupby(cls: Type, data: DataObject, key: Optional[Callable[[int], int]]) -> None:
+def test_groupby(case: Case, data: DataObject, key: Optional[Callable[[int], int]]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y1, y2 = [cls(x).groupby(key=key) for _ in range(2)]
-    assert isinstance(y1, cls)
+    assert isinstance(y1, case.cls)
     z1, z2 = [groupby(x, key=key) for _ in range(2)]
     assert len(cast(y1)) == len(cast(z1))
     for y_i, (kz_i, vz_i) in zip(y2, z2):
-        assert isinstance(y_i, CTuple)
+        assert isinstance(y_i, tuple)
         ky_i, vy_i = y_i
         assert isinstance(ky_i, int)
         assert ky_i == kz_i
-        assert isinstance(vy_i, cls)
+        assert isinstance(vy_i, case.cls)
         assert cast(vy_i) == cast(vz_i)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(
     data=data(), start=islice_ints, stop=none() | islice_ints, step=none() | islice_ints,
 )
 def test_islice(
-    cls: Type, data: DataObject, start: int, stop: Optional[int], step: Optional[int],
+    case: Case, data: DataObject, start: int, stop: Optional[int], step: Optional[int],
 ) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     if step is not None:
         assume((stop is not None) and (step != 0))
     y = cls(x).islice(start, stop, step)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(
             islice(
@@ -179,38 +184,38 @@ def test_islice(
         )
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data(), r=none() | small_ints)
-def test_permutations(cls: Type, data: DataObject, r: Optional[int]) -> None:
+def test_permutations(case: Case, data: DataObject, r: Optional[int]) -> None:
     x, cast = data.draw(siterables(cls, integers(), max_size=3))
     y = cls(x).permutations(r=r)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     assert cast(y) == cast(permutations(x, r=r))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple])
+@mark.parametrize("case", [CIterable, CList, CTuple])
 @given(data=data(), repeat=integers(1, 3))
-def test_product(cls: Type, data: DataObject, repeat: int) -> None:
+def test_product(case: Case, data: DataObject, repeat: int) -> None:
     x, cast = data.draw(siterables(cls, integers(), max_size=3))
     xs, _ = data.draw(nested_siterables(cls, integers(), max_size=3))
     y1, y2 = [cls(x).product(*xs, repeat=repeat) for _ in range(2)]
-    assert isinstance(y1, cls)
+    assert isinstance(y1, case.cls)
     z1, z2 = [product(x, *xs, repeat=repeat) for _ in range(2)]
     assert len(cast(y1)) == len(cast(z1))
     for y_i, z_i in zip(y2, z2):
-        assert isinstance(y_i, cls)
+        assert isinstance(y_i, case.cls)
         assert cast(y_i) == cast(z_i)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data(), x=integers(), n=islice_ints)
-def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
+def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
     if cls is CIterable:
         times = data.draw(none() | small_ints)
     else:
         times = data.draw(small_ints)
     y = cls.repeat(x, times=times)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     _, cast = data.draw(siterables(cls, none()))
     z = repeat(x, *(() if times is None else (times,)))
     if (cls is CIterable) and (times is None):
@@ -219,46 +224,46 @@ def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
         assert cast(y) == cast(z)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data())
-def test_starmap(cls: Type, data: DataObject) -> None:
+def test_starmap(case: Case, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
     y = cls(x).starmap(max)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     assert cast(y) == cast(starmap(max, x))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(data=data())
-def test_takewhile(cls: Type, data: DataObject) -> None:
+def test_takewhile(case: Case, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).takewhile(is_even)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(takewhile(is_even, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple])
+@mark.parametrize("case", [CIterable, CList, CTuple])
 @given(data=data(), n=small_ints)
-def test_tee(cls: Type, data: DataObject, n: int) -> None:
+def test_tee(case: Case, data: DataObject, n: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).tee(n=n)
-    assert isinstance(y, cls)
+    assert isinstance(y, case.cls)
     for y_i in y:
-        assert isinstance(y_i, cls)
+        assert isinstance(y_i, case.cls)
         assert cast(y_i) == cast(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", [CIterable, CList, CTuple])
 @given(data=data(), fillvalue=none() | integers())
-def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> None:
+def test_zip_longest(case: Case, data: DataObject, fillvalue: Optional[int]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y1, y2 = [cls(x).zip_longest(*xs, fillvalue=fillvalue) for _ in range(2)]
-    assert isinstance(y1, cls)
+    assert isinstance(y1, case.cls)
     z1, z2 = [zip_longest(x, *xs, fillvalue=fillvalue) for _ in range(2)]
     assert len(cast(y1)) == len(cast(z1))
     for y_i, z_i in zip(y2, z2):
-        assert isinstance(y_i, CTuple)
+        assert isinstance(y_i, case.cls)
         if cls in {CIterable, CList, CTuple}:
             assert cast(y_i) == cast(z_i)
