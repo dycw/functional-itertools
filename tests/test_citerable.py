@@ -245,7 +245,7 @@ def test_map(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(map(neg, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @mark.parametrize("func", [max, min])
 @given(
     data=data(),

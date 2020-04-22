@@ -66,8 +66,6 @@ from more_itertools.recipes import take
 from more_itertools.recipes import unique_everseen
 from more_itertools.recipes import unique_justseen
 
-from functional_itertools.compat import MAX_MIN_KEY_ANNOTATION
-from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
@@ -77,6 +75,7 @@ from functional_itertools.methods import EnumerateMethodBuilder
 from functional_itertools.methods import FilterMethodBuilder
 from functional_itertools.methods import LenMethodBuilder
 from functional_itertools.methods import MapMethodBuilder
+from functional_itertools.methods import MaxMinMethodBuilder
 from functional_itertools.methods import MethodBuilder
 from functional_itertools.methods import Template
 from functional_itertools.utilities import drop_sentinel
@@ -253,27 +252,11 @@ class CIterable(Iterable[T]):
     iter = IterMethodBuilder("CIterable")  # noqa: A003
     list = ListMethodBuilder("CIterable")  # noqa: A003
     map = MapMethodBuilder("CIterable")  # noqa: A003
+    max = MaxMinMethodBuilder("CIterable", func=max)  # noqa: A003
+    min = MaxMinMethodBuilder("CIterable", func=min)  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CIterable")  # noqa: A003
     set = SetMethodBuilder("CIterable")  # noqa: A003
     tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-
-    def max(  # noqa: A003
-        self: CIterable[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        _, kwargs = drop_sentinel(key=key, default=default)
-        return max(self._iterable, **kwargs)
-
-    def min(  # noqa: A003
-        self: CIterable[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        _, kwargs = drop_sentinel(key=key, default=default)
-        return min(self._iterable, **kwargs)
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
@@ -613,27 +596,13 @@ class CList(List[T]):
     list = ListMethodBuilder("CList")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CList")  # noqa: A003
     map = MapMethodBuilder("CList")  # noqa: A003
+    max = MaxMinMethodBuilder("CList", func=max)  # noqa: A003
+    min = MaxMinMethodBuilder("CList", func=min)  # noqa: A003
     set = SetMethodBuilder("CList")  # noqa: A003
     tuple = TupleMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
-
-    def max(  # noqa: A003
-        self: CList[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.iter().max(key=key, default=default)
-
-    def min(  # noqa: A003
-        self: CList[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.iter().min(key=key, default=default)
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
@@ -876,6 +845,8 @@ class CTuple(Tuple[T]):
     len = LenMethodBuilder("CTuple")  # noqa: A003
     list = ListMethodBuilder("CTuple")  # noqa: A003
     map = MapMethodBuilder("CTuple")  # noqa: A003
+    max = MaxMinMethodBuilder("CTuple", func=max)  # noqa: A003
+    min = MaxMinMethodBuilder("CTuple", func=min)  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CTuple")  # noqa: A003
     set = SetMethodBuilder("CTuple")  # noqa: A003
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
@@ -896,24 +867,10 @@ class CSet(Set[T]):
     list = ListMethodBuilder("CSet")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CSet")  # noqa: A003
     map = MapMethodBuilder("CSet")  # noqa: A003
+    max = MaxMinMethodBuilder("CSet", func=max)  # noqa: A003
+    min = MaxMinMethodBuilder("CSet", func=min)  # noqa: A003
     set = SetMethodBuilder("CSet")  # noqa: A003
     tuple = TupleMethodBuilder("CSet")  # noqa: A003
-
-    def max(  # noqa: A003
-        self: CSet[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.iter().max(key=key, default=default)
-
-    def min(  # noqa: A003
-        self: CSet[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.iter().min(key=key, default=default)
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
@@ -1150,24 +1107,10 @@ class CFrozenSet(FrozenSet[T]):
     list = ListMethodBuilder("CFrozenSet")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CFrozenSet")  # noqa: A003
     map = MapMethodBuilder("CFrozenSet")  # noqa: A003
+    max = MaxMinMethodBuilder("CFrozenSet", func=max)  # noqa: A003
+    min = MaxMinMethodBuilder("CFrozenSet", func=min)  # noqa: A003
     set = SetMethodBuilder("CFrozenSet")  # noqa: A003
     tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-
-    def max(  # noqa: A003
-        self: CFrozenSet[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.iter().max(key=key, default=default)
-
-    def min(  # noqa: A003
-        self: CFrozenSet[T],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.iter().min(key=key, default=default)
 
     @classmethod  # noqa: A003
     def range(  # noqa: A003
@@ -1374,24 +1317,6 @@ class CDict(Dict[T, U]):
 
     # built-in
 
-    def all_keys(self: CDict[Any, Any]) -> bool:  # dead: disable
-        return self.keys().all()
-
-    def all_values(self: CDict[Any, Any]) -> bool:  # dead: disable
-        return self.values().all()
-
-    def all_items(self: CDict[Any, Any]) -> bool:  # dead: disable
-        return self.items().all()
-
-    def any_keys(self: CDict[Any, Any]) -> bool:  # dead: disable
-        return self.keys().any()
-
-    def any_values(self: CDict[Any, Any]) -> bool:  # dead: disable
-        return self.values().any()
-
-    def any_items(self: CDict[Any, Any]) -> bool:  # dead: disable
-        return self.items().any()
-
     def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> bool:
             key, _ = item
@@ -1415,24 +1340,6 @@ class CDict(Dict[T, U]):
 
         return self.items().filter(inner).dict()
 
-    def frozenset_keys(self: CDict[T, Any]) -> CFrozenSet[T]:  # dead: disable
-        return self.keys().frozenset()
-
-    def frozenset_values(self: CDict[T, Any]) -> CFrozenSet[U]:  # dead: disable
-        return self.values().frozenset()
-
-    def frozenset_items(self: CDict[T, Any]) -> CFrozenSet[Tuple[T, U]]:  # dead: disable
-        return self.items().frozenset()
-
-    def list_keys(self: CDict[T, Any]) -> CList[T]:  # dead: disable
-        return self.keys().list()
-
-    def list_values(self: CDict[Any, U]) -> CList[U]:  # dead: disable
-        return self.values().list()
-
-    def list_items(self: CDict[T, U]) -> CList[Tuple[T, U]]:  # dead: disable
-        return self.items().list()
-
     def map_keys(self: CDict[T, U], func: Callable[[T], V]) -> CDict[V, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> Tuple[V, U]:
             key, value = item
@@ -1455,37 +1362,3 @@ class CDict(Dict[T, U]):
             return func(key, value)
 
         return self.items().map(inner).dict()
-
-    def max_keys(  # dead: disable
-        self: CDict[T, U],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        return self.keys().max(key=key, default=default)
-
-    def max_values(  # dead: disable
-        self: CDict[T, U],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[U, Sentinel] = sentinel,
-    ) -> U:
-        return self.values().max(key=key, default=default)
-
-    def max_items(  # dead: disable
-        self: CDict[T, U],
-        *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
-        default: Union[T, Sentinel] = sentinel,
-    ) -> T:
-        _, kwargs = drop_sentinel(key=key, default=default)
-        return max(self.items(), **kwargs)
-
-    def set_keys(self: CDict[T, U]) -> CSet[T]:  # dead: disable
-        return self.keys().set()
-
-    def set_values(self: CDict[T, U]) -> CSet[U]:  # dead: disable
-        return self.values().set()
-
-    def set_items(self: CDict[T, U]) -> CSet[Tuple[T, U]]:  # dead: disable
-        return self.items().set()

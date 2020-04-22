@@ -7,7 +7,13 @@ from typing import Iterable
 from typing import Optional
 from typing import Tuple
 from typing import TypeVar
+from typing import Union
 
+from functional_itertools.errors import UnsupportVersionError
+from functional_itertools.utilities import Sentinel
+from functional_itertools.utilities import sentinel
+from functional_itertools.utilities import VERSION
+from functional_itertools.utilities import Version
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -20,8 +26,8 @@ class Template(Iterable[T]):
 
 
 class MethodBuilderMeta(type):
-    def __call__(cls: MethodBuilder, cls_name: str) -> Callable[..., Any]:
-        method = cls._build_method()
+    def __call__(cls: MethodBuilder, cls_name: str, **kwargs: Any) -> Callable[..., Any]:
+        method = cls._build_method(**kwargs)
         method.__annotations__ = {
             k: v.replace("Template", cls_name) for k, v in method.__annotations__.items()
         }
@@ -30,8 +36,8 @@ class MethodBuilderMeta(type):
 
 
 class MethodBuilder(metaclass=MethodBuilderMeta):
-    @classmethod
-    def _build_method(cls: MethodBuilder) -> FunctionType:  # noqa: U100
+    @classmethod  # noqa: U100
+    def _build_method(cls: MethodBuilder, **kwargs: Any) -> FunctionType:  # noqa: U100
         raise NotImplementedError
 
     _doc = NotImplemented
@@ -97,6 +103,41 @@ class MapMethodBuilder(MethodBuilder):
     def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
         def method(self: Template[T], func: Callable[..., U], *iterables: Iterable) -> Template[U]:
             return type(self)(map(func, self, *iterables))
+
+        return method
+
+    _doc = "Construct a {0} by applying `func` to every item of the {0}."
+
+
+class MaxMinMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder, func: Callable[..., Any]) -> Callable[..., Any]:
+        if VERSION is Version.py37:
+
+            def method(
+                self: Template[T],
+                *,
+                key: Union[Callable[[T], Any], Sentinel] = sentinel,
+                default: V = sentinel,
+            ) -> Union[T, U]:
+                return func(
+                    self,
+                    **({} if key is sentinel else {"key": key}),
+                    **({} if default is sentinel else {"default": default}),
+                )
+
+        elif VERSION is Version.py38:
+
+            def method(
+                self: Template[T],
+                *,
+                key: Optional[Callable[[T], Any]] = None,
+                default: U = sentinel,
+            ) -> Union[T, U]:
+                return func(self, key=key, **({} if default is sentinel else {"default": default}))
+
+        else:
+            raise UnsupportVersionError(VERSION)  # pragma: no cover
 
         return method
 
