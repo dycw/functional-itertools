@@ -245,7 +245,7 @@ def test_map(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(map(neg, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @mark.parametrize("func", [max, min])
 @given(
     data=data(),
@@ -277,7 +277,7 @@ def test_max_and_min(
         assert y == func(x, **key_kwargs, **default_kwargs)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(
     data=data(), start=islice_ints, stop=none() | islice_ints, step=none() | islice_ints,
 )
