@@ -228,10 +228,14 @@ def test_tee(cls: Type, data: DataObject, n: int) -> None:
 def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
-    y = cls(x).zip_longest(*xs, fillvalue=fillvalue)
-    assert isinstance(y, cls)
-    if cls in {CIterable, CList, CTuple}:
-        assert cast(y) == cast(zip_longest(x, *xs, fillvalue=fillvalue))
+    y1, y2 = [cls(x).zip_longest(*xs, fillvalue=fillvalue) for _ in range(2)]
+    assert isinstance(y1, cls)
+    z1, z2 = [zip_longest(x, *xs, fillvalue=fillvalue) for _ in range(2)]
+    assert len(cast(y1)) == len(cast(z1))
+    for y_i, z_i in zip(y2, z2):
+        assert isinstance(y_i, CTuple)
+        if cls in {CIterable, CList, CTuple}:
+            assert cast(y_i) == cast(z_i)
 
 
 @mark.parametrize("cls", CLASSES)

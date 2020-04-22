@@ -74,7 +74,7 @@ from functional_itertools.methods.itertools import ChainMethodBuilder
 from functional_itertools.methods.itertools import CompressMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
-from functional_itertools.methods.itertools import DropwhileMethodBuilder
+from functional_itertools.methods.itertools import DropWhileMethodBuilder
 from functional_itertools.methods.itertools import FilterFalseMethodBuilder
 from functional_itertools.methods.itertools import ISliceMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
@@ -200,6 +200,19 @@ class GroupByMethodBuilder(MethodBuilder):
     )
 
 
+class ZipLongestMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[ZipLongestMethodBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[T], *iterables: Iterable[U], fillvalue: V = None
+        ) -> Template[CTuple[T]]:
+            return type(self)(map(CTuple, zip_longest(self, *iterables, fillvalue=fillvalue)))
+
+        return method
+
+    _doc = "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-"
+
+
 # classes
 
 
@@ -297,18 +310,14 @@ class CIterable(Iterable[T]):
     accumulate = AccumulateMethodBuilder("CIterable")
     chain = ChainMethodBuilder("CIterable")
     compress = CompressMethodBuilder("CIterable")
-    dropwhile = DropwhileMethodBuilder("CIterable")
+    dropwhile = DropWhileMethodBuilder("CIterable")
     filterfalse = FilterFalseMethodBuilder("CIterable")
     groupby = GroupByMethodBuilder("CIterable")
     islice = ISliceMethodBuilder("CIterable")
     starmap = StarMapMethodBuilder("CIterable")
     takewhile = TakeWhileMethodBuilder("CIterable")
     tee = TeeMethodBuilder("CIterable")
-
-    def zip_longest(
-        self: CIterable[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CIterable[Tuple[Union[T, U, V]]]:
-        return CIterable(zip_longest(self._iterable, *iterables, fillvalue=fillvalue))
+    zip_longest = ZipLongestMethodBuilder("CIterable")
 
     def product(
         self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
@@ -564,18 +573,14 @@ class CList(List[T]):
     accumulate = AccumulateMethodBuilder("CList")
     chain = ChainMethodBuilder("CList")
     compress = CompressMethodBuilder("CList")
-    dropwhile = DropwhileMethodBuilder("CList")
+    dropwhile = DropWhileMethodBuilder("CList")
     filterfalse = FilterFalseMethodBuilder("CList")
     groupby = GroupByMethodBuilder("CList")
     islice = ISliceMethodBuilder("CList")
     starmap = StarMapMethodBuilder("CList")
     takewhile = TakeWhileMethodBuilder("CList")
     tee = TeeMethodBuilder("CList")
-
-    def zip_longest(
-        self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CList[Tuple[Union[T, U, V]]]:
-        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
+    zip_longest = ZipLongestMethodBuilder("CList")
 
     def product(
         self: CList[T], *iterables: Iterable[U], repeat: int = 1,
@@ -754,13 +759,14 @@ class CTuple(Tuple[T]):
     accumulate = AccumulateMethodBuilder("CTuple")
     chain = ChainMethodBuilder("CTuple")
     compress = CompressMethodBuilder("CTuple")
-    dropwhile = DropwhileMethodBuilder("CTuple")
+    dropwhile = DropWhileMethodBuilder("CTuple")
     filterfalse = FilterFalseMethodBuilder("CTuple")
     groupby = GroupByMethodBuilder("CTuple")
     islice = ISliceMethodBuilder("CTuple")
     starmap = StarMapMethodBuilder("CTuple")
     takewhile = TakeWhileMethodBuilder("CTuple")
     tee = TeeMethodBuilder("CTuple")
+    zip_longest = ZipLongestMethodBuilder("CTuple")
 
     # more-itertools
 
@@ -862,16 +868,12 @@ class CSet(Set[T]):
     accumulate = AccumulateMethodBuilder("CSet")
     chain = ChainMethodBuilder("CSet")
     compress = CompressMethodBuilder("CSet")
-    dropwhile = DropwhileMethodBuilder("CSet")
+    dropwhile = DropWhileMethodBuilder("CSet")
     filterfalse = FilterFalseMethodBuilder("CSet")
     islice = ISliceMethodBuilder("CSet")
     starmap = StarMapMethodBuilder("CSet")
     takewhile = TakeWhileMethodBuilder("CSet")
-
-    def zip_longest(
-        self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CSet[Tuple[Union[T, U, V]]]:
-        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).set()
+    zip_longest = ZipLongestMethodBuilder("CSet")
 
     def product(
         self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
@@ -1012,16 +1014,12 @@ class CFrozenSet(FrozenSet[T]):
     accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
     chain = ChainMethodBuilder("CFrozenSet")
     compress = CompressMethodBuilder("CFrozenSet")
-    dropwhile = DropwhileMethodBuilder("CFrozenSet")
+    dropwhile = DropWhileMethodBuilder("CFrozenSet")
     filterfalse = FilterFalseMethodBuilder("CFrozenSet")
     islice = ISliceMethodBuilder("CFrozenSet")
     starmap = StarMapMethodBuilder("CFrozenSet")
     takewhile = TakeWhileMethodBuilder("CFrozenSet")
-
-    def zip_longest(
-        self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CFrozenSet[Tuple[Union[T, U, V]]]:
-        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
+    zip_longest = ZipLongestMethodBuilder("CFrozenSet")
 
     def product(
         self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,

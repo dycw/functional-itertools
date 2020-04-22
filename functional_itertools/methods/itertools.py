@@ -16,7 +16,6 @@ from itertools import repeat
 from itertools import starmap
 from itertools import takewhile
 from itertools import tee
-from itertools import zip_longest
 from operator import add
 from typing import Any
 from typing import Callable
@@ -129,9 +128,9 @@ class CompressMethodBuilder(MethodBuilder):
     _doc = "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F"
 
 
-class DropwhileMethodBuilder(MethodBuilder):
+class DropWhileMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[DropWhileMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
             return type(self)(dropwhile(func, self))
 
@@ -142,7 +141,7 @@ class DropwhileMethodBuilder(MethodBuilder):
 
 class FilterFalseMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[FilterFalseMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
             return type(self)(filterfalse(func, self))
 
@@ -153,7 +152,7 @@ class FilterFalseMethodBuilder(MethodBuilder):
 
 class ISliceMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[ISliceMethodBuilder]) -> Callable[..., Any]:
         def method(
             self: Template[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
         ) -> Template[T]:
@@ -183,7 +182,7 @@ class ISliceMethodBuilder(MethodBuilder):
 
 class StarMapMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[StarMapMethodBuilder]) -> Callable[..., Any]:
         def method(
             self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
         ) -> Template[U]:
@@ -196,7 +195,7 @@ class StarMapMethodBuilder(MethodBuilder):
 
 class TakeWhileMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[TakeWhileMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
             return type(self)(takewhile(func, self))
 
@@ -207,7 +206,7 @@ class TakeWhileMethodBuilder(MethodBuilder):
 
 class TeeMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[TeeMethodBuilder]) -> Callable[..., Any]:
         def method(self: Template[T], n: int = 2) -> Template[Template[T]]:
             cls = type(self)
             return cls(tee(self, n)).map(cls)
@@ -218,14 +217,6 @@ class TeeMethodBuilder(MethodBuilder):
 
 
 if 0:
-
-    def tee(self: CList[T], n: int = 2) -> CList[CList[T]]:
-        return self.iter().tee(n=n).list().map(CList)
-
-    def zip_longest(
-        self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CList[Tuple[Union[T, U, V]]]:
-        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
 
     def product(
         self: CList[T], *iterables: Iterable[U], repeat: int = 1,
