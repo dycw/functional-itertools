@@ -79,6 +79,8 @@ from functional_itertools.methods.itertools import AccumulateMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
+from functional_itertools.methods.more_itertools import ChunkedMethodBuilder
+from functional_itertools.methods.more_itertools import DistributeMethodBuilder
 from functional_itertools.methods.more_itertools import DivideMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
@@ -433,6 +435,8 @@ class CIterable(Iterable[T]):
 
     # more-itertools
 
+    chunked = ChunkedMethodBuilder("CIterable")  # dead: disable
+    distribute = DistributeMethodBuilder("CIterable")
     divide = DivideMethodBuilder("CIterable")
 
     # multiprocessing
@@ -708,6 +712,8 @@ class CList(List[T]):
 
     # more-itertools
 
+    chunked = ChunkedMethodBuilder("CList")  # dead: disable
+    distribute = DistributeMethodBuilder("CList")
     divide = DivideMethodBuilder("CList")
 
     # multiprocessing
@@ -776,6 +782,8 @@ class CTuple(Tuple[T]):
 
     # more-itertools
 
+    chunked = ChunkedMethodBuilder("CTuple")  # dead: disable
+    distribute = DistributeMethodBuilder("CTuple")
     divide = DivideMethodBuilder("CTuple")
 
 
