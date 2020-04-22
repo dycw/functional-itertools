@@ -3,6 +3,8 @@ from __future__ import annotations
 from operator import itemgetter
 from typing import FrozenSet
 from typing import List
+from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -15,6 +17,7 @@ from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import SearchStrategy
+from hypothesis.strategies import sets
 from hypothesis.strategies import tuples
 
 from functional_itertools import CFrozenSet
@@ -41,6 +44,14 @@ CASES = [
     Case(CSet, set),
     Case(CFrozenSet, frozenset),
 ]
+
+
+def lists_or_sets(
+    elements:SearchStrategy[T], *, min_size: int = 0, max_size: Optional[int] = None,
+) -> SearchStrategy[Union[List[T], Set[T]]]:
+    return lists(elements, min_size=min_size, max_size=max_size) | sets(
+        elements, min_size=min_size, max_size=max_size,
+    )
 
 
 def slists(

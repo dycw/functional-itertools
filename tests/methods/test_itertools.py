@@ -23,6 +23,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import FrozenSet
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
@@ -53,7 +54,9 @@ from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import islice_ints
+from tests.strategies import lists_or_sets
 from tests.strategies import nested_siterables
+from tests.strategies import range_args
 from tests.strategies import siterables
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
@@ -170,11 +173,9 @@ def test_groupby(case: Case, x: Set[int], key: Optional[Callable[[int], int]]) -
 
 
 @mark.parametrize("case", CASES)
-@given(
-    data=data(), start=islice_ints, stop=none() | islice_ints, step=none() | islice_ints,
-)
+@given(x=lists_or_sets(integers()), args=range_args)
 def test_islice(
-    case: Case, data: DataObject, start: int, stop: Optional[int], step: Optional[int],
+    case: Case, x: Iterable[int], args: Tuple[int, Optional[int], Optional[int]],
 ) -> None:
     x, case.cast = data.draw(siterables(case.cls, integers()))
     if step is not None:
