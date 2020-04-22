@@ -4,7 +4,6 @@ from operator import itemgetter
 from typing import FrozenSet
 from typing import List
 from typing import Optional
-from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -13,11 +12,12 @@ from typing import Union
 from attr import attrs
 from hypothesis.strategies import frozensets
 from hypothesis.strategies import integers
+from hypothesis.strategies import iterables
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
+from hypothesis.strategies import sampled_from
 from hypothesis.strategies import SearchStrategy
-from hypothesis.strategies import sets
 from hypothesis.strategies import tuples
 
 from functional_itertools import CFrozenSet
@@ -46,12 +46,12 @@ CASES = [
 ]
 
 
-def lists_or_sets(
-    elements:SearchStrategy[T], *, min_size: int = 0, max_size: Optional[int] = None,
-) -> SearchStrategy[Union[List[T], Set[T]]]:
-    return lists(elements, min_size=min_size, max_size=max_size) | sets(
-        elements, min_size=min_size, max_size=max_size,
-    )
+def real_iterables(
+    elements: SearchStrategy[T], *, min_size: int = 0, max_size: Optional[int] = None,
+) -> SearchStrategy[Union[List[T], FrozenSet[T]]]:
+    return tuples(
+        iterables(elements, min_size=min_size, max_size=max_size), sampled_from([tuple, frozenset]),
+    ).map(lambda x: x[1](x[0]))
 
 
 def slists(
@@ -108,6 +108,6 @@ islice_ints = integers(0, MAX_SIZE)
 
 range_args = (
     tuples(integers(0, MAX_SIZE), none(), none())
-    | tuples(integers(-MAX_SIZE, 0), integers(0, MAX_SIZE), none())
-    | tuples(integers(-MAX_SIZE, 0), integers(0, MAX_SIZE), integers(1, 10))
+    | tuples(integers(0, MAX_SIZE), integers(0, MAX_SIZE), none())
+    | tuples(integers(0, MAX_SIZE), integers(0, MAX_SIZE), integers(1, 10))
 )

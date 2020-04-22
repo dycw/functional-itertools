@@ -512,14 +512,13 @@ class PermutationsBuilder(MethodBuilder):
     )
 
 
-class ProductBuilder(MethodBuilder):
+class ProductMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[ProductBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[ProductMethodBuilder]) -> Callable[..., Any]:
         def method(
             self: Template[T], *iterables: Iterable[U], repeat: int = 1,
-        ) -> Template[Template[T]]:
-            cls = type(self)
-            return cls(product(self, *iterables, repeat=repeat)).map(cls)
+        ) -> Template[CTuple[T]]:
+            return type(self)(map(CTuple, product(self, *iterables, repeat=repeat)))
 
         return method
 
@@ -699,14 +698,12 @@ class CIterable(Iterable[T]):
     filterfalse = FilterFalseMethodBuilder("CIterable")
     groupby = GroupByMethodBuilder("CIterable")
     islice = ISliceMethodBuilder("CIterable")
+    permutations = PermutationsBuilder("CIterable")
+    product = ProductMethodBuilder("CIterable")
     starmap = StarMapMethodBuilder("CIterable")
     takewhile = TakeWhileMethodBuilder("CIterable")
     tee = TeeMethodBuilder("CIterable")
     zip_longest = ZipLongestMethodBuilder("CIterable")
-    product = ProductBuilder("CIterable")
-
-    def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[Tuple[T, ...]]:
-        return CIterable(permutations(self._iterable, r=r))
 
     # itertools-recipes
 
@@ -954,11 +951,12 @@ class CList(List[T]):
     filterfalse = FilterFalseMethodBuilder("CList")
     groupby = GroupByMethodBuilder("CList")
     islice = ISliceMethodBuilder("CList")
+    permutations = PermutationsBuilder("CList")
+    product = ProductMethodBuilder("CList")
     starmap = StarMapMethodBuilder("CList")
     takewhile = TakeWhileMethodBuilder("CList")
     tee = TeeMethodBuilder("CList")
     zip_longest = ZipLongestMethodBuilder("CList")
-    product = ProductBuilder("CList")
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
@@ -1132,11 +1130,12 @@ class CTuple(Tuple[T]):
     filterfalse = FilterFalseMethodBuilder("CTuple")
     groupby = GroupByMethodBuilder("CTuple")
     islice = ISliceMethodBuilder("CTuple")
+    permutations = PermutationsBuilder("CTuple")
+    product = ProductMethodBuilder("CTuple")
     starmap = StarMapMethodBuilder("CTuple")
     takewhile = TakeWhileMethodBuilder("CTuple")
     tee = TeeMethodBuilder("CTuple")
     zip_longest = ZipLongestMethodBuilder("CTuple")
-    product = ProductBuilder("CTuple")
 
     # more-itertools
 
@@ -1243,6 +1242,8 @@ class CSet(Set[T]):
     filterfalse = FilterFalseMethodBuilder("CSet")
     groupby = GroupByMethodBuilder("CSet")
     islice = ISliceMethodBuilder("CSet")
+    permutations = PermutationsBuilder("CSet")
+    product = ProductMethodBuilder("CSet")
     repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
     starmap = StarMapMethodBuilder("CSet")
     takewhile = TakeWhileMethodBuilder("CSet")
@@ -1377,6 +1378,8 @@ class CFrozenSet(FrozenSet[T]):
     filterfalse = FilterFalseMethodBuilder("CFrozenSet")
     groupby = GroupByMethodBuilder("CFrozenSet")
     islice = ISliceMethodBuilder("CFrozenSet")
+    permutations = PermutationsBuilder("CFrozenSet")
+    product = ProductMethodBuilder("CFrozenSet")
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
     starmap = StarMapMethodBuilder("CFrozenSet")
     takewhile = TakeWhileMethodBuilder("CFrozenSet")
