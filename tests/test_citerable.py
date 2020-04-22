@@ -76,6 +76,7 @@ from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
+from functional_itertools import CTuple
 from functional_itertools import EmptyIterableError
 from functional_itertools import MultipleElementsError
 from functional_itertools.utilities import drop_sentinel
@@ -155,7 +156,7 @@ def test_str(x: Iterable[int]) -> None:
 # built-ins
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_all(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, booleans()))
@@ -164,7 +165,7 @@ def test_all(cls: Type, data: DataObject) -> None:
     assert y == all(x)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_any(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, booleans()))

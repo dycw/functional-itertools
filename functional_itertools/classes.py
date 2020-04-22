@@ -71,6 +71,8 @@ from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
+from functional_itertools.methods import AllMethodBuilder
+from functional_itertools.methods import AnyMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -171,11 +173,8 @@ class CIterable(Iterable[T]):
 
     # built-in
 
-    def all(self: CIterable[Any]) -> bool:  # noqa: A003
-        return all(self._iterable)
-
-    def any(self: CIterable[Any]) -> bool:  # noqa: A003
-        return any(self._iterable)
+    all = AllMethodBuilder("CIterable")  # noqa: A003
+    any = AnyMethodBuilder("CIterable")  # noqa: A003
 
     def dict(self: CIterable[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return CDict(dict(self._iterable))
@@ -556,11 +555,8 @@ class CList(List[T]):
 
     # built-in
 
-    def all(self: CList[Any]) -> bool:  # noqa: A003
-        return self.iter().all()
-
-    def any(self: CList[Any]) -> bool:  # noqa: A003
-        return self.iter().any()
+    all = AllMethodBuilder("CList")  # noqa: A003
+    any = AnyMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
@@ -837,16 +833,20 @@ class CList(List[T]):
         return CList(self.iter().unzip()).map(CList)
 
 
+class CTuple(Tuple[T]):
+    """A tuple with chainable methods."""
+
+    all = AllMethodBuilder("CTuple")  # noqa: A003
+    any = AnyMethodBuilder("CTuple")  # noqa: A003
+
+
 class CSet(Set[T]):
     """A set with chainable methods."""
 
     # built-in
 
-    def all(self: CSet[Any]) -> bool:  # noqa: A003
-        return self.iter().all()
-
-    def any(self: CSet[Any]) -> bool:  # noqa: A003
-        return self.iter().any()
+    all = AllMethodBuilder("CSet")  # noqa: A003
+    any = AnyMethodBuilder("CSet")  # noqa: A003
 
     def dict(self: CSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
@@ -1116,11 +1116,8 @@ class CFrozenSet(FrozenSet[T]):
 
     # built-in
 
-    def all(self: CFrozenSet[Any]) -> bool:  # noqa: A003
-        return self.iter().all()
-
-    def any(self: CFrozenSet[Any]) -> bool:  # noqa: A003
-        return self.iter().any()
+    all = AllMethodBuilder("CFrozenSet")  # noqa: A003
+    any = AnyMethodBuilder("CFrozenSet")  # noqa: A003
 
     def dict(self: CFrozenSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
