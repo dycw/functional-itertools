@@ -73,7 +73,7 @@ class AccumulateMethodBuilder(MethodBuilder):
             def method(self: Template[T], func: Callable[[T, T], T] = add) -> Template[T]:
                 return type(self)(accumulate(self, func))
 
-        elif VERSION is Version.py37:
+        elif VERSION is Version.py38:
 
             def method(
                 self: Template[T],
