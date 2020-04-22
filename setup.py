@@ -14,7 +14,7 @@ with open("README.md") as fd:
     name = search(r"^# ([\w-]+)$", header).group(1)
 for path in Path(__file__).resolve().parent.iterdir():
     try:
-        with open(str(path.joinpath("__init__.py"))) as fd:
+        with open(str(path.joinpath("test_itertools.py"))) as fd:
             version = search(
                 r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]$', fd.read(), MULTILINE,
             ).group(1)

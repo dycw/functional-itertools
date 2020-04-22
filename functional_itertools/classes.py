@@ -6,14 +6,12 @@ from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import compress
-from itertools import cycle
 from itertools import dropwhile
 from itertools import filterfalse
 from itertools import groupby
 from itertools import islice
 from itertools import permutations
 from itertools import product
-from itertools import repeat
 from itertools import starmap
 from itertools import takewhile
 from itertools import tee
@@ -81,6 +79,8 @@ from functional_itertools.methods.builtins import SumMethodBuilder
 from functional_itertools.methods.builtins import Template
 from functional_itertools.methods.builtins import ZipMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
+from functional_itertools.methods.itertools import CycleMethodBuilder
+from functional_itertools.methods.itertools import RepeatMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -258,7 +258,7 @@ class CIterable(Iterable[T]):
     def __str__(self: CIterable[Any]) -> str:
         return f"{type(self).__name__}({self._iterable})"
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CIterable")  # noqa: A003
     any = AnyMethodBuilder("CIterable")  # noqa: A003
@@ -309,13 +309,8 @@ class CIterable(Iterable[T]):
     # itertools
 
     count = classmethod(CountMethodBuilder("CIterable"))
-
-    def cycle(self: CIterable[T]) -> CIterable[T]:
-        return CIterable(cycle(self._iterable))
-
-    @classmethod
-    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
-        return cls(repeat(x, *(() if times is None else (times,))))
+    cycle = CycleMethodBuilder("CIterable")
+    repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
 
     accumulate = _accumulate_citerable
 
@@ -567,7 +562,7 @@ class CList(List[T]):
         else:
             return out
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CList")  # noqa: A003
     any = AnyMethodBuilder("CList")  # noqa: A003
@@ -609,10 +604,7 @@ class CList(List[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
-        return cls(CIterable.repeat(x, times=times))
-
+    repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
     accumulate = _accumulate_clist
 
     def chain(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
@@ -798,6 +790,8 @@ class CList(List[T]):
 class CTuple(Tuple[T]):
     """A tuple with chainable methods."""
 
+    # built-ins
+
     all = AllMethodBuilder("CTuple")  # noqa: A003
     any = AnyMethodBuilder("CTuple")  # noqa: A003
     dict = DictMethodBuilder("CTuple")  # noqa: A003
@@ -817,11 +811,15 @@ class CTuple(Tuple[T]):
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
     zip = ZipMethodBuilder("CTuple")  # noqa: A003
 
+    # itertools
+
+    repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
+
 
 class CSet(Set[T]):
     """A set with chainable methods."""
 
-    # built-in
+    # built-
 
     all = AllMethodBuilder("CSet")  # noqa: A003
     any = AnyMethodBuilder("CSet")  # noqa: A003
@@ -907,9 +905,7 @@ class CSet(Set[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
-        return cls(CIterable.repeat(x, times=times))
+    repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
 
     accumulate = _accumulate_cset
 
@@ -1040,7 +1036,7 @@ class CSet(Set[T]):
 class CFrozenSet(FrozenSet[T]):
     """A frozenset with chainable methods."""
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CFrozenSet")  # noqa: A003
     any = AnyMethodBuilder("CFrozenSet")  # noqa: A003
@@ -1087,10 +1083,7 @@ class CFrozenSet(FrozenSet[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
+    repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
     accumulate = _accumulate_cfrozenset
 
     def chain(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
@@ -1237,7 +1230,7 @@ class CDict(Dict[T, U]):
     def items(self: CDict[T, U]) -> CIterable[Tuple[T, U]]:
         return CIterable(super().items())
 
-    # built-in
+    # built-ins
 
     def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> bool:
