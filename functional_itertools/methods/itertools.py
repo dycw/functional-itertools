@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from itertools import accumulate
+from itertools import chain
 from itertools import count
 from itertools import cycle
 from itertools import repeat
 from operator import add
 from typing import Any
 from typing import Callable
+from typing import Iterable
 from typing import Optional
 from typing import Type
 from typing import TypeVar
@@ -89,3 +91,14 @@ class AccumulateMethodBuilder(MethodBuilder):
         return method
 
     _doc = "accumulate([1,2,3,4,5]) --> 1 3 6 10 15"
+
+
+class ChainMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[ChainMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], *iterables: Iterable[U]) -> Template[Union[T, U]]:
+            return type(self)(chain(self, *iterables))
+
+        return method
+
+    _doc = "chain('ABC', 'DEF') --> A B C D E F"

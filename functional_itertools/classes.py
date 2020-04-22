@@ -76,6 +76,7 @@ from functional_itertools.methods.builtins import SumMethodBuilder
 from functional_itertools.methods.builtins import Template
 from functional_itertools.methods.builtins import ZipMethodBuilder
 from functional_itertools.methods.itertools import AccumulateMethodBuilder
+from functional_itertools.methods.itertools import ChainMethodBuilder
 from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
@@ -265,9 +266,7 @@ class CIterable(Iterable[T]):
     cycle = CycleMethodBuilder("CIterable")
     repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
     accumulate = AccumulateMethodBuilder("CIterable")
-
-    def chain(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
-        return CIterable(chain(self._iterable, *iterables))
+    chain = ChainMethodBuilder("CIterable")
 
     def compress(self: CIterable[T], selectors: Iterable[Any]) -> CIterable[T]:
         return CIterable(compress(self._iterable, selectors))
@@ -564,9 +563,7 @@ class CList(List[T]):
 
     repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CList")
-
-    def chain(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
-        return self.iter().chain(*iterables).list()
+    chain = ChainMethodBuilder("CList")
 
     def compress(self: CList[T], selectors: Iterable[Any]) -> CList[T]:
         return self.iter().compress(selectors).list()
@@ -779,6 +776,7 @@ class CTuple(Tuple[T]):
 
     repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CTuple")
+    chain = ChainMethodBuilder("CTuple")
 
     # more-itertools
 
@@ -878,9 +876,7 @@ class CSet(Set[T]):
 
     repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
     accumulate = AccumulateMethodBuilder("CSet")
-
-    def chain(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
-        return self.iter().chain(*iterables).set()
+    chain = ChainMethodBuilder("CSet")
 
     def compress(self: CSet[T], selectors: Iterable[Any]) -> CSet[T]:
         return self.iter().compress(selectors).set()
@@ -1055,9 +1051,7 @@ class CFrozenSet(FrozenSet[T]):
 
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
     accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
-
-    def chain(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
-        return self.iter().chain(*iterables).frozenset()
+    chain = ChainMethodBuilder("CFrozenSet")
 
     def compress(self: CFrozenSet[T], selectors: Iterable[Any]) -> CFrozenSet[T]:
         return self.iter().compress(selectors).frozenset()
