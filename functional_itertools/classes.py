@@ -7,7 +7,6 @@ from itertools import combinations_with_replacement
 from itertools import groupby
 from itertools import islice
 from itertools import permutations
-from itertools import product
 from itertools import zip_longest
 from multiprocessing import Pool
 from pathlib import Path
@@ -77,6 +76,7 @@ from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import DropWhileMethodBuilder
 from functional_itertools.methods.itertools import FilterFalseMethodBuilder
 from functional_itertools.methods.itertools import ISliceMethodBuilder
+from functional_itertools.methods.itertools import ProductBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
 from functional_itertools.methods.itertools import StarMapMethodBuilder
 from functional_itertools.methods.itertools import TakeWhileMethodBuilder
@@ -318,11 +318,7 @@ class CIterable(Iterable[T]):
     takewhile = TakeWhileMethodBuilder("CIterable")
     tee = TeeMethodBuilder("CIterable")
     zip_longest = ZipLongestMethodBuilder("CIterable")
-
-    def product(
-        self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CIterable[Tuple[Union[T, U], ...]]:
-        return CIterable(product(self._iterable, *iterables, repeat=repeat))
+    product = ProductBuilder("CIterable")
 
     def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[Tuple[T, ...]]:
         return CIterable(permutations(self._iterable, r=r))
@@ -581,11 +577,7 @@ class CList(List[T]):
     takewhile = TakeWhileMethodBuilder("CList")
     tee = TeeMethodBuilder("CList")
     zip_longest = ZipLongestMethodBuilder("CList")
-
-    def product(
-        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CList[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).list()
+    product = ProductBuilder("CList")
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
@@ -767,6 +759,7 @@ class CTuple(Tuple[T]):
     takewhile = TakeWhileMethodBuilder("CTuple")
     tee = TeeMethodBuilder("CTuple")
     zip_longest = ZipLongestMethodBuilder("CTuple")
+    product = ProductBuilder("CTuple")
 
     # more-itertools
 
@@ -874,11 +867,6 @@ class CSet(Set[T]):
     starmap = StarMapMethodBuilder("CSet")
     takewhile = TakeWhileMethodBuilder("CSet")
     zip_longest = ZipLongestMethodBuilder("CSet")
-
-    def product(
-        self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CSet[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).set()
 
     def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[Tuple[T, ...]]:
         return self.iter().permutations(r=r).set()
@@ -1020,11 +1008,6 @@ class CFrozenSet(FrozenSet[T]):
     starmap = StarMapMethodBuilder("CFrozenSet")
     takewhile = TakeWhileMethodBuilder("CFrozenSet")
     zip_longest = ZipLongestMethodBuilder("CFrozenSet")
-
-    def product(
-        self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CFrozenSet[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).frozenset()
 
     def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[Tuple[T, ...]]:
         return self.iter().permutations(r=r).frozenset()

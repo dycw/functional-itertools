@@ -216,12 +216,21 @@ class TeeMethodBuilder(MethodBuilder):
     _doc = "Return n independent iterators from a single iterable."
 
 
-if 0:
+class ProductBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[ProductBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[T], *iterables: Iterable[U], repeat: int = 1,
+        ) -> Template[Template[T]]:
+            cls = type(self)
+            return cls(product(self, *iterables, repeat=repeat)).map(cls)
 
-    def product(
-        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CList[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).list()
+        return method
+
+    _doc = "Cartesian product of input iterables."
+
+
+if 0:
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()

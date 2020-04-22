@@ -238,14 +238,20 @@ def test_zip_longest(cls: Type, data: DataObject, fillvalue: Optional[int]) -> N
             assert cast(y_i) == cast(z_i)
 
 
-@mark.parametrize("cls", CLASSES)
-@given(data=data(), repeat=integers(1, 3))
+@mark.parametrize("cls", [CIterable, CList, CTuple])
+@given(
+    data=data(), repeat=integers(1, 3),
+)
 def test_product(cls: Type, data: DataObject, repeat: int) -> None:
     x, cast = data.draw(siterables(cls, integers(), max_size=3))
     xs, _ = data.draw(nested_siterables(cls, integers(), max_size=3))
-    y = cls(x).product(*xs, repeat=repeat)
-    assert isinstance(y, cls)
-    assert cast(y) == cast(product(x, *xs, repeat=repeat))
+    y1, y2 = [cls(x).product(*xs, repeat=repeat) for _ in range(2)]
+    assert isinstance(y1, cls)
+    z1, z2 = [product(x, *xs, repeat=repeat) for _ in range(2)]
+    assert len(cast(y1)) == len(cast(z1))
+    for y_i, z_i in zip(y2, z2):
+        assert isinstance(y_i, cls)
+        assert cast(y_i) == cast(z_i)
 
 
 @mark.parametrize("cls", CLASSES)
