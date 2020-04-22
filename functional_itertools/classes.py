@@ -75,6 +75,7 @@ from functional_itertools.methods import AllMethodBuilder
 from functional_itertools.methods import AnyMethodBuilder
 from functional_itertools.methods import EnumerateMethodBuilder
 from functional_itertools.methods import FilterMethodBuilder
+from functional_itertools.methods import LenMethodBuilder
 from functional_itertools.methods import MapMethodBuilder
 from functional_itertools.methods import MethodBuilder
 from functional_itertools.methods import Template
@@ -608,6 +609,7 @@ class CList(List[T]):
     enumerate = EnumerateMethodBuilder("CList")  # noqa: A003
     filter = FilterMethodBuilder("CList")  # noqa: A003
     iter = IterMethodBuilder("CList")  # noqa: A003
+    len = LenMethodBuilder("CList")  # noqa: A003
     list = ListMethodBuilder("CList")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CList")  # noqa: A003
     map = MapMethodBuilder("CList")  # noqa: A003
@@ -871,6 +873,7 @@ class CTuple(Tuple[T]):
     enumerate = EnumerateMethodBuilder("CTuple")  # noqa: A003
     filter = FilterMethodBuilder("CTuple")  # noqa: A003
     iter = IterMethodBuilder("CTuple")  # noqa: A003
+    len = LenMethodBuilder("CTuple")  # noqa: A003
     list = ListMethodBuilder("CTuple")  # noqa: A003
     map = MapMethodBuilder("CTuple")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CTuple")  # noqa: A003
@@ -889,6 +892,7 @@ class CSet(Set[T]):
     enumerate = EnumerateMethodBuilder("CSet")  # noqa: A003
     filter = FilterMethodBuilder("CSet")  # noqa: A003
     iter = IterMethodBuilder("CSet")  # noqa: A003
+    len = LenMethodBuilder("CSet")  # noqa: A003
     list = ListMethodBuilder("CSet")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CSet")  # noqa: A003
     map = MapMethodBuilder("CSet")  # noqa: A003
@@ -1142,6 +1146,7 @@ class CFrozenSet(FrozenSet[T]):
     enumerate = EnumerateMethodBuilder("CFrozenSet")  # noqa: A003
     filter = FilterMethodBuilder("CFrozenSet")  # noqa: A003
     iter = IterMethodBuilder("CFrozenSet")  # noqa: A003
+    len = LenMethodBuilder("CFrozenSet")  # noqa: A003
     list = ListMethodBuilder("CFrozenSet")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CFrozenSet")  # noqa: A003
     map = MapMethodBuilder("CFrozenSet")  # noqa: A003
