@@ -52,15 +52,10 @@ from more_itertools.recipes import unique_justseen
 
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
-from functional_itertools.methods.builtins import FilterMethodBuilder
-from functional_itertools.methods.builtins import LenMethodBuilder
-from functional_itertools.methods.builtins import MapMethodBuilder
-from functional_itertools.methods.builtins import MaxMinMethodBuilder
-from functional_itertools.methods.builtins import MethodBuilder
-from functional_itertools.methods.builtins import RangeMethodBuilder
-from functional_itertools.methods.builtins import SumMethodBuilder
-from functional_itertools.methods.builtins import Template
-from functional_itertools.methods.builtins import ZipMethodBuilder
+from functional_itertools.errors import StopArgumentMissing
+from functional_itertools.errors import UnsupportVersionError
+from functional_itertools.methods.base import MethodBuilder
+from functional_itertools.methods.base import Template
 from functional_itertools.methods.itertools import AccumulateMethodBuilder
 from functional_itertools.methods.itertools import ChainMethodBuilder
 from functional_itertools.methods.itertools import CombinationsMethodBuilder
@@ -84,6 +79,8 @@ from functional_itertools.methods.more_itertools import DivideMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
+from functional_itertools.utilities import VERSION
+from functional_itertools.utilities import Version
 from functional_itertools.utilities import warn_non_functional
 
 
@@ -132,12 +129,23 @@ class DictMethodBuilder(MethodBuilder):
 class EnumerateMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: Type[EnumerateMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], start: int = 0) -> Template[CTuple[int, T]]:
+        def method(self: Template[T], start: int = 0) -> Template[CTuple[Union[int, T]]]:
             return type(self)(map(CTuple, enumerate(self, start=start)))
 
         return method
 
     _doc = "Return an enumerate object, cast as a {0}."
+
+
+class FilterMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[FilterMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], func: Optional[Callable[[T], bool]]) -> Template[T]:
+            return type(self)(filter(func, self))
+
+        return method
+
+    _doc = "Construct a {0} from those elements of the {0} for which function returns true."
 
 
 class IterMethodBuilder(MethodBuilder):
@@ -162,6 +170,17 @@ class FrozenSetMethodBuilder(MethodBuilder):
     _doc = "Create a new CFrozenSet from the {0}."
 
 
+class LenMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[LenMethodBuilder]) -> Callable[..., int]:
+        def method(self: Template[T]) -> int:
+            return len(self)
+
+        return method
+
+    _doc = "Return the length of the {0}."
+
+
 class ListMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: ListMethodBuilder) -> Callable[..., CList]:
@@ -171,6 +190,79 @@ class ListMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CList from the {0}."
+
+
+class MapMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[MapMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T], func: Callable[..., U], *iterables: Iterable) -> Template[U]:
+            return type(self)(map(func, self, *iterables))
+
+        return method
+
+    _doc = "Construct a {0} by applying `func` to every item of the {0}."
+
+
+class MaxMinMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(
+        cls: Type[MaxMinMethodBuilder], func: Callable[..., Any],
+    ) -> Callable[..., Any]:
+        if VERSION is Version.py37:
+
+            def method(
+                self: Template[T],
+                *,
+                key: Union[Callable[[T], Any], Sentinel] = sentinel,
+                default: U = sentinel,
+            ) -> Union[T, U]:
+                return func(
+                    self,
+                    **({} if key is sentinel else {"key": key}),
+                    **({} if default is sentinel else {"default": default}),
+                )
+
+        elif VERSION is Version.py38:
+
+            def method(
+                self: Template[T],
+                *,
+                key: Optional[Callable[[T], Any]] = None,
+                default: U = sentinel,
+            ) -> Union[T, U]:
+                return func(self, key=key, **({} if default is sentinel else {"default": default}))
+
+        else:
+            raise UnsupportVersionError(VERSION)  # pragma: no cover
+
+        return method
+
+    _doc = "Return the maximum/minimum over the {0}."
+
+
+class RangeMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[RangeMethodBuilder]) -> Callable[..., Any]:
+        def method(
+            cls: Type[Template[T]],
+            start: int,
+            stop: Optional[int] = None,
+            step: Optional[int] = None,
+        ) -> Template[int]:
+            if (stop is None) and (step is not None):
+                raise StopArgumentMissing()
+            else:
+                return cls(
+                    range(
+                        start,
+                        *(() if stop is None else (stop,)),
+                        *(() if step is None else (step,)),
+                    ),
+                )
+
+        return method
+
+    _doc = "Return a range of integers as a {0}."
 
 
 class SetMethodBuilder(MethodBuilder):
@@ -197,6 +289,17 @@ class SortedMethodBuilder(MethodBuilder):
     _doc = "Return a sorted CList from the items in the {0}."
 
 
+class SumMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[SumMethodBuilder]) -> Callable[..., int]:
+        def method(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+            return sum(self, *(() if start is sentinel else (start,)))
+
+        return method
+
+    _doc = "Return the sum of the elements in {0}."
+
+
 class TupleMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: TupleMethodBuilder) -> Callable[..., CTuple]:
@@ -206,6 +309,17 @@ class TupleMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CTuple from the {0}."
+
+
+class ZipMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[ZipMethodBuilder]) -> Callable[..., int]:
+        def method(self: Template[T], *iterables: Iterable[U]) -> Template[CTuple[Union[T, U]]]:
+            return type(self)(map(CTuple, zip(self, *iterables)))
+
+        return method
+
+    _doc = "Return an iterator that aggregates elements from the {0} and the input iterables."
 
 
 # classes

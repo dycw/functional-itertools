@@ -68,7 +68,7 @@ def test_enumerate(case: Case, x: Set[int], start: int) -> None:
     y1, y2 = [case.cls(x).enumerate(start=start) for _ in range(2)]
     assert isinstance(y1, case.cls)
     z1, z2 = [enumerate(x, start=start) for _ in range(2)]
-    assert len(list(y1)) == len(list(y2))
+    assert len(case.cast(y1)) == len(case.cast(y2))
     for yi, (zi0, zi1) in zip(y2, z2):
         assert isinstance(yi, CTuple)
         yi0, yi1 = yi
@@ -201,7 +201,12 @@ def test_tuple(case: Case, x: Set[int]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=sets(integers()), xs=sets(frozensets(integers())))
-def test_zip2(case: Case, x: Set[int], xs: Set[FrozenSet[int]]) -> None:
-    y = case.cls(x).zip(*xs)
-    assert isinstance(y, case.cls)
-    assert case.cast(y) == case.cast(zip(x, *xs))
+def test_zip(case: Case, x: Set[int], xs: Set[FrozenSet[int]]) -> None:
+    y1, y2 = [case.cls(x).zip(*xs) for _ in range(2)]
+    assert isinstance(y1, case.cls)
+    z1, z2 = [zip(x, *xs) for _ in range(2)]
+    assert len(case.cast(y1)) == len(case.cast(z1))
+    for yi, zi in zip(y2, z2):
+        assert isinstance(yi, CTuple)
+        if case.cls in {CIterable, CList, CTuple}:
+            assert case.cast(yi) == case.cast(zi)
