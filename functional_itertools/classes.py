@@ -148,6 +148,19 @@ class SetMethodBuilder(MethodBuilder):
     _doc = "Create a new CSet from the {0}."
 
 
+class SortedMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+        def method(
+            self: Template[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
+        ) -> CList[T]:
+            return CList(sorted(self, key=key, reverse=reverse))
+
+        return method
+
+    _doc = "Return a sorted CList from the items in the {0}."
+
+
 class TupleMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: TupleMethodBuilder) -> Callable[..., CTuple]:
@@ -258,12 +271,8 @@ class CIterable(Iterable[T]):
     min = MaxMinMethodBuilder("CIterable", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CIterable"))  # noqa: A003
     set = SetMethodBuilder("CIterable")  # noqa: A003
+    sorted = SortedMethodBuilder("CIterable")  # noqa: A003
     tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-
-    def sorted(  # noqa: A003
-        self: CIterable[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return CList(sorted(self._iterable, key=key, reverse=reverse))
 
     def sum(self: CIterable[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         args, _ = drop_sentinel(start)
@@ -581,6 +590,7 @@ class CList(List[T]):
     min = MaxMinMethodBuilder("CList", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CList"))  # noqa: A003
     set = SetMethodBuilder("CList")  # noqa: A003
+    sorted = SortedMethodBuilder("CList")  # noqa: A003
     tuple = TupleMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
@@ -594,11 +604,6 @@ class CList(List[T]):
     ) -> CList[T]:
         warn("Use the 'sorted' method instead of 'sort'")
         return self.sorted(key=key, reverse=reverse)
-
-    def sorted(  # noqa: A003
-        self: CList[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
 
     def sum(self: CList[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
@@ -818,6 +823,7 @@ class CTuple(Tuple[T]):
     min = MaxMinMethodBuilder("CTuple", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CTuple"))  # noqa: A003
     set = SetMethodBuilder("CTuple")  # noqa: A003
+    sorted = SortedMethodBuilder("CTuple")  # noqa: A003
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
 
 
@@ -840,12 +846,8 @@ class CSet(Set[T]):
     min = MaxMinMethodBuilder("CSet", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CSet"))  # noqa: A003
     set = SetMethodBuilder("CSet")  # noqa: A003
+    sorted = SortedMethodBuilder("CSet")  # noqa: A003
     tuple = TupleMethodBuilder("CSet")  # noqa: A003
-
-    def sorted(  # noqa: A003
-        self: CSet[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
 
     def sum(self: CSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
@@ -1067,12 +1069,8 @@ class CFrozenSet(FrozenSet[T]):
     min = MaxMinMethodBuilder("CFrozenSet", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CFrozenSet"))  # noqa: A003
     set = SetMethodBuilder("CFrozenSet")  # noqa: A003
+    sorted = SortedMethodBuilder("CFrozenSet")  # noqa: A003
     tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-
-    def sorted(  # noqa: A003
-        self: CFrozenSet[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
 
     def sum(self: CFrozenSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)

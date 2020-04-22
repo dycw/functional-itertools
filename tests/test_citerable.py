@@ -92,6 +92,9 @@ from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
 
+CLASSES = [CIterable, CList, CTuple, CSet, CFrozenSet]
+
+
 @given(x=integers() | lists(integers()))
 def test_init(x: Union[int, List[int]]) -> None:
     if isinstance(x, int):
@@ -156,7 +159,7 @@ def test_str(x: Iterable[int]) -> None:
 # built-ins
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_all(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, booleans()))
@@ -165,7 +168,7 @@ def test_all(cls: Type, data: DataObject) -> None:
     assert y == all(x)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_any(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, booleans()))
@@ -174,14 +177,14 @@ def test_any(cls: Type, data: DataObject) -> None:
     assert y == any(x)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_dict(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, tuples(integers(), integers())))
     assert isinstance(cls(x).dict(), CDict)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), start=integers())
 def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -191,7 +194,7 @@ def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
         assert cast(y) == cast(enumerate(x, start=start))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_filter(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -200,7 +203,7 @@ def test_filter(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(filter(is_even, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_frozenset(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
@@ -209,7 +212,7 @@ def test_frozenset(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(frozenset(x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_iter(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
@@ -227,7 +230,7 @@ def test_len(cls: Type, data: DataObject) -> None:
     assert y == len(x)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_list(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -236,7 +239,7 @@ def test_list(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(list(x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_map(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -245,7 +248,7 @@ def test_map(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(map(neg, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @mark.parametrize("func", [max, min])
 @given(
     data=data(),
@@ -277,7 +280,7 @@ def test_max_and_min(
         assert y == func(x, **key_kwargs, **default_kwargs)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(
     data=data(), start=islice_ints, stop=none() | islice_ints, step=none() | islice_ints,
 )
@@ -294,7 +297,7 @@ def test_range(
     )
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_set(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -303,7 +306,7 @@ def test_set(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(set(x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), key=none() | just(neg), reverse=booleans())
 def test_sorted(
     cls: Type, data: DataObject, key: Optional[Callable[[int], int]], reverse: bool,
@@ -324,7 +327,7 @@ def test_sum(cls: Type, data: DataObject, start: Union[int, Sentinel]) -> None:
     assert y == sum(x, *args)
 
 
-@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
 def test_tuple(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))

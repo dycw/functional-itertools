@@ -16,6 +16,7 @@ from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 
+
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
