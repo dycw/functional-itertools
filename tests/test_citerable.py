@@ -174,7 +174,7 @@ def test_any(cls: Type, data: DataObject) -> None:
     assert y == any(x)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_dict(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, tuples(integers(), integers())))

@@ -73,6 +73,7 @@ from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods import AllMethodBuilder
 from functional_itertools.methods import AnyMethodBuilder
+from functional_itertools.methods import MethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -85,6 +86,17 @@ T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
+
+
+class DictMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., T]:
+        def method(self: Iterable[Tuple[T, U]]) -> CDict[T, U]:
+            return CDict(dict(self))
+
+        return method
+
+    _doc = "Return `True` if all elements of the {0} are true (or if the {0} is empty)."
 
 
 if VERSION is Version.py37:
@@ -175,9 +187,7 @@ class CIterable(Iterable[T]):
 
     all = AllMethodBuilder("CIterable")  # noqa: A003
     any = AnyMethodBuilder("CIterable")  # noqa: A003
-
-    def dict(self: CIterable[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
-        return CDict(dict(self._iterable))
+    dict = DictMethodBuilder("CIterable")  # noqa: A003
 
     def enumerate(self: CIterable[T], start: int = 0) -> CIterable[Tuple[int, T]]:  # noqa: A003
         return CIterable(enumerate(self._iterable, start=start))
@@ -557,12 +567,10 @@ class CList(List[T]):
 
     all = AllMethodBuilder("CList")  # noqa: A003
     any = AnyMethodBuilder("CList")  # noqa: A003
+    dict = DictMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
-
-    def dict(self: CList[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
-        return self.iter().dict()
 
     def enumerate(self: CList[T], start: int = 0) -> CList[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).list()
@@ -838,6 +846,7 @@ class CTuple(Tuple[T]):
 
     all = AllMethodBuilder("CTuple")  # noqa: A003
     any = AnyMethodBuilder("CTuple")  # noqa: A003
+    dict = DictMethodBuilder("CTuple")  # noqa: A003
 
 
 class CSet(Set[T]):
@@ -847,9 +856,7 @@ class CSet(Set[T]):
 
     all = AllMethodBuilder("CSet")  # noqa: A003
     any = AnyMethodBuilder("CSet")  # noqa: A003
-
-    def dict(self: CSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
-        return self.iter().dict()
+    dict = DictMethodBuilder("CSet")  # noqa: A003
 
     def enumerate(self: CSet[T], start: int = 0) -> CSet[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).set()
@@ -1118,9 +1125,7 @@ class CFrozenSet(FrozenSet[T]):
 
     all = AllMethodBuilder("CFrozenSet")  # noqa: A003
     any = AnyMethodBuilder("CFrozenSet")  # noqa: A003
-
-    def dict(self: CFrozenSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
-        return self.iter().dict()
+    dict = DictMethodBuilder("CFrozenSet")  # noqa: A003
 
     def enumerate(self: CFrozenSet[T], start: int = 0) -> CFrozenSet[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).frozenset()
