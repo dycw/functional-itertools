@@ -19,6 +19,7 @@ from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
+from functional_itertools import CTuple
 
 
 MAX_SIZE = 1000
@@ -52,6 +53,9 @@ def siterables(
     if cls in {CIterable, CList}:
         strategy = slists(elements, min_size=min_size, max_size=max_size, unique=unique)
         cast = list
+    elif cls is CTuple:
+        strategy = slists(elements, min_size=min_size, max_size=max_size, unique=unique).map(tuple)
+        cast = tuple
     elif cls in {CSet, CFrozenSet}:
         strategy = frozensets(elements, min_size=min_size, max_size=max_size)
         cast = frozenset
