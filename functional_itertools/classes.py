@@ -875,7 +875,6 @@ class CSet(Set[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
-    accumulate = AccumulateMethodBuilder("CSet")
     chain = ChainMethodBuilder("CSet")
 
     def compress(self: CSet[T], selectors: Iterable[Any]) -> CSet[T]:
@@ -1050,7 +1049,6 @@ class CFrozenSet(FrozenSet[T]):
     # itertools
 
     repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
-    accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
     chain = ChainMethodBuilder("CFrozenSet")
 
     def compress(self: CFrozenSet[T], selectors: Iterable[Any]) -> CFrozenSet[T]:
