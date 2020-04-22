@@ -78,8 +78,8 @@ def test_map_values(x: Dict[int, int]) -> None:
 @given(x=dictionaries(integers(), integers()))
 def test_map_items(x: Dict[int, int]) -> None:
     def func(key: int, value: int) -> Tuple[int, int]:
-        return value, key
+        return neg(key), neg(value)
 
     y = CDict(x).map_items(func)
     assert isinstance(y, CDict)
-    assert y == dict(func(k, v) for k, v in x.items())
+    assert y == {neg(k): neg(v) for k, v in x.items()}

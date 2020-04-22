@@ -77,6 +77,7 @@ from functional_itertools.methods import LenMethodBuilder
 from functional_itertools.methods import MapMethodBuilder
 from functional_itertools.methods import MaxMinMethodBuilder
 from functional_itertools.methods import MethodBuilder
+from functional_itertools.methods import RangeMethodBuilder
 from functional_itertools.methods import Template
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
@@ -249,35 +250,15 @@ class CIterable(Iterable[T]):
     dict = DictMethodBuilder("CIterable")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CIterable")  # noqa: A003
     filter = FilterMethodBuilder("CIterable")  # noqa: A003
+    frozenset = FrozenSetMethodBuilder("CIterable")  # noqa: A003
     iter = IterMethodBuilder("CIterable")  # noqa: A003
     list = ListMethodBuilder("CIterable")  # noqa: A003
     map = MapMethodBuilder("CIterable")  # noqa: A003
     max = MaxMinMethodBuilder("CIterable", func=max)  # noqa: A003
     min = MaxMinMethodBuilder("CIterable", func=min)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CIterable")  # noqa: A003
+    range = classmethod(RangeMethodBuilder("CIterable"))  # noqa: A003
     set = SetMethodBuilder("CIterable")  # noqa: A003
     tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-
-    @classmethod  # noqa: A003
-    def range(  # noqa: A003
-        cls: Type[CIterable], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[int]:
-        """
-        >>> CIterable.range(5).list()
-        [0, 1, 2, 3, 4]
-        >>> CIterable.range(1, 5).list()
-        [1, 2, 3, 4]
-        >>> CIterable.range(1, 5, 2).list()
-        [1, 3]
-        """
-        if (stop is None) and (step is not None):
-            raise ValueError("'stop' cannot be None if 'step' is provided")
-        else:
-            return cls(
-                range(
-                    start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
-                ),
-            )
 
     def sorted(  # noqa: A003
         self: CIterable[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
@@ -591,32 +572,19 @@ class CList(List[T]):
     dict = DictMethodBuilder("CList")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CList")  # noqa: A003
     filter = FilterMethodBuilder("CList")  # noqa: A003
+    frozenset = FrozenSetMethodBuilder("CList")  # noqa: A003
     iter = IterMethodBuilder("CList")  # noqa: A003
     len = LenMethodBuilder("CList")  # noqa: A003
     list = ListMethodBuilder("CList")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CList")  # noqa: A003
     map = MapMethodBuilder("CList")  # noqa: A003
     max = MaxMinMethodBuilder("CList", func=max)  # noqa: A003
     min = MaxMinMethodBuilder("CList", func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder("CList"))  # noqa: A003
     set = SetMethodBuilder("CList")  # noqa: A003
     tuple = TupleMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
-
-    @classmethod  # noqa: A003
-    def range(  # noqa: A003
-        cls: Type[CList], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CList[int]:
-        """
-        >>> CList.range(5)
-        [0, 1, 2, 3, 4]
-        >>> CList.range(1, 5)
-        [1, 2, 3, 4]
-        >>> CList.range(1, 5, 2)
-        [1, 3]
-        """
-        return cls(CIterable.range(start, stop=stop, step=step))
 
     def reversed(self: CList[T]) -> CList[T]:  # noqa: A003
         return CList(reversed(self))
@@ -841,13 +809,14 @@ class CTuple(Tuple[T]):
     dict = DictMethodBuilder("CTuple")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CTuple")  # noqa: A003
     filter = FilterMethodBuilder("CTuple")  # noqa: A003
+    frozenset = FrozenSetMethodBuilder("CTuple")  # noqa: A003
     iter = IterMethodBuilder("CTuple")  # noqa: A003
     len = LenMethodBuilder("CTuple")  # noqa: A003
     list = ListMethodBuilder("CTuple")  # noqa: A003
     map = MapMethodBuilder("CTuple")  # noqa: A003
     max = MaxMinMethodBuilder("CTuple", func=max)  # noqa: A003
     min = MaxMinMethodBuilder("CTuple", func=min)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CTuple")  # noqa: A003
+    range = classmethod(RangeMethodBuilder("CTuple"))  # noqa: A003
     set = SetMethodBuilder("CTuple")  # noqa: A003
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
 
@@ -862,29 +831,16 @@ class CSet(Set[T]):
     dict = DictMethodBuilder("CSet")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CSet")  # noqa: A003
     filter = FilterMethodBuilder("CSet")  # noqa: A003
+    frozenset = FrozenSetMethodBuilder("CSet")  # noqa: A003
     iter = IterMethodBuilder("CSet")  # noqa: A003
     len = LenMethodBuilder("CSet")  # noqa: A003
     list = ListMethodBuilder("CSet")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CSet")  # noqa: A003
     map = MapMethodBuilder("CSet")  # noqa: A003
     max = MaxMinMethodBuilder("CSet", func=max)  # noqa: A003
     min = MaxMinMethodBuilder("CSet", func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder("CSet"))  # noqa: A003
     set = SetMethodBuilder("CSet")  # noqa: A003
     tuple = TupleMethodBuilder("CSet")  # noqa: A003
-
-    @classmethod  # noqa: A003
-    def range(  # noqa: A003
-        cls: Type[CSet], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CSet[int]:
-        """
-        >>> CSet.range(5)
-        CSet({0, 1, 2, 3, 4})
-        >>> CSet.range(1, 5)
-        CSet({1, 2, 3, 4})
-        >>> CSet.range(1, 5, 2)
-        CSet({1, 3})
-        """
-        return cls(CIterable.range(start, stop=stop, step=step))
 
     def sorted(  # noqa: A003
         self: CSet[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
@@ -1102,29 +1058,16 @@ class CFrozenSet(FrozenSet[T]):
     dict = DictMethodBuilder("CFrozenSet")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CFrozenSet")  # noqa: A003
     filter = FilterMethodBuilder("CFrozenSet")  # noqa: A003
+    frozenset = FrozenSetMethodBuilder("CFrozenSet")  # noqa: A003
     iter = IterMethodBuilder("CFrozenSet")  # noqa: A003
     len = LenMethodBuilder("CFrozenSet")  # noqa: A003
     list = ListMethodBuilder("CFrozenSet")  # noqa: A003
-    frozenset = FrozenSetMethodBuilder("CFrozenSet")  # noqa: A003
     map = MapMethodBuilder("CFrozenSet")  # noqa: A003
     max = MaxMinMethodBuilder("CFrozenSet", func=max)  # noqa: A003
     min = MaxMinMethodBuilder("CFrozenSet", func=min)  # noqa: A003
+    range = classmethod(RangeMethodBuilder("CFrozenSet"))  # noqa: A003
     set = SetMethodBuilder("CFrozenSet")  # noqa: A003
     tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-
-    @classmethod  # noqa: A003
-    def range(  # noqa: A003
-        cls: Type[CFrozenSet], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CFrozenSet[int]:
-        """
-        >>> CFrozenSet.range(5)
-        CFrozenSet({0, 1, 2, 3, 4})
-        >>> CFrozenSet.range(1, 5)
-        CFrozenSet({1, 2, 3, 4})
-        >>> CFrozenSet.range(1, 5, 2)
-        CFrozenSet({1, 3})
-        """
-        return cls(CIterable.range(start, stop=stop, step=step))
 
     def sorted(  # noqa: A003
         self: CFrozenSet[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,

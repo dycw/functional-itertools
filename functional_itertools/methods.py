@@ -6,6 +6,7 @@ from typing import Callable
 from typing import Iterable
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -141,4 +142,29 @@ class MaxMinMethodBuilder(MethodBuilder):
 
         return method
 
-    _doc = "Construct a {0} by applying `func` to every item of the {0}."
+    _doc = "Return the maximum/minimum over the {0}."
+
+
+class RangeMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+        def method(
+            cls: Type[Template[T]],
+            start: int,
+            stop: Optional[int] = None,
+            step: Optional[int] = None,
+        ) -> Template[T]:
+            if (stop is None) and (step is not None):
+                raise ValueError("'stop' cannot be None if 'step' is provided")
+            else:
+                return cls(
+                    range(
+                        start,
+                        *(() if stop is None else (stop,)),
+                        *(() if step is None else (step,)),
+                    ),
+                )
+
+        return method
+
+    _doc = "Return a range of integers as a {0}."
