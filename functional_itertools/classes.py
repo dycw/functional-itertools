@@ -1,26 +1,21 @@
 from __future__ import annotations
 
 from functools import reduce
-from itertools import accumulate
 from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import compress
-from itertools import count
-from itertools import cycle
 from itertools import dropwhile
 from itertools import filterfalse
 from itertools import groupby
 from itertools import islice
 from itertools import permutations
 from itertools import product
-from itertools import repeat
 from itertools import starmap
 from itertools import takewhile
 from itertools import tee
 from itertools import zip_longest
 from multiprocessing import Pool
-from operator import add
 from pathlib import Path
 from sys import maxsize
 from typing import Any
@@ -68,22 +63,25 @@ from more_itertools.recipes import unique_justseen
 
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
-from functional_itertools.errors import UnsupportVersionError
-from functional_itertools.methods import AllMethodBuilder
-from functional_itertools.methods import AnyMethodBuilder
-from functional_itertools.methods import EnumerateMethodBuilder
-from functional_itertools.methods import FilterMethodBuilder
-from functional_itertools.methods import LenMethodBuilder
-from functional_itertools.methods import MapMethodBuilder
-from functional_itertools.methods import MaxMinMethodBuilder
-from functional_itertools.methods import MethodBuilder
-from functional_itertools.methods import RangeMethodBuilder
-from functional_itertools.methods import Template
+from functional_itertools.methods.builtins import AllMethodBuilder
+from functional_itertools.methods.builtins import AnyMethodBuilder
+from functional_itertools.methods.builtins import EnumerateMethodBuilder
+from functional_itertools.methods.builtins import FilterMethodBuilder
+from functional_itertools.methods.builtins import LenMethodBuilder
+from functional_itertools.methods.builtins import MapMethodBuilder
+from functional_itertools.methods.builtins import MaxMinMethodBuilder
+from functional_itertools.methods.builtins import MethodBuilder
+from functional_itertools.methods.builtins import RangeMethodBuilder
+from functional_itertools.methods.builtins import SumMethodBuilder
+from functional_itertools.methods.builtins import Template
+from functional_itertools.methods.builtins import ZipMethodBuilder
+from functional_itertools.methods.itertools import AccumulateMethodBuilder
+from functional_itertools.methods.itertools import CountMethodBuilder
+from functional_itertools.methods.itertools import CycleMethodBuilder
+from functional_itertools.methods.itertools import RepeatMethodBuilder
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from functional_itertools.utilities import warn_non_functional
 
 
@@ -148,6 +146,19 @@ class SetMethodBuilder(MethodBuilder):
     _doc = "Create a new CSet from the {0}."
 
 
+class SortedMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+        def method(
+            self: Template[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
+        ) -> CList[T]:
+            return CList(sorted(self, key=key, reverse=reverse))
+
+        return method
+
+    _doc = "Return a sorted CList from the items in the {0}."
+
+
 class TupleMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: TupleMethodBuilder) -> Callable[..., CTuple]:
@@ -157,52 +168,6 @@ class TupleMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CTuple from the {0}."
-
-
-if VERSION is Version.py37:
-
-    def _accumulate_citerable(
-        self: CIterable[T], func: Callable[[T, U], U] = add,
-    ) -> CIterable[Union[T, U]]:
-        return CIterable(accumulate(self._iterable, func))
-
-    def _accumulate_clist(self: CList[T], func: Callable[[T, U], U] = add) -> CList[Union[T, U]]:
-        return self.iter().accumulate(func=func).list()
-
-    def _accumulate_cset(self: CSet[T], func: Callable[[T, U], U] = add) -> CSet[Union[T, U]]:
-        return self.iter().accumulate(func=func).set()
-
-    def _accumulate_cfrozenset(
-        self: CFrozenSet[T], func: Callable[[T, U], U] = add,
-    ) -> CFrozenSet[Union[T, U]]:
-        return self.iter().accumulate(func=func).frozenset()
-
-
-elif VERSION is Version.py38:
-
-    def _accumulate_citerable(
-        self: CIterable[T], func: Callable[[T, U], U] = add, *, initial: Optional[U] = None,
-    ) -> CIterable[Union[T, U]]:
-        return CIterable(accumulate(self._iterable, func, initial=initial))
-
-    def _accumulate_clist(
-        self: CList[T], func: Callable[[T, U], U] = add, *, initial: Optional[U] = None,
-    ) -> CList[Union[T, U]]:
-        return self.iter().accumulate(func=func, initial=initial).list()
-
-    def _accumulate_cset(
-        self: CSet[T], func: Callable[[T, T], T] = add, *, initial: Optional[U] = None,
-    ) -> CSet[T]:
-        return self.iter().accumulate(func=func, initial=initial).set()
-
-    def _accumulate_cfrozenset(
-        self: CFrozenSet[T], func: Callable[[T, T], T] = add, *, initial: Optional[U] = None,
-    ) -> CFrozenSet[T]:
-        return self.iter().accumulate(func=func, initial=initial).frozenset()
-
-
-else:
-    raise UnsupportVersionError(VERSION)  # pragma: no cover
 
 
 class CIterable(Iterable[T]):
@@ -243,7 +208,7 @@ class CIterable(Iterable[T]):
     def __str__(self: CIterable[Any]) -> str:
         return f"{type(self).__name__}({self._iterable})"
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CIterable")  # noqa: A003
     any = AnyMethodBuilder("CIterable")  # noqa: A003
@@ -258,21 +223,10 @@ class CIterable(Iterable[T]):
     min = MaxMinMethodBuilder("CIterable", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CIterable"))  # noqa: A003
     set = SetMethodBuilder("CIterable")  # noqa: A003
+    sorted = SortedMethodBuilder("CIterable")  # noqa: A003
+    sum = SumMethodBuilder("CIterable")  # noqa: A003
     tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-
-    def sorted(  # noqa: A003
-        self: CIterable[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return CList(sorted(self._iterable, key=key, reverse=reverse))
-
-    def sum(self: CIterable[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        args, _ = drop_sentinel(start)
-        return sum(self._iterable, *args)
-
-    def zip(  # noqa: A003
-        self: CIterable[T], *iterables: Iterable[U],
-    ) -> CIterable[Tuple[Union[T, U]]]:
-        return CIterable(zip(self._iterable, *iterables))
+    zip = ZipMethodBuilder("CIterable")  # noqa: A003
 
     # functools
 
@@ -304,18 +258,10 @@ class CIterable(Iterable[T]):
 
     # itertools
 
-    @classmethod
-    def count(cls: Type[CIterable], start: int = 0, step: int = 1) -> CIterable[int]:
-        return cls(count(start=start, step=step))
-
-    def cycle(self: CIterable[T]) -> CIterable[T]:
-        return CIterable(cycle(self._iterable))
-
-    @classmethod
-    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
-        return cls(repeat(x, *(() if times is None else (times,))))
-
-    accumulate = _accumulate_citerable
+    count = classmethod(CountMethodBuilder("CIterable"))
+    cycle = CycleMethodBuilder("CIterable")
+    repeat = classmethod(RepeatMethodBuilder("CIterable", allow_infinite=True))
+    accumulate = AccumulateMethodBuilder("CIterable")
 
     def chain(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
         return CIterable(chain(self._iterable, *iterables))
@@ -565,7 +511,7 @@ class CList(List[T]):
         else:
             return out
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CList")  # noqa: A003
     any = AnyMethodBuilder("CList")  # noqa: A003
@@ -581,7 +527,10 @@ class CList(List[T]):
     min = MaxMinMethodBuilder("CList", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CList"))  # noqa: A003
     set = SetMethodBuilder("CList")  # noqa: A003
+    sorted = SortedMethodBuilder("CList")  # noqa: A003
+    sum = SumMethodBuilder("CList")  # noqa: A003
     tuple = TupleMethodBuilder("CList")  # noqa: A003
+    zip = ZipMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
@@ -595,17 +544,6 @@ class CList(List[T]):
         warn("Use the 'sorted' method instead of 'sort'")
         return self.sorted(key=key, reverse=reverse)
 
-    def sorted(  # noqa: A003
-        self: CList[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
-
-    def sum(self: CList[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        return self.iter().sum(start=start)
-
-    def zip(self: CList[T], *iterables: Iterable[U]) -> CList[Tuple[Union[T, U]]]:  # noqa: A003
-        return self.iter().zip(*iterables).list()
-
     # functools
 
     def reduce(
@@ -615,11 +553,8 @@ class CList(List[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    accumulate = _accumulate_clist
+    repeat = classmethod(RepeatMethodBuilder("CList", allow_infinite=False))
+    accumulate = AccumulateMethodBuilder("CList")
 
     def chain(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
         return self.iter().chain(*iterables).list()
@@ -804,6 +739,8 @@ class CList(List[T]):
 class CTuple(Tuple[T]):
     """A tuple with chainable methods."""
 
+    # built-ins
+
     all = AllMethodBuilder("CTuple")  # noqa: A003
     any = AnyMethodBuilder("CTuple")  # noqa: A003
     dict = DictMethodBuilder("CTuple")  # noqa: A003
@@ -818,13 +755,21 @@ class CTuple(Tuple[T]):
     min = MaxMinMethodBuilder("CTuple", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CTuple"))  # noqa: A003
     set = SetMethodBuilder("CTuple")  # noqa: A003
+    sorted = SortedMethodBuilder("CTuple")  # noqa: A003
+    sum = SumMethodBuilder("CTuple")  # noqa: A003
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
+    zip = ZipMethodBuilder("CTuple")  # noqa: A003
+
+    # itertools
+
+    repeat = classmethod(RepeatMethodBuilder("CTuple", allow_infinite=False))
+    accumulate = AccumulateMethodBuilder("CTuple")
 
 
 class CSet(Set[T]):
     """A set with chainable methods."""
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CSet")  # noqa: A003
     any = AnyMethodBuilder("CSet")  # noqa: A003
@@ -840,18 +785,10 @@ class CSet(Set[T]):
     min = MaxMinMethodBuilder("CSet", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CSet"))  # noqa: A003
     set = SetMethodBuilder("CSet")  # noqa: A003
+    sorted = SortedMethodBuilder("CSet")  # noqa: A003
+    sum = SumMethodBuilder("CSet")  # noqa: A003
     tuple = TupleMethodBuilder("CSet")  # noqa: A003
-
-    def sorted(  # noqa: A003
-        self: CSet[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
-
-    def sum(self: CSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        return self.iter().sum(start=start)
-
-    def zip(self: CSet[T], *iterables: Iterable[U]) -> CSet[Tuple[Union[T, U]]]:  # noqa: A003
-        return self.iter().zip(*iterables).set()
+    zip = ZipMethodBuilder("CSet")  # noqa: A003
 
     # set & frozenset methods
 
@@ -918,11 +855,8 @@ class CSet(Set[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    accumulate = _accumulate_cset
+    repeat = classmethod(RepeatMethodBuilder("CSet", allow_infinite=False))
+    accumulate = AccumulateMethodBuilder("CSet")
 
     def chain(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
         return self.iter().chain(*iterables).set()
@@ -1051,7 +985,7 @@ class CSet(Set[T]):
 class CFrozenSet(FrozenSet[T]):
     """A frozenset with chainable methods."""
 
-    # built-in
+    # built-ins
 
     all = AllMethodBuilder("CFrozenSet")  # noqa: A003
     any = AnyMethodBuilder("CFrozenSet")  # noqa: A003
@@ -1067,20 +1001,10 @@ class CFrozenSet(FrozenSet[T]):
     min = MaxMinMethodBuilder("CFrozenSet", func=min)  # noqa: A003
     range = classmethod(RangeMethodBuilder("CFrozenSet"))  # noqa: A003
     set = SetMethodBuilder("CFrozenSet")  # noqa: A003
+    sorted = SortedMethodBuilder("CFrozenSet")  # noqa: A003
+    sum = SumMethodBuilder("CFrozenSet")  # noqa: A003
     tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-
-    def sorted(  # noqa: A003
-        self: CFrozenSet[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
-
-    def sum(self: CFrozenSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
-        return self.iter().sum(start=start)
-
-    def zip(  # noqa: A003
-        self: CFrozenSet[T], *iterables: Iterable[U],
-    ) -> CFrozenSet[Tuple[Union[T, U]]]:
-        return self.iter().zip(*iterables).frozenset()
+    zip = ZipMethodBuilder("CFrozenSet")  # noqa: A003
 
     # set & frozenset methods
 
@@ -1108,11 +1032,8 @@ class CFrozenSet(FrozenSet[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    accumulate = _accumulate_cfrozenset
+    repeat = classmethod(RepeatMethodBuilder("CFrozenSet", allow_infinite=False))
+    accumulate = accumulate = AccumulateMethodBuilder("CFrozenSet")
 
     def chain(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
         return self.iter().chain(*iterables).frozenset()
@@ -1258,7 +1179,7 @@ class CDict(Dict[T, U]):
     def items(self: CDict[T, U]) -> CIterable[Tuple[T, U]]:
         return CIterable(super().items())
 
-    # built-in
+    # built-ins
 
     def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:  # dead: disable
         def inner(item: Tuple[T, U]) -> bool:

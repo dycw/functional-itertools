@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from types import FunctionType
 from typing import Any
 from typing import Callable
 from typing import Iterable
@@ -11,37 +10,16 @@ from typing import TypeVar
 from typing import Union
 
 from functional_itertools.errors import UnsupportVersionError
+from functional_itertools.methods.base import MethodBuilder
+from functional_itertools.methods.base import Template
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 
+
 T = TypeVar("T")
 U = TypeVar("U")
-V = TypeVar("V")
-W = TypeVar("W")
-
-
-class Template(Iterable[T]):
-    pass
-
-
-class MethodBuilderMeta(type):
-    def __call__(cls: MethodBuilder, cls_name: str, **kwargs: Any) -> Callable[..., Any]:
-        method = cls._build_method(**kwargs)
-        method.__annotations__ = {
-            k: v.replace("Template", cls_name) for k, v in method.__annotations__.items()
-        }
-        method.__doc__ = cls._doc.format(cls_name)
-        return method
-
-
-class MethodBuilder(metaclass=MethodBuilderMeta):
-    @classmethod  # noqa: U100
-    def _build_method(cls: MethodBuilder, **kwargs: Any) -> FunctionType:  # noqa: U100
-        raise NotImplementedError
-
-    _doc = NotImplemented
 
 
 class AllMethodBuilder(MethodBuilder):
@@ -119,7 +97,7 @@ class MaxMinMethodBuilder(MethodBuilder):
                 self: Template[T],
                 *,
                 key: Union[Callable[[T], Any], Sentinel] = sentinel,
-                default: V = sentinel,
+                default: U = sentinel,
             ) -> Union[T, U]:
                 return func(
                     self,
@@ -168,3 +146,25 @@ class RangeMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Return a range of integers as a {0}."
+
+
+class SumMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+        def method(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+            return sum(self, *(() if start is sentinel else (start,)))
+
+        return method
+
+    _doc = "Return the sum of the elements in {0}."
+
+
+class ZipMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., int]:
+        def method(self: Template[T], *iterables: Iterable[U]) -> Template[Tuple[Union[T, U]]]:
+            return type(self)(zip(self, *iterables))
+
+        return method
+
+    _doc = "Return an iterator that aggregates elements from the {0} and the input iterables."

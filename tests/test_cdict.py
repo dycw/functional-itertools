@@ -34,9 +34,7 @@ def test_items(x: Dict[str, int]) -> None:
     assert list(y) == list(x.items())
 
 
-# built-in
-
-
+# built-ins
 @given(x=dictionaries(integers(), integers()))
 def test_filter_keys(x: Dict[int, int]) -> None:
     y = CDict(x).filter_keys(is_even)

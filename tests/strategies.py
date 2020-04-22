@@ -22,6 +22,7 @@ from functional_itertools import CSet
 from functional_itertools import CTuple
 
 
+CLASSES = [CIterable, CList, CTuple, CSet, CFrozenSet]
 MAX_SIZE = 1000
 T = TypeVar("T")
 
