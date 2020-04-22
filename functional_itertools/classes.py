@@ -4,10 +4,8 @@ from functools import reduce
 from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
-from itertools import groupby
 from itertools import islice
 from itertools import permutations
-from itertools import zip_longest
 from multiprocessing import Pool
 from pathlib import Path
 from sys import maxsize
@@ -75,12 +73,14 @@ from functional_itertools.methods.itertools import CountMethodBuilder
 from functional_itertools.methods.itertools import CycleMethodBuilder
 from functional_itertools.methods.itertools import DropWhileMethodBuilder
 from functional_itertools.methods.itertools import FilterFalseMethodBuilder
+from functional_itertools.methods.itertools import GroupByMethodBuilder
 from functional_itertools.methods.itertools import ISliceMethodBuilder
 from functional_itertools.methods.itertools import ProductBuilder
 from functional_itertools.methods.itertools import RepeatMethodBuilder
 from functional_itertools.methods.itertools import StarMapMethodBuilder
 from functional_itertools.methods.itertools import TakeWhileMethodBuilder
 from functional_itertools.methods.itertools import TeeMethodBuilder
+from functional_itertools.methods.itertools import ZipLongestMethodBuilder
 from functional_itertools.methods.more_itertools import ChunkedMethodBuilder
 from functional_itertools.methods.more_itertools import DistributeMethodBuilder
 from functional_itertools.methods.more_itertools import DivideMethodBuilder
@@ -176,41 +176,6 @@ class TupleMethodBuilder(MethodBuilder):
         return method
 
     _doc = "Create a new CTuple from the {0}."
-
-
-# itertools
-
-
-class GroupByMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[T], key: Optional[Callable[[T], U]] = None,
-        ) -> Template[CTuple[U, Template[T]]]:
-            cls = type(self)
-            return cls((CTuple((k, cls(v))) for k, v in groupby(self, key=key)))
-
-        return method
-
-    _doc = "\n".join(
-        [
-            "[k for k, g in groupby('AAAABBBCCDAABBB')] --> A B C D A B",
-            "[list(g) for k, g in groupby('AAAABBBCCD')] --> AAAA BBB CC D",
-        ],
-    )
-
-
-class ZipLongestMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[ZipLongestMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
-        ) -> Template[CTuple[T]]:
-            return type(self)(map(CTuple, zip_longest(self, *iterables, fillvalue=fillvalue)))
-
-        return method
-
-    _doc = "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-"
 
 
 # classes

@@ -5,7 +5,7 @@ from itertools import chain
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import compress
-from itertools import count
+from itertools import count,groupby ,zip_longest
 from itertools import cycle
 from itertools import dropwhile
 from itertools import filterfalse
@@ -36,48 +36,6 @@ from functional_itertools.utilities import Version
 
 T = TypeVar("T")
 U = TypeVar("U")
-
-
-class CountMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CycleMethodBuilder]) -> Callable[..., Any]:
-        def method(cls: Type[Template[T]], start: int = 0, step: int = 1) -> Template[int]:
-            return cls(count(start=start, step=step))
-
-        return method
-
-    _doc = "count(10) --> 10 11 12 13 14 ..."
-
-
-class CycleMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CycleMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T]) -> Template[T]:
-            return type(self)(cycle(self))
-
-        return method
-
-    _doc = "cycle('ABCD') --> A B C D A B C D A B C D ..."
-
-
-class RepeatMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(
-        cls: Type[RepeatMethodBuilder], *, allow_infinite: bool,
-    ) -> Callable[..., Any]:
-        if allow_infinite:
-
-            def method(cls: Type[Template[T]], x: T, times: Optional[int] = None) -> Template[T]:
-                return cls(repeat(x, **({} if times is None else {"times": times})))
-
-        else:
-
-            def method(cls: Type[Template[T]], x: T, times: int) -> Template[T]:
-                return cls(repeat(x, times=times))
-
-        return method
-
-    _doc = "repeat(10, 3) --> 10 10 10"
 
 
 class AccumulateMethodBuilder(MethodBuilder):
@@ -128,6 +86,28 @@ class CompressMethodBuilder(MethodBuilder):
     _doc = "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F"
 
 
+class CountMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CycleMethodBuilder]) -> Callable[..., Any]:
+        def method(cls: Type[Template[T]], start: int = 0, step: int = 1) -> Template[int]:
+            return cls(count(start=start, step=step))
+
+        return method
+
+    _doc = "count(10) --> 10 11 12 13 14 ..."
+
+
+class CycleMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CycleMethodBuilder]) -> Callable[..., Any]:
+        def method(self: Template[T]) -> Template[T]:
+            return type(self)(cycle(self))
+
+        return method
+
+    _doc = "cycle('ABCD') --> A B C D A B C D A B C D ..."
+
+
 class DropWhileMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: Type[DropWhileMethodBuilder]) -> Callable[..., Any]:
@@ -148,6 +128,25 @@ class FilterFalseMethodBuilder(MethodBuilder):
         return method
 
     _doc = "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8"
+
+
+class GroupByMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[T], key: Optional[Callable[[T], U]] = None,
+        ) -> Template[Tuple[U, Template[T]]]:
+            cls = type(self)
+            return cls(((k, cls(v))) for k, v in groupby(self, key=key))
+
+        return method
+
+    _doc = "\n".join(
+        [
+            "[k for k, g in groupby('AAAABBBCCDAABBB')] --> A B C D A B",
+            "[list(g) for k, g in groupby('AAAABBBCCD')] --> AAAA BBB CC D",
+        ],
+    )
 
 
 class ISliceMethodBuilder(MethodBuilder):
@@ -178,6 +177,40 @@ class ISliceMethodBuilder(MethodBuilder):
             "islice('ABCDEFG', 0, None, 2) --> A C E G",
         ],
     )
+
+
+class ProductBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: Type[ProductBuilder]) -> Callable[..., Any]:
+        def method(
+            self: Template[T], *iterables: Iterable[U], repeat: int = 1,
+        ) -> Template[Template[T]]:
+            cls = type(self)
+            return cls(product(self, *iterables, repeat=repeat)).map(cls)
+
+        return method
+
+    _doc = "Cartesian product of input iterables."
+
+
+class RepeatMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(
+        cls: Type[RepeatMethodBuilder], *, allow_infinite: bool,
+    ) -> Callable[..., Any]:
+        if allow_infinite:
+
+            def method(cls: Type[Template[T]], x: T, times: Optional[int] = None) -> Template[T]:
+                return cls(repeat(x, **({} if times is None else {"times": times})))
+
+        else:
+
+            def method(cls: Type[Template[T]], x: T, times: int) -> Template[T]:
+                return cls(repeat(x, times=times))
+
+        return method
+
+    _doc = "repeat(10, 3) --> 10 10 10"
 
 
 class StarMapMethodBuilder(MethodBuilder):
@@ -216,18 +249,18 @@ class TeeMethodBuilder(MethodBuilder):
     _doc = "Return n independent iterators from a single iterable."
 
 
-class ProductBuilder(MethodBuilder):
+class ZipLongestMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: Type[ProductBuilder]) -> Callable[..., Any]:
+    def _build_method(cls: Type[ZipLongestMethodBuilder]) -> Callable[..., Any]:
         def method(
-            self: Template[T], *iterables: Iterable[U], repeat: int = 1,
+            self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
         ) -> Template[Template[T]]:
             cls = type(self)
-            return cls(product(self, *iterables, repeat=repeat)).map(cls)
+            return cls(zip_longest(self, *iterables, fillvalue=fillvalue)).map(cls)
 
         return method
 
-    _doc = "Cartesian product of input iterables."
+    _doc = "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-"
 
 
 if 0:
