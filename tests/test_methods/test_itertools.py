@@ -62,6 +62,7 @@ from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
+from functional_itertools import CTuple
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -118,7 +119,7 @@ def test_accumulate(cls: Type, data: DataObject, initial: Dict[str, Any]) -> Non
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).accumulate(add, **initial)
     assert isinstance(y, cls)
-    if cls in {CIterable, CList}:
+    if cls in {CIterable, CList, CTuple}:
         assert cast(y) == cast(accumulate(x, add, **initial))
 
 
