@@ -204,7 +204,7 @@ class ZipLongestMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: Type[ZipLongestMethodBuilder]) -> Callable[..., Any]:
         def method(
-            self: Template[T], *iterables: Iterable[U], fillvalue: V = None
+            self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
         ) -> Template[CTuple[T]]:
             return type(self)(map(CTuple, zip_longest(self, *iterables, fillvalue=fillvalue)))
 
