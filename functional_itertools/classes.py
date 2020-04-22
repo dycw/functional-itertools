@@ -74,7 +74,10 @@ from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods import AllMethodBuilder
 from functional_itertools.methods import AnyMethodBuilder
 from functional_itertools.methods import EnumerateMethodBuilder
+from functional_itertools.methods import FilterMethodBuilder
+from functional_itertools.methods import MapMethodBuilder
 from functional_itertools.methods import MethodBuilder
+from functional_itertools.methods import Template
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -92,7 +95,7 @@ W = TypeVar("W")
 class DictMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: DictMethodBuilder) -> Callable[..., CDict]:
-        def method(self: Iterable[Tuple[T, U]]) -> CDict[T, U]:
+        def method(self: Template[Tuple[T, U]]) -> CDict[T, U]:
             return CDict(self)
 
         return method
@@ -103,7 +106,7 @@ class DictMethodBuilder(MethodBuilder):
 class IterMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: IterMethodBuilder) -> Callable[..., CIterable]:
-        def method(self: Iterable[T]) -> CIterable[T]:
+        def method(self: Template[T]) -> CIterable[T]:
             return CIterable(self)
 
         return method
@@ -114,7 +117,7 @@ class IterMethodBuilder(MethodBuilder):
 class FrozenSetMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: FrozenSetMethodBuilder) -> Callable[..., CFrozenSet]:
-        def method(self: Iterable[T]) -> CFrozenSet[T]:
+        def method(self: Template[T]) -> CFrozenSet[T]:
             return CFrozenSet(self)
 
         return method
@@ -125,7 +128,7 @@ class FrozenSetMethodBuilder(MethodBuilder):
 class ListMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: ListMethodBuilder) -> Callable[..., CList]:
-        def method(self: Iterable[T]) -> CList[T]:
+        def method(self: Template[T]) -> CList[T]:
             return CList(self)
 
         return method
@@ -135,8 +138,8 @@ class ListMethodBuilder(MethodBuilder):
 
 class SetMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: SetMethodBuilder) -> CSet:
-        def method(self: Iterable[T]) -> CSet[T]:
+    def _build_method(cls: SetMethodBuilder) -> Callable[..., CSet]:
+        def method(self: Template[T]) -> CSet[T]:
             return CSet(self)
 
         return method
@@ -146,8 +149,8 @@ class SetMethodBuilder(MethodBuilder):
 
 class TupleMethodBuilder(MethodBuilder):
     @classmethod
-    def _build_method(cls: TupleMethodBuilder) -> CTuple:
-        def method(self: Iterable[T]) -> CTuple[T]:
+    def _build_method(cls: TupleMethodBuilder) -> Callable[..., CTuple]:
+        def method(self: Template[T]) -> CTuple[T]:
             return CTuple(self)
 
         return method
@@ -245,21 +248,13 @@ class CIterable(Iterable[T]):
     any = AnyMethodBuilder("CIterable")  # noqa: A003
     dict = DictMethodBuilder("CIterable")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CIterable")  # noqa: A003
+    filter = FilterMethodBuilder("CIterable")  # noqa: A003
     iter = IterMethodBuilder("CIterable")  # noqa: A003
     list = ListMethodBuilder("CIterable")  # noqa: A003
+    map = MapMethodBuilder("CIterable")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CIterable")  # noqa: A003
     set = SetMethodBuilder("CIterable")  # noqa: A003
     tuple = TupleMethodBuilder("CIterable")  # noqa: A003
-
-    def filter(  # noqa: A003
-        self: CIterable[T], func: Optional[Callable[[T], bool]],
-    ) -> CIterable[T]:
-        return CIterable(filter(func, self._iterable))
-
-    def map(  # noqa: A003
-        self: CIterable[T], func: Callable[..., U], *iterables: Iterable,
-    ) -> CIterable[U]:
-        return CIterable(map(func, self._iterable, *iterables))
 
     def max(  # noqa: A003
         self: CIterable[T],
@@ -611,20 +606,16 @@ class CList(List[T]):
     any = AnyMethodBuilder("CList")  # noqa: A003
     dict = DictMethodBuilder("CList")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CList")  # noqa: A003
+    filter = FilterMethodBuilder("CList")  # noqa: A003
     iter = IterMethodBuilder("CList")  # noqa: A003
     list = ListMethodBuilder("CList")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CList")  # noqa: A003
+    map = MapMethodBuilder("CList")  # noqa: A003
     set = SetMethodBuilder("CList")  # noqa: A003
     tuple = TupleMethodBuilder("CList")  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
-
-    def filter(self: CList[T], func: Optional[Callable[[T], bool]]) -> CList[T]:  # noqa: A003
-        return self.iter().filter(func).list()
-
-    def map(self: CList[T], func: Callable[..., U], *iterables: Iterable) -> CList[U]:  # noqa: A003
-        return self.iter().map(func, *iterables).list()
 
     def max(  # noqa: A003
         self: CList[T],
@@ -878,8 +869,10 @@ class CTuple(Tuple[T]):
     any = AnyMethodBuilder("CTuple")  # noqa: A003
     dict = DictMethodBuilder("CTuple")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CTuple")  # noqa: A003
+    filter = FilterMethodBuilder("CTuple")  # noqa: A003
     iter = IterMethodBuilder("CTuple")  # noqa: A003
     list = ListMethodBuilder("CTuple")  # noqa: A003
+    map = MapMethodBuilder("CTuple")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CTuple")  # noqa: A003
     set = SetMethodBuilder("CTuple")  # noqa: A003
     tuple = TupleMethodBuilder("CTuple")  # noqa: A003
@@ -894,17 +887,13 @@ class CSet(Set[T]):
     any = AnyMethodBuilder("CSet")  # noqa: A003
     dict = DictMethodBuilder("CSet")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CSet")  # noqa: A003
+    filter = FilterMethodBuilder("CSet")  # noqa: A003
     iter = IterMethodBuilder("CSet")  # noqa: A003
     list = ListMethodBuilder("CSet")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CSet")  # noqa: A003
+    map = MapMethodBuilder("CSet")  # noqa: A003
     set = SetMethodBuilder("CSet")  # noqa: A003
     tuple = TupleMethodBuilder("CSet")  # noqa: A003
-
-    def filter(self: CSet[T], func: Optional[Callable[[T], bool]]) -> CSet[T]:  # noqa: A003
-        return self.iter().filter(func).set()
-
-    def map(self: CSet[T], func: Callable[..., U], *iterables: Iterable) -> CSet[U]:  # noqa: A003
-        return self.iter().map(func, *iterables).set()
 
     def max(  # noqa: A003
         self: CSet[T],
@@ -1151,21 +1140,13 @@ class CFrozenSet(FrozenSet[T]):
     any = AnyMethodBuilder("CFrozenSet")  # noqa: A003
     dict = DictMethodBuilder("CFrozenSet")  # noqa: A003
     enumerate = EnumerateMethodBuilder("CFrozenSet")  # noqa: A003
+    filter = FilterMethodBuilder("CFrozenSet")  # noqa: A003
     iter = IterMethodBuilder("CFrozenSet")  # noqa: A003
     list = ListMethodBuilder("CFrozenSet")  # noqa: A003
     frozenset = FrozenSetMethodBuilder("CFrozenSet")  # noqa: A003
+    map = MapMethodBuilder("CFrozenSet")  # noqa: A003
     set = SetMethodBuilder("CFrozenSet")  # noqa: A003
     tuple = TupleMethodBuilder("CFrozenSet")  # noqa: A003
-
-    def filter(  # noqa: A003
-        self: CFrozenSet[T], func: Optional[Callable[[T], bool]],
-    ) -> CFrozenSet[T]:
-        return self.iter().filter(func).frozenset()
-
-    def map(  # noqa: A003
-        self: CFrozenSet[T], func: Callable[..., U], *iterables: Iterable,
-    ) -> CFrozenSet[U]:
-        return self.iter().map(func, *iterables).frozenset()
 
     def max(  # noqa: A003
         self: CFrozenSet[T],

@@ -1,20 +1,29 @@
 from __future__ import annotations
 
+from types import FunctionType
 from typing import Any
 from typing import Callable
 from typing import Iterable
+from typing import Optional
 from typing import Tuple
 from typing import TypeVar
 
 
 T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+W = TypeVar("W")
+
+
+class Template(Iterable[T]):
+    pass
 
 
 class MethodBuilderMeta(type):
-    def __call__(cls: MethodBuilder, cls_name: int) -> Callable[..., Any]:
+    def __call__(cls: MethodBuilder, cls_name: str) -> Callable[..., Any]:
         method = cls._build_method()
         method.__annotations__ = {
-            k: v.replace("Iterable", cls_name) for k, v in method.__annotations__.items()
+            k: v.replace("Template", cls_name) for k, v in method.__annotations__.items()
         }
         method.__doc__ = cls._doc.format(cls_name)
         return method
@@ -22,7 +31,7 @@ class MethodBuilderMeta(type):
 
 class MethodBuilder(metaclass=MethodBuilderMeta):
     @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:  # noqa: U100
+    def _build_method(cls: MethodBuilder) -> FunctionType:  # noqa: U100
         raise NotImplementedError
 
     _doc = NotImplemented
@@ -31,7 +40,7 @@ class MethodBuilder(metaclass=MethodBuilderMeta):
 class AllMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
-        def method(self: Iterable[T]) -> bool:
+        def method(self: Template[T]) -> bool:
             return all(self)
 
         return method
@@ -42,7 +51,7 @@ class AllMethodBuilder(MethodBuilder):
 class AnyMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
-        def method(self: Iterable[T]) -> bool:
+        def method(self: Template[T]) -> bool:
             return any(self)
 
         return method
@@ -53,9 +62,31 @@ class AnyMethodBuilder(MethodBuilder):
 class EnumerateMethodBuilder(MethodBuilder):
     @classmethod
     def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
-        def method(self: Iterable[T], start: int = 0) -> Iterable[Tuple[int, T]]:
+        def method(self: Template[T], start: int = 0) -> Template[Tuple[int, T]]:
             return type(self)(enumerate(self, start=start))
 
         return method
 
     _doc = "Return an enumerate object, cast as a {0}."
+
+
+class FilterMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+        def method(self: Template[T], func: Optional[Callable[[T], bool]]) -> Template[T]:
+            return type(self)(filter(func, self))
+
+        return method
+
+    _doc = "Construct a {0} from those elements of the {0} for which function returns true."
+
+
+class MapMethodBuilder(MethodBuilder):
+    @classmethod
+    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
+        def method(self: Template[T], func: Callable[..., U], *iterables: Iterable) -> Template[U]:
+            return type(self)(map(func, self, *iterables))
+
+        return method
+
+    _doc = "Construct a {0} by applying `func` to every item of the {0}."

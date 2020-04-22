@@ -191,7 +191,7 @@ def test_enumerate(cls: Type, data: DataObject, start: int) -> None:
         assert cast(y) == cast(enumerate(x, start=start))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_filter(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
@@ -200,7 +200,7 @@ def test_filter(cls: Type, data: DataObject) -> None:
     assert cast(y) == cast(filter(is_even, x))
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_frozenset(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, tuples(integers(), integers())))
@@ -221,7 +221,7 @@ def test_list(cls: Type, data: DataObject) -> None:
     assert isinstance(cls(x).list(), CList)
 
 
-@mark.parametrize("cls", [CIterable, CList, CSet, CFrozenSet])
+@mark.parametrize("cls", [CIterable, CList, CTuple, CSet, CFrozenSet])
 @given(data=data())
 def test_map(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
