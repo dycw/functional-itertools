@@ -42,7 +42,7 @@ def _pmap_neg(x: Iterable[int]) -> int:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(x=real_iterables(tuples(integers(), integers()), min_size=1))
+@given(x=real_iterables(tuples(integers(), integers()), min_size=1, max_size=10))
 def test_pstarmap(cls: Type, x: Iterable[Tuple[int, int]]) -> None:
     y = cls(x).pstarmap(max, processes=1)
     assert isinstance(y, cls)
