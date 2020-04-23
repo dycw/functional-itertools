@@ -5,7 +5,6 @@ import functools
 import itertools
 from itertools import chain
 from itertools import islice
-from itertools import starmap
 from multiprocessing import Pool
 from operator import add
 from pathlib import Path
@@ -40,7 +39,6 @@ from more_itertools.recipes import random_combination
 from more_itertools.recipes import random_combination_with_replacement
 from more_itertools.recipes import random_permutation
 from more_itertools.recipes import random_product
-from more_itertools.recipes import repeatfunc
 from more_itertools.recipes import roundrobin
 from more_itertools.recipes import tabulate
 from more_itertools.recipes import unique_everseen
@@ -525,10 +523,10 @@ def _build_repeat(name: str) -> Callable[..., Iterable]:
 
 @_defines_method_factory("starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000")
 def _build_starmap() -> Callable[Iterable]:
-    def method(self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> Template[U]:
-        return type(self)(starmap(func, self))
+    def starmap(self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> Template[U]:
+        return type(self)(itertools.starmap(func, self))
 
-    return method
+    return starmap
 
 
 @_defines_method_factory(
@@ -646,6 +644,25 @@ def _build_quantify() -> Callable[..., int]:
         return more_itertools.quantify(self, pred=pred)
 
     return quantify
+
+
+@_defines_method_factory("Repeat calls to func with specified arguments", citerable_or_clist=True)
+def _build_repeatfunc(name: str) -> Callable[..., Iterable]:
+    if name == _CIterable:
+
+        def repeatfunc(
+            cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+        ) -> CIterable[T]:
+            return CIterable(more_itertools.repeatfunc(func, times, *args))
+
+    else:
+
+        def repeatfunc(
+            cls: Type[Template], func: Callable[..., T], times: int, *args: Any,
+        ) -> CList[T]:
+            return CList(more_itertools.repeatfunc(func, times, *args))
+
+    return repeatfunc
 
 
 @_defines_method_factory(
@@ -855,6 +872,7 @@ class CIterable(Iterable[T]):
     pairwise = _build_pairwise(_CIterable)
     prepend = _build_prepend(_CIterable)
     quantify = _build_quantify(_CIterable)
+    repeatfunc = classmethod(_build_repeatfunc(_CIterable))
     tail = _build_tail(_CIterable)
     take = _build_take(_CIterable)
 
@@ -864,12 +882,6 @@ class CIterable(Iterable[T]):
 
     def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
         return CIterable(padnone(self._iterable))
-
-    @classmethod
-    def repeatfunc(
-        cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
-    ) -> CIterable[T]:
-        return cls(repeatfunc(func, times, *args))
 
     def grouper(
         self: CIterable[T], n: int, fillvalue: U = None,
@@ -1063,14 +1075,9 @@ class CList(List[T]):
     pairwise = _build_pairwise(_CList)
     prepend = _build_prepend(_CList)
     quantify = _build_quantify(_CList)
+    repeatfunc = classmethod(_build_repeatfunc(_CList))
     tail = _build_tail(_CList)
     take = _build_take(_CList)
-
-    @classmethod
-    def repeatfunc(
-        cls: Type[CList], func: Callable[..., T], times: Optional[int] = None, *args: Any,
-    ) -> CList[T]:
-        return CIterable.repeatfunc(func, times, *args).list()
 
     def grouper(
         self: CList[T], n: int, fillvalue: Optional[T] = None,
@@ -1209,6 +1216,7 @@ class CTuple(Tuple[T]):
     pairwise = _build_pairwise(_CTuple)
     prepend = _build_prepend(_CTuple)
     quantify = _build_quantify(_CTuple)
+    repeatfunc = classmethod(_build_repeatfunc(_CTuple))
     tail = _build_tail(_CTuple)
     take = _build_take(_CTuple)
 
@@ -1341,14 +1349,9 @@ class CSet(Set[T]):
     pairwise = _build_pairwise(_CSet)
     prepend = _build_prepend(_CSet)
     quantify = _build_quantify(_CSet)
+    repeatfunc = classmethod(_build_repeatfunc(_CSet))
     tail = _build_tail(_CSet)
     take = _build_take(_CSet)
-
-    @classmethod
-    def repeatfunc(
-        cls: Type[CSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
-    ) -> CSet[T]:
-        return CIterable.repeatfunc(func, times, *args).set()
 
     # more-itertools
 
@@ -1450,14 +1453,9 @@ class CFrozenSet(FrozenSet[T]):
     pairwise = _build_pairwise(_CFrozenSet)
     prepend = _build_prepend(_CFrozenSet)
     quantify = _build_quantify(_CFrozenSet)
+    repeatfunc = classmethod(_build_repeatfunc(_CFrozenSet))
     tail = _build_tail(_CFrozenSet)
     take = _build_take(_CFrozenSet)
-
-    @classmethod
-    def repeatfunc(
-        cls: Type[CFrozenSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
-    ) -> CFrozenSet[T]:
-        return CIterable.repeatfunc(func, times, *args).frozenset()
 
     # more-itertools
 

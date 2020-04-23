@@ -40,7 +40,6 @@ from tests.strategies import CLASSES
 from tests.strategies import islice_ints
 from tests.strategies import ORDERED_CLASSES
 from tests.strategies import real_iterables
-from tests.strategies import siterables
 from tests.strategies import slists
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
@@ -150,24 +149,21 @@ def test_quantify(cls: Type, x: Iterable[int]) -> None:
     assert y == quantify(x, pred=is_even)
 
 
-@mark.xfail
 @mark.parametrize("cls", CLASSES)
 @given(data=data(), n=islice_ints)
 def test_repeatfunc(cls: Type, data: DataObject, n: int) -> None:
     add1 = partial(add, 1)
-    if case is CIterable:
+    if cls is CIterable:
         times = data.draw(none() | small_ints)
     else:
         times = data.draw(small_ints)
-
-    y = repeatfunc(add1, times, 0)
-    assert isinstance(y, case)
-    _, cast = data.draw(siterables(case, none()))
+    y = cls.repeatfunc(add1, times, 0)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
     z = repeatfunc(add1, times, 0)
-    if (case is CIterable) and (times is None):
-        assert cast(y[:n]) == cast(islice(z, n))
+    if (cls is CIterable) and (times is None):
+        assert list(y[:n]) == list(islice(z, n))
     else:
-        assert cast(y) == cast(z)
+        assert list(y) == list(z)
 
 
 @given(start=integers(), n=islice_ints)
