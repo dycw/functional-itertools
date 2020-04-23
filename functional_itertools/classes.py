@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import builtins
 import itertools
-from functools import reduce
 from itertools import chain
 from itertools import islice
 from itertools import starmap
@@ -29,18 +28,13 @@ from typing import Union
 from warnings import warn
 
 import more_itertools
-from more_itertools.recipes import consume
 from more_itertools.recipes import first_true
-from more_itertools.recipes import flatten
 from more_itertools.recipes import grouper
 from more_itertools.recipes import iter_except
-from more_itertools.recipes import nth
 from more_itertools.recipes import nth_combination
 from more_itertools.recipes import padnone
 from more_itertools.recipes import partition
 from more_itertools.recipes import powerset
-from more_itertools.recipes import prepend
-from more_itertools.recipes import quantify
 from more_itertools.recipes import random_combination
 from more_itertools.recipes import random_combination_with_replacement
 from more_itertools.recipes import random_permutation
@@ -48,7 +42,6 @@ from more_itertools.recipes import random_product
 from more_itertools.recipes import repeatfunc
 from more_itertools.recipes import roundrobin
 from more_itertools.recipes import tabulate
-from more_itertools.recipes import take
 from more_itertools.recipes import unique_everseen
 from more_itertools.recipes import unique_justseen
 
@@ -290,6 +283,40 @@ def _build_zip(name: str) -> Callable[..., Iterable[CTuple]]:
         return _get_citerable_or_clist(name)(map(CTuple, builtins.zip(self, *iterables)))
 
     return zip
+
+
+# functools
+
+
+@_defines_method_factory("Apply a binary function over the elements of the {name}",)
+def _build_reduce(name: str) -> Callable:
+    def reduce(
+        self: CIterable[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
+    ) -> Any:
+        args, _ = drop_sentinel(initial)
+        try:
+            result = reduce(func, self, *(() if initial is sentinel else (initial,)))
+        except TypeError as error:
+            (msg,) = error.args
+            if msg == "reduce() of empty sequence with no initial value":
+                raise EmptyIterableError from None
+            else:
+                raise error
+        else:
+            if isinstance(result, list):
+                return CList(result)
+            elif isinstance(result, tuple):
+                return CTuple(result)
+            elif isinstance(result, set):
+                return CSet(result)
+            elif isinstance(result, frozenset):
+                return CFrozenSet(result)
+            elif isinstance(result, dict):
+                return CDict(result)
+            else:
+                return result
+
+    return reduce
 
 
 # itertools
@@ -548,12 +575,32 @@ def _build_all_equal() -> Callable[..., bool]:
     return all_equal
 
 
+@_defines_method_factory("Advance the iterator n-steps ahead. If n is None, consume entirely.")
+def _build_consume() -> Callable[..., CIterable]:
+    def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
+        iterator = iter(self)
+        more_itertools.consume(iterator, n=n)
+        return CIterable(iterator)
+
+    return consume
+
+
 @_defines_method_factory("Returns True if all the elements are equal to each other")
 def _build_dotproduct() -> Callable[..., Any]:
     def dotproduct(self: Template[T], x: Iterable[T]) -> T:
         return more_itertools.dotproduct(self, x)
 
     return dotproduct
+
+
+@_defines_method_factory(
+    "Flatten one level of nesting", citerable_or_clist=True,
+)
+def _build_flatten(name: str) -> Callable[..., Iterable]:
+    def flatten(self: Template[Iterable[T]]) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(more_itertools.flatten(self))
+
+    return flatten
 
 
 @_defines_method_factory(
@@ -564,6 +611,14 @@ def _build_ncycles(name: str) -> Callable[..., Iterable]:
         return _get_citerable_or_clist(name)(more_itertools.ncycles(self, n))
 
     return ncycles
+
+
+@_defines_method_factory("Returns the nth item or a default value")
+def _build_nth() -> Callable[..., Any]:
+    def nth(self: Template[T], n: int, default: Optional[int] = None) -> T:
+        return more_itertools.nth(self, n, default=default)
+
+    return nth
 
 
 @_defines_method_factory(
@@ -577,6 +632,24 @@ def _build_pairwise(name: str) -> Callable[..., Iterable[CTuple]]:
 
 
 @_defines_method_factory(
+    "prepend(1, [2, 3, 4]) -> 1 2 3 4", citerable_or_clist=True,
+)
+def _build_prepend(name: str) -> Callable[..., Iterable]:
+    def prepend(self: Template[T], value: U) -> CIterableOrCList[Union[T, U]]:
+        return _get_citerable_or_clist(name)(more_itertools.prepend(value, self))
+
+    return prepend
+
+
+@_defines_method_factory("Count how many times the predicate is true")
+def _build_quantify() -> Callable[..., int]:
+    def quantify(self: Template[T], pred: Callable[[T], bool] = bool) -> int:
+        return more_itertools.quantify(self, pred=pred)
+
+    return quantify
+
+
+@_defines_method_factory(
     "Return an iterator over the last n items", citerable_or_clist=True,
 )
 def _build_tail(name: str) -> Callable[..., Iterable]:
@@ -584,6 +657,16 @@ def _build_tail(name: str) -> Callable[..., Iterable]:
         return _get_citerable_or_clist(name)(more_itertools.tail(n, self))
 
     return tail
+
+
+@_defines_method_factory(
+    "Return first n items of the iterable", citerable_or_clist=True,
+)
+def _build_take(name: str) -> Callable[..., Iterable]:
+    def take(self: Template[T], n: int) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(more_itertools.take(n, self))
+
+    return take
 
 
 # more-itertools
@@ -621,6 +704,61 @@ def _build_divide(name: str) -> Callable[Iterable[Iterable]]:
         return cls(map(cls, more_itertools.divide(n, list(self))))
 
     return divide
+
+
+# multiprocessing
+
+
+@_defines_method_factory("Map over the elements of the {name} in parallel.")
+def _build_pmap() -> Callable[..., Iterable]:
+    def pmap(
+        self: Template[T], func: Callable[[T], U], *, processes: Optional[int] = None,
+    ) -> Template[U]:
+        try:
+            with Pool(processes=processes) as pool:
+                return type(self)(pool.map(func, self))
+        except AssertionError as error:
+            (msg,) = error.args
+            if msg == "daemonic processes are not allowed to have children":
+                return self.map(func)
+            else:
+                raise NotImplementedError(msg)
+
+    return pmap
+
+
+@_defines_method_factory("Star_map over the elements of the {name} in parallel.")
+def _build_pstarmap() -> Callable[..., Iterable]:
+    def pmap(
+        self: Template[T], func: Callable[[T], U], *, processes: Optional[int] = None,
+    ) -> Template[U]:
+        try:
+            with Pool(processes=processes) as pool:
+                return type(self)(pool.map(func, self))
+        except AssertionError as error:
+            (msg,) = error.args
+            if msg == "daemonic processes are not allowed to have children":
+                return self.map(func)
+            else:
+                raise NotImplementedError(msg)
+
+    def pstarmap(
+        self: Template[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        processes: Optional[int] = None,
+    ) -> Template[U]:
+        try:
+            with Pool(processes=processes) as pool:
+                return type(self)(pool.starmap(func, self))
+        except AssertionError as error:
+            (msg,) = error.args
+            if msg == "daemonic processes are not allowed to have children":
+                return self.starmap(func)
+            else:
+                raise NotImplementedError(msg)
+
+    return pstarmap
 
 
 # pathlib
@@ -697,31 +835,7 @@ class CIterable(Iterable[T]):
 
     # functools
 
-    def reduce(
-        self: CIterable[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
-    ) -> Any:
-        args, _ = drop_sentinel(initial)
-        try:
-            result = reduce(func, self._iterable, *args)
-        except TypeError as error:
-            (msg,) = error.args
-            if msg == "reduce() of empty sequence with no initial value":
-                raise EmptyIterableError from None
-            else:
-                raise error
-        else:
-            if isinstance(result, list):
-                return CList(result)
-            elif isinstance(result, tuple):
-                return CTuple(result)
-            elif isinstance(result, set):
-                return CSet(result)
-            elif isinstance(result, frozenset):
-                return CFrozenSet(result)
-            elif isinstance(result, dict):
-                return CDict(result)
-            else:
-                return result
+    reduce = _build_reduce(_CIterable)
 
     # itertools
 
@@ -747,37 +861,23 @@ class CIterable(Iterable[T]):
     # itertools-recipes
 
     all_equal = _build_all_equal(_CIterable)
+    consume = _build_consume(_CIterable)
     dotproduct = _build_dotproduct(_CIterable)
+    flatten = _build_flatten(_CIterable)
     ncycles = _build_ncycles(_CIterable)
+    nth = _build_nth(_CIterable)
     pairwise = _build_pairwise(_CIterable)
+    prepend = _build_prepend(_CIterable)
+    quantify = _build_quantify(_CIterable)
     tail = _build_tail(_CIterable)
-
-    def take(self: CIterable[T], n: int) -> CIterable[T]:
-        return CIterable(take(n, self._iterable))
-
-    def prepend(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
-        return CIterable(prepend(value, self._iterable))
+    take = _build_take(_CIterable)
 
     @classmethod
     def tabulate(cls: Type[CIterable], func: Callable[[int], T], start: int = 0) -> CIterable[T]:
         return cls(tabulate(func, start=start))
 
-    def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
-        iterator = iter(self)
-        consume(iterator, n=n)
-        return CIterable(iterator)
-
-    def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
-        return nth(self._iterable, n, default=default)
-
-    def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
-        return quantify(self._iterable, pred=pred)
-
     def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
         return CIterable(padnone(self._iterable))
-
-    def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
-        return CIterable(flatten(self._iterable))
 
     @classmethod
     def repeatfunc(
@@ -850,27 +950,8 @@ class CIterable(Iterable[T]):
 
     # multiprocessing
 
-    def pmap(
-        self: CIterable[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CIterable[U]:
-        try:
-            with Pool(processes=processes) as pool:
-                return CIterable(pool.map(func, self._iterable))
-        except AssertionError as error:
-            (msg,) = error.args
-            if msg == "daemonic processes are not allowed to have children":
-                return self.map(func)
-            else:
-                raise NotImplementedError(msg)
-
-    def pstarmap(
-        self: CIterable[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CIterable[U]:
-        with Pool(processes=processes) as pool:
-            return CIterable(pool.starmap(func, self._iterable))
+    pmap = _build_pmap(_CIterable)
+    pstarmap = _build_pstarmap(_CIterable)
 
     # pathlib
 
@@ -962,10 +1043,7 @@ class CList(List[T]):
 
     # functools
 
-    def reduce(
-        self: CList[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
-    ) -> Any:
-        return self.iter().reduce(func, initial=initial)
+    reduce = _build_reduce(_CList)
 
     # itertools
 
@@ -993,27 +1071,14 @@ class CList(List[T]):
 
     all_equal = _build_all_equal(_CList)
     dotproduct = _build_dotproduct(_CList)
+    flatten = _build_flatten(_CList)
     ncycles = _build_ncycles(_CList)
+    nth = _build_nth(_CList)
     pairwise = _build_pairwise(_CList)
+    prepend = _build_prepend(_CList)
+    quantify = _build_quantify(_CList)
     tail = _build_tail(_CList)
-
-    def take(self: CList[T], n: int) -> CList[T]:
-        return self.iter().take(n).list()
-
-    def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
-        return self.iter().prepend(value).list()
-
-    def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
-        return self.iter().consume(n=n).list()
-
-    def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def flatten(self: CList[Iterable[T]]) -> CList[T]:
-        return self.iter().flatten().list()
+    take = _build_take(_CList)
 
     @classmethod
     def repeatfunc(
@@ -1080,18 +1145,8 @@ class CList(List[T]):
 
     # multiprocessing
 
-    def pmap(
-        self: CList[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CList[U]:
-        return self.iter().pmap(func, processes=processes).list()
-
-    def pstarmap(
-        self: CList[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CList[U]:
-        return self.iter().pstarmap(func, processes=processes).list()
+    pmap = _build_pmap(_CList)
+    pstarmap = _build_pstarmap(_CList)
 
     # pathlib
 
@@ -1135,6 +1190,10 @@ class CTuple(Tuple[T]):
     tuple = _build_tuple(_CTuple)  # noqa: A003
     zip = _build_zip(_CTuple)  # noqa: A003
 
+    # functools
+
+    reduce = _build_reduce(_CTuple)
+
     # itertools
 
     combinations = _build_combinations(_CTuple)
@@ -1158,15 +1217,25 @@ class CTuple(Tuple[T]):
 
     all_equal = _build_all_equal(_CTuple)
     dotproduct = _build_dotproduct(_CTuple)
+    flatten = _build_flatten(_CTuple)
     ncycles = _build_ncycles(_CTuple)
+    nth = _build_nth(_CTuple)
     pairwise = _build_pairwise(_CTuple)
+    prepend = _build_prepend(_CTuple)
+    quantify = _build_quantify(_CTuple)
     tail = _build_tail(_CTuple)
+    take = _build_take(_CTuple)
 
     # more-itertools
 
     chunked = _build_chunked(_CTuple)
     distribute = _build_distribute(_CTuple)
     divide = _build_divide(_CTuple)
+
+    # multiprocessing
+
+    pmap = _build_pmap(_CTuple)
+    pstarmap = _build_pstarmap(_CTuple)
 
     # pathlib
 
@@ -1255,10 +1324,7 @@ class CSet(Set[T]):
 
     # functools
 
-    def reduce(
-        self: CSet[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
-    ) -> Any:
-        return self.iter().reduce(func, initial=initial)
+    reduce = _build_reduce(_CSet)
 
     # itertools
 
@@ -1283,27 +1349,14 @@ class CSet(Set[T]):
 
     all_equal = _build_all_equal(_CSet)
     dotproduct = _build_dotproduct(_CSet)
+    flatten = _build_flatten(_CSet)
     ncycles = _build_ncycles(_CSet)
+    nth = _build_nth(_CSet)
     pairwise = _build_pairwise(_CSet)
+    prepend = _build_prepend(_CSet)
+    quantify = _build_quantify(_CSet)
     tail = _build_tail(_CSet)
-
-    def take(self: CSet[T], n: int) -> CSet[T]:
-        return self.iter().take(n).set()
-
-    def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
-        return self.iter().prepend(value).set()
-
-    def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
-        return self.iter().consume(n=n).set()
-
-    def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
-        return self.iter().flatten().set()
+    take = _build_take(_CSet)
 
     @classmethod
     def repeatfunc(
@@ -1319,16 +1372,8 @@ class CSet(Set[T]):
 
     # multiprocessing
 
-    def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
-        return self.iter().pmap(func, processes=processes).set()
-
-    def pstarmap(
-        self: CSet[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CSet[U]:
-        return self.iter().pstarmap(func, processes=processes).set()
+    pmap = _build_pmap(_CSet)
+    pstarmap = _build_pstarmap(_CSet)
 
     # pathlib
 
@@ -1388,10 +1433,7 @@ class CFrozenSet(FrozenSet[T]):
 
     # functools
 
-    def reduce(
-        self: CFrozenSet[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
-    ) -> Any:
-        return self.iter().reduce(func, initial=initial)
+    reduce = _build_reduce(_CFrozenSet)
 
     # itertools
 
@@ -1416,27 +1458,14 @@ class CFrozenSet(FrozenSet[T]):
 
     all_equal = _build_all_equal(_CFrozenSet)
     dotproduct = _build_dotproduct(_CFrozenSet)
+    flatten = _build_flatten(_CFrozenSet)
     ncycles = _build_ncycles(_CFrozenSet)
+    nth = _build_nth(_CFrozenSet)
     pairwise = _build_pairwise(_CFrozenSet)
+    prepend = _build_prepend(_CFrozenSet)
+    quantify = _build_quantify(_CFrozenSet)
     tail = _build_tail(_CFrozenSet)
-
-    def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
-        return self.iter().take(n).frozenset()
-
-    def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
-        return self.iter().prepend(value).frozenset()
-
-    def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
-        return self.iter().consume(n=n).frozenset()
-
-    def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
-        return self.iter().flatten().frozenset()
+    take = _build_take(_CFrozenSet)
 
     @classmethod
     def repeatfunc(
@@ -1452,18 +1481,8 @@ class CFrozenSet(FrozenSet[T]):
 
     # multiprocessing
 
-    def pmap(
-        self: CFrozenSet[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CFrozenSet[U]:
-        return self.iter().pmap(func, processes=processes).frozenset()
-
-    def pstarmap(
-        self: CFrozenSet[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CFrozenSet[U]:
-        return self.iter().pstarmap(func, processes=processes).frozenset()
+    pmap = _build_pmap(_CFrozenSet)
+    pstarmap = _build_pstarmap(_CFrozenSet)
 
     # pathlib
 
