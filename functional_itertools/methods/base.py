@@ -14,8 +14,12 @@ class Template(Iterable[T]):
     pass
 
 
+class CIterableOrCList(Iterable[T]):
+    pass
+
+
 class MethodBuilderMeta(type):
-    def __call__(cls: MethodBuilder, cls_name: str, **kwargs: Any) -> Callable[..., Any]:
+    def __call__(cls: MethodBuilder, cls_name: str, **kwargs: Any) -> Callable:
         method = cls._build_method(**kwargs)
         method.__annotations__ = {
             k: v.replace(Template.__name__, cls_name) for k, v in method.__annotations__.items()

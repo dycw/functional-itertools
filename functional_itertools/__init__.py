@@ -22,4 +22,4 @@ __all__ = [
     "EmptyIterableError",
     "MultipleElementsError",
 ]
-__version__ = "0.9.12"
+__version__ = "0.9.13"
