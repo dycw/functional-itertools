@@ -117,7 +117,6 @@ def nested_siterables(
     )
 
 
-small_ints = integers(0, 10)
 islice_ints = integers(0, MAX_SIZE)
 
 range_args = (

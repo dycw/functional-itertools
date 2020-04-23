@@ -49,7 +49,6 @@ from tests.strategies import islice_ints
 from tests.strategies import ORDERED_CLASSES
 from tests.strategies import range_args
 from tests.strategies import real_iterables
-from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
 
@@ -206,9 +205,9 @@ def test_product(cls: Type, x: Iterable[int], xs: Iterable[Iterable[int]], repea
 @given(data=data(), x=integers(), n=islice_ints)
 def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
     if cls is CIterable:
-        times = data.draw(none() | small_ints)
+        times = data.draw(none() | integers(0, 10))
     else:
-        times = data.draw(small_ints)
+        times = data.draw(integers(0, 10))
     y = cls.repeat(x, times=times)
     assert isinstance(y, CIterable if cls is CIterable else CList)
     z = repeat(x, *(() if times is None else (times,)))

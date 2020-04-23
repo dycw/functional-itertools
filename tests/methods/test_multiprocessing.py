@@ -33,7 +33,8 @@ def test_pmap(cls: Type, x: Iterable[int]) -> None:
 def test_pmap_nested(cls: Type, x: Iterable[Iterable[int]]) -> None:
     y = cls(x).pmap(_pmap_neg, processes=1)
     assert isinstance(y, cls)
-    assert list(y) == [max(map(neg, x_i)) for x_i in x]
+    cast = get_cast(cls)
+    assert cast(y) == cast(max(map(neg, x_i)) for x_i in x)
 
 
 def _pmap_neg(x: Iterable[int]) -> int:

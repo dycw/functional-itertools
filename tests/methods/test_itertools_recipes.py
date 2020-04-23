@@ -8,6 +8,7 @@ from sys import maxsize
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 
@@ -16,6 +17,7 @@ from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
 from hypothesis.strategies import none
+from hypothesis.strategies import sets
 from hypothesis.strategies import tuples
 from more_itertools import all_equal
 from more_itertools import consume
@@ -41,7 +43,6 @@ from tests.strategies import islice_ints
 from tests.strategies import ORDERED_CLASSES
 from tests.strategies import real_iterables
 from tests.strategies import slists
-from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
 
@@ -142,8 +143,8 @@ def test_prepend(cls: Type, x: Iterable[int], value: int) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(x=real_iterables(integers()))
-def test_quantify(cls: Type, x: Iterable[int]) -> None:
+@given(x=sets(integers()))
+def test_quantify(cls: Type, x: Set[int]) -> None:
     y = cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
     assert y == quantify(x, pred=is_even)
@@ -154,9 +155,9 @@ def test_quantify(cls: Type, x: Iterable[int]) -> None:
 def test_repeatfunc(cls: Type, data: DataObject, n: int) -> None:
     add1 = partial(add, 1)
     if cls is CIterable:
-        times = data.draw(none() | small_ints)
+        times = data.draw(none() | integers(0, 10))
     else:
-        times = data.draw(small_ints)
+        times = data.draw(integers(0, 10))
     y = cls.repeatfunc(add1, times, 0)
     assert isinstance(y, CIterable if cls is CIterable else CList)
     z = repeatfunc(add1, times, 0)
@@ -174,7 +175,7 @@ def test_tabulate(start: int, n: int) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(x=real_iterables(integers()), n=integers(min_value=0))
+@given(x=real_iterables(integers()), n=integers(0, maxsize))
 def test_tail(cls: Type, x: Iterable[int], n: int) -> None:
     y = cls(x).tail(n)
     assert isinstance(y, CIterable if cls is CIterable else CList)
