@@ -105,7 +105,8 @@ def test_copy(cls: Type, data: DataObject) -> None:
 @given(x=sfrozensets(integers()), xs=sfrozensets(sfrozensets(integers())))
 def test_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
     with warns(
-        UserWarning, match="CSet.update is a non-functional name, did you mean CSet.union instead?",
+        UserWarning,
+        match="CSet.update is a non-functional method, did you mean CSet.union instead?",
     ):
         CSet(x).update(*xs)
 
@@ -114,7 +115,7 @@ def test_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
 def test_intersection_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
     with warns(
         UserWarning,
-        match="CSet.intersection_update is a non-functional name, did you mean CSet.intersection instead?",
+        match="CSet.intersection_update is a non-functional method, did you mean CSet.intersection instead?",
     ):
         CSet(x).intersection_update(*xs)
 
@@ -123,7 +124,7 @@ def test_intersection_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -
 def test_difference_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> None:
     with warns(
         UserWarning,
-        match="CSet.difference_update is a non-functional name, did you mean CSet.difference instead?",
+        match="CSet.difference_update is a non-functional method, did you mean CSet.difference instead?",
     ):
         CSet(x).difference_update(*xs)
 
@@ -132,7 +133,7 @@ def test_difference_update(x: FrozenSet[int], xs: FrozenSet[FrozenSet[int]]) -> 
 def test_symmetric_difference_update(x: FrozenSet[int], y: FrozenSet[int]) -> None:
     with warns(
         UserWarning,
-        match="CSet.symmetric_difference_update is a non-functional name, "
+        match="CSet.symmetric_difference_update is a non-functional method, "
         "did you mean CSet.symmetric_difference instead?",
     ):
         CSet(x).symmetric_difference_update(y)

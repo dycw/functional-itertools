@@ -30,7 +30,6 @@ from warnings import warn
 
 import more_itertools
 from more_itertools.recipes import consume
-from more_itertools.recipes import dotproduct
 from more_itertools.recipes import first_true
 from more_itertools.recipes import flatten
 from more_itertools.recipes import grouper
@@ -38,7 +37,6 @@ from more_itertools.recipes import iter_except
 from more_itertools.recipes import nth
 from more_itertools.recipes import nth_combination
 from more_itertools.recipes import padnone
-from more_itertools.recipes import pairwise
 from more_itertools.recipes import partition
 from more_itertools.recipes import powerset
 from more_itertools.recipes import prepend
@@ -234,7 +232,7 @@ def _build_maxmin(func: Callable) -> Callable:
 @_defines_method_factory("Return a range of integers as a {name}.")
 def _build_range() -> Callable[..., Iterable[int]]:
     def range(  # noqa: A001
-        cls: Type[Template[T]], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+        cls: Type[Template], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> Template[int]:
         if (stop is None) and (step is not None):
             raise StopArgumentMissing()
@@ -550,6 +548,14 @@ def _build_all_equal() -> Callable[..., bool]:
     return all_equal
 
 
+@_defines_method_factory("Returns True if all the elements are equal to each other")
+def _build_dotproduct() -> Callable[..., Any]:
+    def dotproduct(self: Template[T], x: Iterable[T]) -> T:
+        return more_itertools.dotproduct(self, x)
+
+    return dotproduct
+
+
 @_defines_method_factory(
     "Returns the sequence elements n times", citerable_or_clist=True,
 )
@@ -558,6 +564,16 @@ def _build_ncycles(name: str) -> Callable[..., Iterable]:
         return _get_citerable_or_clist(name)(more_itertools.ncycles(self, n))
 
     return ncycles
+
+
+@_defines_method_factory(
+    "s -> (s0,s1), (s1,s2), (s2, s3), ...", citerable_or_clist=True,
+)
+def _build_pairwise(name: str) -> Callable[..., Iterable[CTuple]]:
+    def pairwise(self: Template[T]) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(map(CTuple, more_itertools.pairwise(self)))
+
+    return pairwise
 
 
 @_defines_method_factory(
@@ -604,6 +620,17 @@ def _build_divide(name: str) -> Callable:
         return cls(map(cls, more_itertools.divide(n, list(self))))
 
     return divide
+
+
+# pathlib
+
+
+@_defines_method_factory("Return a collection of paths as a {name}.")
+def _build_iterdir() -> Callable[..., Iterable[Path]]:
+    def iterdir(cls: Type[Template], path: Union[Path, str]) -> Template[Path]:
+        return cls(Path(path).iterdir())
+
+    return iterdir
 
 
 # classes
@@ -719,7 +746,9 @@ class CIterable(Iterable[T]):
     # itertools-recipes
 
     all_equal = _build_all_equal(_CIterable)
+    dotproduct = _build_dotproduct(_CIterable)
     ncycles = _build_ncycles(_CIterable)
+    pairwise = _build_pairwise(_CIterable)
     tail = _build_tail(_CIterable)
 
     def take(self: CIterable[T], n: int) -> CIterable[T]:
@@ -746,9 +775,6 @@ class CIterable(Iterable[T]):
     def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
         return CIterable(padnone(self._iterable))
 
-    def dotproduct(self: CIterable[T], iterable: Iterable[T]) -> T:
-        return dotproduct(self._iterable, iterable)
-
     def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
         return CIterable(flatten(self._iterable))
 
@@ -757,9 +783,6 @@ class CIterable(Iterable[T]):
         cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
     ) -> CIterable[T]:
         return cls(repeatfunc(func, times, *args))
-
-    def pairwise(self: CIterable[T]) -> CIterable[Tuple[T, T]]:
-        return CIterable(pairwise(self._iterable))
 
     def grouper(
         self: CIterable[T], n: int, fillvalue: U = None,
@@ -850,9 +873,7 @@ class CIterable(Iterable[T]):
 
     # pathlib
 
-    @classmethod
-    def iterdir(cls: Type[CIterable], path: Union[Path, str]) -> CIterable[Path]:
-        return cls(Path(path).iterdir())
+    iterdir = classmethod(_build_iterdir(_CIterable))
 
     # extra public
 
@@ -970,7 +991,9 @@ class CList(List[T]):
     # itertools-recipes
 
     all_equal = _build_all_equal(_CList)
+    dotproduct = _build_dotproduct(_CList)
     ncycles = _build_ncycles(_CList)
+    pairwise = _build_pairwise(_CList)
     tail = _build_tail(_CList)
 
     def take(self: CList[T], n: int) -> CList[T]:
@@ -988,9 +1011,6 @@ class CList(List[T]):
     def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
-    def dotproduct(self: CList[T], iterable: Iterable[T]) -> T:
-        return self.iter().dotproduct(iterable)
-
     def flatten(self: CList[Iterable[T]]) -> CList[T]:
         return self.iter().flatten().list()
 
@@ -999,9 +1019,6 @@ class CList(List[T]):
         cls: Type[CList], func: Callable[..., T], times: Optional[int] = None, *args: Any,
     ) -> CList[T]:
         return CIterable.repeatfunc(func, times, *args).list()
-
-    def pairwise(self: CList[T]) -> CList[Tuple[T, T]]:
-        return self.iter().pairwise().list()
 
     def grouper(
         self: CList[T], n: int, fillvalue: Optional[T] = None,
@@ -1077,9 +1094,7 @@ class CList(List[T]):
 
     # pathlib
 
-    @classmethod
-    def iterdir(cls: Type[CList], path: Union[Path, str]) -> CList[Path]:
-        return cls(CIterable.iterdir(path))
+    iterdir = classmethod(_build_iterdir(_CList))
 
     # extra public
 
@@ -1141,7 +1156,9 @@ class CTuple(Tuple[T]):
     # itertools-recipes
 
     all_equal = _build_all_equal(_CTuple)
+    dotproduct = _build_dotproduct(_CTuple)
     ncycles = _build_ncycles(_CTuple)
+    pairwise = _build_pairwise(_CTuple)
     tail = _build_tail(_CTuple)
 
     # more-itertools
@@ -1149,6 +1166,10 @@ class CTuple(Tuple[T]):
     chunked = _build_chunked(_CTuple)
     distribute = _build_distribute(_CTuple)
     divide = _build_divide(_CTuple)
+
+    # pathlib
+
+    iterdir = classmethod(_build_iterdir(_CTuple))
 
 
 class CSet(Set[T]):
@@ -1260,7 +1281,9 @@ class CSet(Set[T]):
     # itertools-recipes
 
     all_equal = _build_all_equal(_CSet)
+    dotproduct = _build_dotproduct(_CSet)
     ncycles = _build_ncycles(_CSet)
+    pairwise = _build_pairwise(_CSet)
     tail = _build_tail(_CSet)
 
     def take(self: CSet[T], n: int) -> CSet[T]:
@@ -1278,9 +1301,6 @@ class CSet(Set[T]):
     def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
-    def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
-        return self.iter().dotproduct(iterable)
-
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
 
@@ -1289,9 +1309,6 @@ class CSet(Set[T]):
         cls: Type[CSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
     ) -> CSet[T]:
         return CIterable.repeatfunc(func, times, *args).set()
-
-    def pairwise(self: CSet[T]) -> CSet[Tuple[T, T]]:
-        return self.iter().pairwise().set()
 
     # more-itertools
 
@@ -1314,9 +1331,7 @@ class CSet(Set[T]):
 
     # pathlib
 
-    @classmethod
-    def iterdir(cls: Type[CSet], path: Union[Path, str]) -> CSet[Path]:
-        return cls(CIterable.iterdir(path))
+    iterdir = classmethod(_build_iterdir(_CSet))
 
     # extra public
 
@@ -1399,7 +1414,9 @@ class CFrozenSet(FrozenSet[T]):
     # itertools-recipes
 
     all_equal = _build_all_equal(_CFrozenSet)
+    dotproduct = _build_dotproduct(_CFrozenSet)
     ncycles = _build_ncycles(_CFrozenSet)
+    pairwise = _build_pairwise(_CFrozenSet)
     tail = _build_tail(_CFrozenSet)
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
@@ -1417,9 +1434,6 @@ class CFrozenSet(FrozenSet[T]):
     def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
-    def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
-        return self.iter().dotproduct(iterable)
-
     def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
         return self.iter().flatten().frozenset()
 
@@ -1429,14 +1443,12 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[T]:
         return CIterable.repeatfunc(func, times, *args).frozenset()
 
-    def pairwise(self: CFrozenSet[T]) -> CFrozenSet[Tuple[T, T]]:
-        return self.iter().pairwise().frozenset()
-
     # more-itertools
 
     chunked = _build_chunked(_CFrozenSet)
     distribute = _build_distribute(_CFrozenSet)
     divide = _build_divide(_CFrozenSet)
+
     # multiprocessing
 
     def pmap(
@@ -1454,9 +1466,7 @@ class CFrozenSet(FrozenSet[T]):
 
     # pathlib
 
-    @classmethod
-    def iterdir(cls: Type[CFrozenSet], path: Union[Path, str]) -> CFrozenSet[Path]:
-        return cls(CIterable.iterdir(path))
+    iterdir = classmethod(_build_iterdir(_CFrozenSet))
 
     # extra public
 

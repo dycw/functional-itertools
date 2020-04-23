@@ -15,6 +15,7 @@ from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
 from hypothesis.strategies import none
+from hypothesis.strategies import tuples
 from more_itertools import all_equal
 from more_itertools import consume
 from more_itertools import dotproduct
@@ -33,6 +34,7 @@ from pytest import mark
 
 from functional_itertools import CIterable
 from functional_itertools import CList
+from functional_itertools import CTuple
 from tests.strategies import CLASSES
 from tests.strategies import islice_ints
 from tests.strategies import ORDERED_CLASSES
@@ -64,13 +66,12 @@ def test_consume(cls: Type, data: DataObject, n: Optional[int]) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data())
-def test_dotproduct(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(case, integers()))
-    y, _ = data.draw(siterables(case, integers(), min_size=len(x), max_size=len(x)))
-    z = case(x).dotproduct(y)
+@given(pairs=real_iterables(tuples(integers(), integers()), min_size=1))
+def test_dotproduct(cls: Type, pairs: Iterable[Tuple[int, int]]) -> None:
+    x, y = zip(*pairs)
+    z = cls(x).dotproduct(y)
     assert isinstance(z, int)
-    if case in ORDERED_CLASSES:
+    if cls in ORDERED_CLASSES:
         assert z == dotproduct(x, y)
 
 
@@ -118,13 +119,18 @@ def test_padnone(x: List[int], n: int) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data())
-def test_pairwise(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(siterables(case, integers()))
-    y = case(x).pairwise()
-    assert isinstance(y, case)
-    if case in ORDERED_CLASSES:
-        assert cast(y) == cast(pairwise(x))
+@given(x=real_iterables(integers()))
+def test_pairwise(cls: Type, x: Iterable[int]) -> None:
+    y = cls(x).pairwise()
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+        zi0, zi1 = zi
+        assert isinstance(zi0, int)
+        assert isinstance(zi1, int)
+    if cls in ORDERED_CLASSES:
+        assert z == list(pairwise(x))
 
 
 @mark.parametrize("cls", CLASSES)
