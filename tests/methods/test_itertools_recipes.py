@@ -5,6 +5,7 @@ from itertools import islice
 from operator import add
 from operator import neg
 from sys import maxsize
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Type
@@ -35,7 +36,7 @@ from functional_itertools import CList
 from functional_itertools import CTuple
 from tests.strategies import CLASSES
 from tests.strategies import islice_ints
-from tests.strategies import nested_siterables
+from tests.strategies import real_iterables
 from tests.strategies import siterables
 from tests.strategies import slists
 from tests.strategies import small_ints
@@ -43,10 +44,9 @@ from tests.test_utilities import is_even
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data())
-def test_all_equal(cls: Type, data: DataObject) -> None:
-    x, _ = data.draw(siterables(case, integers()))
-    y = case(x).all_equal()
+@given(x=real_iterables(integers()))
+def test_all_equal(cls: Type, x: Iterable[int]) -> None:
+    y = cls(x).all_equal()
     assert isinstance(y, bool)
     assert y == all_equal(x)
 
@@ -75,21 +75,19 @@ def test_dotproduct(cls: Type, data: DataObject) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data())
-def test_flatten(cls: Type, data: DataObject) -> None:
-    x, cast = data.draw(nested_siterables(case, integers()))
-    y = case(x).flatten()
-    assert isinstance(y, case)
-    assert cast(y) == cast(flatten(x))
+@given(x=real_iterables(real_iterables(integers())))
+def test_flatten(cls: Type, x: Iterable[Iterable[int]]) -> None:
+    y = cls(x).flatten()
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    assert list(y) == list(flatten(x))
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data(), n=small_ints)
-def test_ncycles(cls: Type, data: DataObject, n: int) -> None:
-    x, cast = data.draw(siterables(case, integers()))
-    y = case(x).ncycles(n)
-    assert isinstance(y, case)
-    assert cast(y) == cast(ncycles(x, n))
+@given(x=real_iterables(integers(), max_size=10), n=integers(0, 5))
+def test_ncycles(cls: Type, x: Iterable[int], n: int) -> None:
+    y = cls(x).ncycles(n)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    assert list(y) == list(ncycles(x, n))
 
 
 @mark.parametrize("cls", CLASSES)

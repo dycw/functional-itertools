@@ -29,14 +29,12 @@ from typing import Union
 from warnings import warn
 
 import more_itertools
-from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
 from more_itertools.recipes import first_true
 from more_itertools.recipes import flatten
 from more_itertools.recipes import grouper
 from more_itertools.recipes import iter_except
-from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
 from more_itertools.recipes import nth_combination
 from more_itertools.recipes import padnone
@@ -85,7 +83,7 @@ _CFrozenSet = "CFrozenSet"
 # built-ins
 
 
-def defines_method_factory(
+def _defines_method_factory(
     doc: str, *, citerable_or_clist: bool = False,
 ) -> Callable[[str], FunctionType]:
     def decorator(
@@ -120,7 +118,7 @@ def _get_citerable_or_clist(name: str) -> Type:
     return getattr(modules[__name__], required.lstrip("_"))
 
 
-@defines_method_factory("Return `True` if all elements of the {name} are true, or if it is empty.")
+@_defines_method_factory("Return `True` if all elements of the {name} are true, or if it is empty.")
 def _build_all() -> Callable:
     def all(self: Template[T]) -> bool:  # noqa: A001
         return builtins.all(self)
@@ -128,7 +126,7 @@ def _build_all() -> Callable:
     return all
 
 
-@defines_method_factory("Return `True` if at least 1 element of the {name} is true.")
+@_defines_method_factory("Return `True` if at least 1 element of the {name} is true.")
 def _build_any() -> Callable[..., bool]:
     def any(self: Template[T]) -> bool:  # noqa: A001
         return builtins.any(self)
@@ -136,7 +134,7 @@ def _build_any() -> Callable[..., bool]:
     return any
 
 
-@defines_method_factory("Convert the {name} into a CDict.")
+@_defines_method_factory("Convert the {name} into a CDict.")
 def _build_dict() -> Callable[..., CDict[Any, Any]]:
     def dict(self: Template[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A001
         return CDict(self)
@@ -144,7 +142,7 @@ def _build_dict() -> Callable[..., CDict[Any, Any]]:
     return dict
 
 
-@defines_method_factory("Enumerate the elements of the {name}.", citerable_or_clist=True)
+@_defines_method_factory("Enumerate the elements of the {name}.", citerable_or_clist=True)
 def _build_enumerate(name: str) -> Callable[..., Iterable[Tuple[int, Any]]]:
     def enumerate(
         self: Template[T], start: int = 0,
@@ -154,7 +152,7 @@ def _build_enumerate(name: str) -> Callable[..., Iterable[Tuple[int, Any]]]:
     return enumerate
 
 
-@defines_method_factory("Filter the elements of the {name}.")
+@_defines_method_factory("Filter the elements of the {name}.")
 def _build_filter() -> Callable[..., Iterable]:
     def filter(self: Template[T], func: Optional[Callable[[T], bool]]) -> Template[T]:  # noqa: A001
         return type(self)(builtins.filter(func, self))
@@ -162,7 +160,7 @@ def _build_filter() -> Callable[..., Iterable]:
     return filter
 
 
-@defines_method_factory("Create a CIterable from the {name}.")
+@_defines_method_factory("Create a CIterable from the {name}.")
 def _build_iter() -> Callable[..., CIterable]:
     def iter(self: Template[T]) -> CIterable[T]:  # noqa: A001
         return CIterable(self)
@@ -170,7 +168,7 @@ def _build_iter() -> Callable[..., CIterable]:
     return iter
 
 
-@defines_method_factory("Convert the {name} into a CFrozenSet.")
+@_defines_method_factory("Convert the {name} into a CFrozenSet.")
 def _build_frozenset() -> Callable[..., CFrozenSet]:
     def frozenset(self: Template[T]) -> CFrozenSet[T]:  # noqa: A001
         return CFrozenSet(self)
@@ -178,7 +176,7 @@ def _build_frozenset() -> Callable[..., CFrozenSet]:
     return frozenset
 
 
-@defines_method_factory("Return the length of the {name}.")
+@_defines_method_factory("Return the length of the {name}.")
 def _build_len() -> Callable[..., int]:
     def len(self: Template[T]) -> int:  # noqa: A001
         return builtins.len(self)
@@ -186,7 +184,7 @@ def _build_len() -> Callable[..., int]:
     return len
 
 
-@defines_method_factory("Create a CList from the {name}.")
+@_defines_method_factory("Create a CList from the {name}.")
 def _build_list() -> Callable[..., CList]:
     def list(self: Template[T]) -> CList[T]:  # noqa: A001
         return CList(self)
@@ -194,7 +192,7 @@ def _build_list() -> Callable[..., CList]:
     return list
 
 
-@defines_method_factory("Map over the elements of the {name}.")
+@_defines_method_factory("Map over the elements of the {name}.")
 def _build_map() -> Callable[..., Iterable]:
     def map(  # noqa: A001
         self: Template[T], func: Callable[..., U], *iterables: Iterable,
@@ -204,7 +202,7 @@ def _build_map() -> Callable[..., Iterable]:
     return map
 
 
-@defines_method_factory("Return the max/minimum over the {name}.")
+@_defines_method_factory("Return the max/minimum over the {name}.")
 def _build_maxmin(func: Callable) -> Callable:
     if VERSION is Version.py37:
 
@@ -234,7 +232,7 @@ def _build_maxmin(func: Callable) -> Callable:
     return min_max
 
 
-@defines_method_factory("Return a range of integers as a {name}.")
+@_defines_method_factory("Return a range of integers as a {name}.")
 def _build_range() -> Callable[..., Iterable[int]]:
     def range(  # noqa: A001
         cls: Type[Template[T]], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -251,7 +249,7 @@ def _build_range() -> Callable[..., Iterable[int]]:
     return range
 
 
-@defines_method_factory("Convert the {name} into a CSet.")
+@_defines_method_factory("Convert the {name} into a CSet.")
 def _build_set() -> Callable[..., CSet]:
     def set(self: Template[T]) -> CSet[T]:  # noqa: A001
         return CSet(self)
@@ -259,7 +257,7 @@ def _build_set() -> Callable[..., CSet]:
     return set
 
 
-@defines_method_factory("Convert the {name} into a sorted CList.")
+@_defines_method_factory("Convert the {name} into a sorted CList.")
 def _build_sorted() -> Callable[..., CList]:
     def sorted(  # noqa: A001
         self: Template[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
@@ -269,7 +267,7 @@ def _build_sorted() -> Callable[..., CList]:
     return sorted
 
 
-@defines_method_factory("Sum the elements of the {name}.")
+@_defines_method_factory("Sum the elements of the {name}.")
 def _build_sum() -> Callable[..., int]:
     def sum(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:  # noqa: A001
         return builtins.sum(self, *(() if start is sentinel else (start,)))
@@ -277,7 +275,7 @@ def _build_sum() -> Callable[..., int]:
     return sum
 
 
-@defines_method_factory("Convert the {name} into a CFrozenSet.")
+@_defines_method_factory("Convert the {name} into a CFrozenSet.")
 def _build_tuple() -> Callable[..., CTuple]:
     def tuple(self: Template[T]) -> CTuple[T]:  # noqa: A001
         return CTuple(self)
@@ -285,7 +283,7 @@ def _build_tuple() -> Callable[..., CTuple]:
     return tuple
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "Zip the elements of the {name} with other iterables.", citerable_or_clist=True,
 )
 def _build_zip(name: str) -> Callable[..., Iterable[CTuple]]:
@@ -300,7 +298,7 @@ def _build_zip(name: str) -> Callable[..., Iterable[CTuple]]:
 # itertools
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "accumulate([1,2,3,4,5]) --> 1 3 6 10 15", citerable_or_clist=True,
 )
 def _build_accumulate(name: str) -> Callable[..., Iterable]:
@@ -311,7 +309,7 @@ def _build_accumulate(name: str) -> Callable[..., Iterable]:
 
     elif VERSION is Version.py38:
 
-        def method(
+        def accumulate(
             self: Template[T],
             func: Callable[[Union[T, U], Union[T, U]], Union[T, U]] = add,
             *,
@@ -325,7 +323,7 @@ def _build_accumulate(name: str) -> Callable[..., Iterable]:
     return accumulate
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "chain('ABC', 'DEF') --> A B C D E F", citerable_or_clist=True,
 )
 def _build_chain(name: str) -> Callable[..., Iterable]:
@@ -335,7 +333,7 @@ def _build_chain(name: str) -> Callable[..., Iterable]:
     return chain
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "\n".join(
         [
             "combinations('ABCD', 2) --> AB AC AD BC BD CD",
@@ -351,7 +349,7 @@ def _build_combinations(name: str) -> Callable[..., Iterable[CTuple]]:
     return combinations
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC", citerable_or_clist=True,
 )
 def _build_combinations_with_replacement(name: str) -> Callable[..., Iterable]:
@@ -363,7 +361,7 @@ def _build_combinations_with_replacement(name: str) -> Callable[..., Iterable]:
     return combinations_with_replacement
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F", citerable_or_clist=True,
 )
 def _build_compress(name: str) -> Callable[..., Iterable]:
@@ -373,7 +371,7 @@ def _build_compress(name: str) -> Callable[..., Iterable]:
     return compress
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "\n".join(["count(10) --> 10 11 12 13 14 ...", "count(2.5, 0.5) -> 2.5 3.0 3.5 ..."]),
 )
 def _build_count() -> Callable[..., CIterable[int]]:
@@ -383,15 +381,15 @@ def _build_count() -> Callable[..., CIterable[int]]:
     return count
 
 
-@defines_method_factory("cycle('ABCD') --> A B C D A B C D A B C D ...")
-def _build_cycle(name: str) -> Callable[..., CIterable]:
+@_defines_method_factory("cycle('ABCD') --> A B C D A B C D A B C D ...")
+def _build_cycle() -> Callable[..., CIterable]:
     def cycle(self: Template[T]) -> CIterable[T]:
         return CIterable(itertools.cycle(self))
 
     return cycle
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "dropwhile(lambda x: x<5, [1,4,6,4,1]) --> 6 4 1", citerable_or_clist=True,
 )
 def _build_dropwhile(name: str) -> Callable[..., Iterable]:
@@ -401,7 +399,7 @@ def _build_dropwhile(name: str) -> Callable[..., Iterable]:
     return dropwhile
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8", citerable_or_clist=True,
 )
 def _build_filterfalse(name: str) -> Callable[..., Iterable]:
@@ -411,7 +409,7 @@ def _build_filterfalse(name: str) -> Callable[..., Iterable]:
     return filterfalse
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "\n".join(
         [
             "[k for k, g in groupby('AAAABBBCCDAABBB')] --> A B C D A B",
@@ -430,7 +428,7 @@ def _build_groupby(name: str) -> Callable[..., Any]:
     return groupby
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "\n".join(
         [
             "islice('ABCDEFG', 2) --> A B",
@@ -459,7 +457,7 @@ def _build_islice() -> Callable[..., CIterable]:
     return islice
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "\n".join(
         [
             "permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC",
@@ -475,7 +473,7 @@ def _build_permutations(name: str) -> Callable[..., Iterable[CTuple]]:
     return permutations
 
 
-@defines_method_factory("Cartesian product of input iterables.", citerable_or_clist=True)
+@_defines_method_factory("Cartesian product of input iterables.", citerable_or_clist=True)
 def _build_product(name: str) -> Callable[..., Iterable[CTuple]]:
     def product(
         self: Template[T], *iterables: Iterable[U], repeat: int = 1,
@@ -487,7 +485,7 @@ def _build_product(name: str) -> Callable[..., Iterable[CTuple]]:
     return product
 
 
-@defines_method_factory("Repeat an element", citerable_or_clist=True)
+@_defines_method_factory("Repeat an element", citerable_or_clist=True)
 def _build_repeat(name: str) -> Callable[..., Iterable]:
     if name == _CIterable:
 
@@ -502,7 +500,7 @@ def _build_repeat(name: str) -> Callable[..., Iterable]:
     return repeat
 
 
-@defines_method_factory("starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000")
+@_defines_method_factory("starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000")
 def _build_starmap() -> Callable[Iterable]:
     def method(self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> Template[U]:
         return type(self)(starmap(func, self))
@@ -510,7 +508,7 @@ def _build_starmap() -> Callable[Iterable]:
     return method
 
 
-@defines_method_factory(
+@_defines_method_factory(
     "takewhile(lambda x: x<5, [1,4,6,4,1]) --> 1 4", citerable_or_clist=True,
 )
 def _build_takewhile(name: str) -> Callable[Iterable]:
@@ -520,15 +518,50 @@ def _build_takewhile(name: str) -> Callable[Iterable]:
     return takewhile
 
 
-@defines_method_factory("Return n independent iterators from a single iterable.")
-def _build_tee(name: str) -> Callable[..., CIterable[CIterable]]:
+@_defines_method_factory("Return n independent iterators from a single iterable.")
+def _build_tee() -> Callable[..., CIterable[CIterable]]:
     def tee(self: Template[T], n: int = 2) -> CIterable[CIterable[T]]:
         return CIterable(map(CIterable, itertools.tee(self, n)))
 
     return tee
 
 
-@defines_method_factory(
+@_defines_method_factory(
+    "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-", citerable_or_clist=True,
+)
+def _build_zip_longest(name: str) -> Callable[..., Iterable[Tuple]]:
+    def zip_longest(
+        self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(
+            map(CTuple, itertools.zip_longest(self, *iterables, fillvalue=fillvalue)),
+        )
+
+    return zip_longest
+
+
+# itertools-recipes
+
+
+@_defines_method_factory("Returns True if all the elements are equal to each other")
+def _build_all_equal() -> Callable[..., bool]:
+    def all_equal(self: Template[T]) -> bool:
+        return more_itertools.all_equal(self)
+
+    return all_equal
+
+
+@_defines_method_factory(
+    "Returns the sequence elements n times", citerable_or_clist=True,
+)
+def _build_ncycles(name: str) -> Callable[..., Iterable]:
+    def ncycles(self: Template[T], n: int) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(more_itertools.ncycles(self, n))
+
+    return ncycles
+
+
+@_defines_method_factory(
     "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-", citerable_or_clist=True,
 )
 def _build_zip_longest(name: str) -> Callable[..., Iterable[Tuple]]:
@@ -690,6 +723,9 @@ class CIterable(Iterable[T]):
 
     # itertools-recipes
 
+    all_equal = _build_all_equal(_CIterable)
+    ncycles = _build_ncycles(_CIterable)
+
     def take(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(take(n, self._iterable))
 
@@ -711,17 +747,11 @@ class CIterable(Iterable[T]):
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self._iterable, n, default=default)
 
-    def all_equal(self: CIterable) -> bool:
-        return all_equal(self._iterable)
-
     def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
         return quantify(self._iterable, pred=pred)
 
     def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
         return CIterable(padnone(self._iterable))
-
-    def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
-        return CIterable(ncycles(self._iterable, n))
 
     def dotproduct(self: CIterable[T], iterable: Iterable[T]) -> T:
         return dotproduct(self._iterable, iterable)
@@ -946,6 +976,9 @@ class CList(List[T]):
 
     # itertools-recipes
 
+    all_equal = _build_all_equal(_CList)
+    ncycles = _build_ncycles(_CList)
+
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
 
@@ -961,14 +994,8 @@ class CList(List[T]):
     def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
-    def all_equal(self: CList) -> bool:
-        return self.iter().all_equal()
-
     def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CList[T], n: int) -> CList[T]:
-        return self.iter().ncycles(n).list()
 
     def dotproduct(self: CList[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
@@ -1120,6 +1147,11 @@ class CTuple(Tuple[T]):
     tee = _build_tee(_CTuple)
     zip_longest = _build_zip_longest(_CTuple)
 
+    # itertools-recipes
+
+    all_equal = _build_all_equal(_CTuple)
+    ncycles = _build_ncycles(_CTuple)
+
     # more-itertools
 
     chunked = _build_chunked(_CTuple)
@@ -1233,7 +1265,10 @@ class CSet(Set[T]):
     tee = _build_tee(_CSet)
     zip_longest = _build_zip_longest(_CSet)
 
-    # itertools - recipes
+    # itertools-recipes
+
+    all_equal = _build_all_equal(_CSet)
+    ncycles = _build_ncycles(_CSet)
 
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
@@ -1250,14 +1285,8 @@ class CSet(Set[T]):
     def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
-    def all_equal(self: CSet) -> bool:
-        return self.iter().all_equal()
-
     def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CSet[T], n: int) -> CSet[T]:
-        return self.iter().ncycles(n).set()
 
     def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
@@ -1377,7 +1406,10 @@ class CFrozenSet(FrozenSet[T]):
     tee = _build_tee(_CFrozenSet)
     zip_longest = _build_zip_longest(_CFrozenSet)
 
-    # itertools - recipes
+    # itertools-recipes
+
+    all_equal = _build_all_equal(_CFrozenSet)
+    ncycles = _build_ncycles(_CFrozenSet)
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().take(n).frozenset()
@@ -1394,14 +1426,8 @@ class CFrozenSet(FrozenSet[T]):
     def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
-    def all_equal(self: CFrozenSet) -> bool:
-        return self.iter().all_equal()
-
     def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
-        return self.iter().ncycles(n).frozenset()
 
     def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)

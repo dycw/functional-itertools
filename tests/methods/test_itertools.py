@@ -259,4 +259,5 @@ def test_zip_longest(
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert z == list(zip_longest(x, *xs, fillvalue=fillvalue))
+    if cls in ORDERED_CLASSES:
+        assert z == list(zip_longest(x, *xs, fillvalue=fillvalue))
