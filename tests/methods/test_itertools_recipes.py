@@ -33,9 +33,9 @@ from pytest import mark
 
 from functional_itertools import CIterable
 from functional_itertools import CList
-from functional_itertools import CTuple
 from tests.strategies import CLASSES
 from tests.strategies import islice_ints
+from tests.strategies import ORDERED_CLASSES
 from tests.strategies import real_iterables
 from tests.strategies import siterables
 from tests.strategies import slists
@@ -57,7 +57,7 @@ def test_consume(cls: Type, data: DataObject, n: Optional[int]) -> None:
     x, cast = data.draw(siterables(case, integers()))
     y = case(x).consume(n=n)
     assert isinstance(y, case)
-    if case in {CIterable, CList, CTuple}:
+    if case in ORDERED_CLASSES:
         iter_x = iter(x)
         consume(iter_x, n=n)
         assert cast(y) == cast(iter_x)
@@ -70,7 +70,7 @@ def test_dotproduct(cls: Type, data: DataObject) -> None:
     y, _ = data.draw(siterables(case, integers(), min_size=len(x), max_size=len(x)))
     z = case(x).dotproduct(y)
     assert isinstance(z, int)
-    if case in {CIterable, CList, CTuple}:
+    if case in ORDERED_CLASSES:
         assert z == dotproduct(x, y)
 
 
@@ -96,7 +96,7 @@ def test_nth(cls: Type, data: DataObject, n: int, default: Optional[int]) -> Non
     x, _ = data.draw(siterables(case, integers()))
     y = case(x).nth(n, default=default)
     assert isinstance(y, int) or (y is None)
-    if case in {CIterable, CList, CTuple}:
+    if case in ORDERED_CLASSES:
         assert y == nth(x, n, default=default)
 
 
@@ -106,7 +106,7 @@ def test_take(cls: Type, data: DataObject, n: int) -> None:
     x, cast = data.draw(siterables(case, integers()))
     y = case(x).take(n)
     assert isinstance(y, case)
-    if case in {CIterable, CList, CTuple}:
+    if case in ORDERED_CLASSES:
         assert cast(y) == cast(take(n, x))
 
 
@@ -123,7 +123,7 @@ def test_pairwise(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(case, integers()))
     y = case(x).pairwise()
     assert isinstance(y, case)
-    if case in {CIterable, CList, CTuple}:
+    if case in ORDERED_CLASSES:
         assert cast(y) == cast(pairwise(x))
 
 
@@ -172,10 +172,9 @@ def test_tabulate(start: int, n: int) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data(), n=small_ints)
-def test_tail(cls: Type, data: DataObject, n: int) -> None:
-    x, cast = data.draw(siterables(case, integers()))
-    y = case(x).tail(n)
-    assert isinstance(y, case)
-    if case in {CIterable, CList, CTuple}:
-        assert cast(y) == cast(tail(n, x))
+@given(x=real_iterables(integers()), n=integers(min_value=0))
+def test_tail(cls: Type, x: Iterable[int], n: int) -> None:
+    y = cls(x).tail(n)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(tail(n, x))

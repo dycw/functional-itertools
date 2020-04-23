@@ -50,7 +50,6 @@ from more_itertools.recipes import random_product
 from more_itertools.recipes import repeatfunc
 from more_itertools.recipes import roundrobin
 from more_itertools.recipes import tabulate
-from more_itertools.recipes import tail
 from more_itertools.recipes import take
 from more_itertools.recipes import unique_everseen
 from more_itertools.recipes import unique_justseen
@@ -562,17 +561,13 @@ def _build_ncycles(name: str) -> Callable[..., Iterable]:
 
 
 @_defines_method_factory(
-    "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-", citerable_or_clist=True,
+    "Return an iterator over the last n items", citerable_or_clist=True,
 )
-def _build_zip_longest(name: str) -> Callable[..., Iterable[Tuple]]:
-    def zip_longest(
-        self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(
-            map(CTuple, itertools.zip_longest(self, *iterables, fillvalue=fillvalue)),
-        )
+def _build_tail(name: str) -> Callable[..., Iterable]:
+    def tail(self: Template[T], n: int) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(more_itertools.tail(n, self))
 
-    return zip_longest
+    return tail
 
 
 # more-itertools
@@ -725,6 +720,7 @@ class CIterable(Iterable[T]):
 
     all_equal = _build_all_equal(_CIterable)
     ncycles = _build_ncycles(_CIterable)
+    tail = _build_tail(_CIterable)
 
     def take(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(take(n, self._iterable))
@@ -735,9 +731,6 @@ class CIterable(Iterable[T]):
     @classmethod
     def tabulate(cls: Type[CIterable], func: Callable[[int], T], start: int = 0) -> CIterable[T]:
         return cls(tabulate(func, start=start))
-
-    def tail(self: CIterable[T], n: int) -> CIterable[T]:
-        return CIterable(tail(n, self._iterable))
 
     def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
         iterator = iter(self)
@@ -978,15 +971,13 @@ class CList(List[T]):
 
     all_equal = _build_all_equal(_CList)
     ncycles = _build_ncycles(_CList)
+    tail = _build_tail(_CList)
 
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
 
     def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
         return self.iter().prepend(value).list()
-
-    def tail(self: CList[T], n: int) -> CList[T]:
-        return self.iter().tail(n).list()
 
     def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
         return self.iter().consume(n=n).list()
@@ -1151,6 +1142,7 @@ class CTuple(Tuple[T]):
 
     all_equal = _build_all_equal(_CTuple)
     ncycles = _build_ncycles(_CTuple)
+    tail = _build_tail(_CTuple)
 
     # more-itertools
 
@@ -1269,15 +1261,13 @@ class CSet(Set[T]):
 
     all_equal = _build_all_equal(_CSet)
     ncycles = _build_ncycles(_CSet)
+    tail = _build_tail(_CSet)
 
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
 
     def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
         return self.iter().prepend(value).set()
-
-    def tail(self: CSet[T], n: int) -> CSet[T]:
-        return self.iter().tail(n).set()
 
     def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
         return self.iter().consume(n=n).set()
@@ -1410,15 +1400,13 @@ class CFrozenSet(FrozenSet[T]):
 
     all_equal = _build_all_equal(_CFrozenSet)
     ncycles = _build_ncycles(_CFrozenSet)
+    tail = _build_tail(_CFrozenSet)
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().take(n).frozenset()
 
     def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
         return self.iter().prepend(value).frozenset()
-
-    def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
-        return self.iter().tail(n).frozenset()
 
     def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
         return self.iter().consume(n=n).frozenset()

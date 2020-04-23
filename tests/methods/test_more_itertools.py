@@ -26,10 +26,20 @@ def test_chunked(cls: Type, x: Iterable[int], n: int) -> None:
 
 
 @mark.parametrize("cls", CLASSES)
-@mark.parametrize("name", ["distribute", "divide"])
 @given(x=real_iterables(integers(), max_size=1000), n=integers(1, 10))
-def test_distribute_and_divide(cls: Type, name: str, x: Iterable[int], n: int) -> None:
-    y = getattr(cls(x), name)(n)
+def test_distribute(cls: Type, x: Iterable[int], n: int) -> None:
+    y = cls(x).distribute(n)
+    expected = CIterable if cls is CIterable else CList
+    assert isinstance(y, expected)
+    for yi, zi in zip(y, getattr(more_itertools, name)(n, cast(x))):
+        assert isinstance(yi, expected)
+        assert list(yi) == list(zi)
+
+
+@mark.parametrize("cls", CLASSES)
+@given(x=real_iterables(integers(), max_size=1000), n=integers(1, 10))
+def test_divide(cls: Type, x: Iterable[int], n: int) -> None:
+    y = cls(x).divide(n)
     expected = CIterable if cls is CIterable else CList
     assert isinstance(y, expected)
     for yi, zi in zip(y, getattr(more_itertools, name)(n, cast(x))):
