@@ -45,13 +45,19 @@ CASES = [
     Case(cls=CSet, cast=set, ordered=False),
     Case(cls=CFrozenSet, cast=frozenset, ordered=False),
 ]
-CLASSES = [
+ORDERED_CLASSES = [
     CIterable,
     CList,
     CTuple,
+]
+CLASSES = ORDERED_CLASSES + [
     CSet,
     CFrozenSet,
 ]
+
+
+def get_cast(cls: Type) -> Type:
+    return list if cls in ORDERED_CLASSES else set
 
 
 def real_iterables(

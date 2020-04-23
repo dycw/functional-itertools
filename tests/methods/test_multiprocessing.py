@@ -12,27 +12,26 @@ from hypothesis.strategies import tuples
 from pytest import mark
 
 from functional_itertools import CIterable
-from tests.strategies import Case
-from tests.strategies import CASES
+from tests.strategies import CLASSES
 from tests.strategies import nested_siterables
 from tests.strategies import siterables
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_pmap(case: Case, data: DataObject) -> None:
+def test_pmap(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, integers()))
     y = cls(x).pmap(neg, processes=1)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert cast(y) == cast(map(neg, x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_pmap_nested(case: Case, data: DataObject) -> None:
+def test_pmap_nested(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(nested_siterables(cls, integers(), min_size=1))
     y = cls(x).pmap(_pmap_neg, processes=1)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert cast(y) == cast(max(map(neg, x_i)) for x_i in x)
 
 
@@ -40,10 +39,10 @@ def _pmap_neg(x: Iterable[int]) -> int:
     return CIterable(x).pmap(neg, processes=1).max()
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_pstarmap(case: Case, data: DataObject) -> None:
+def test_pstarmap(cls: Type, data: DataObject) -> None:
     x, cast = data.draw(siterables(cls, tuples(integers(), integers())))
     y = cls(x).pstarmap(max, processes=1)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert cast(y) == cast(starmap(max, x))

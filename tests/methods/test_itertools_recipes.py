@@ -7,6 +7,7 @@ from operator import neg
 from sys import maxsize
 from typing import List
 from typing import Optional
+from typing import Type
 
 from hypothesis import given
 from hypothesis.strategies import data
@@ -32,8 +33,7 @@ from pytest import mark
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CTuple
-from tests.strategies import Case
-from tests.strategies import CASES
+from tests.strategies import CLASSES
 from tests.strategies import islice_ints
 from tests.strategies import nested_siterables
 from tests.strategies import siterables
@@ -42,74 +42,74 @@ from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_all_equal(case: Case, data: DataObject) -> None:
-    x, _ = data.draw(siterables(case.case, integers()))
-    y = case.case(x).all_equal()
+def test_all_equal(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(case, integers()))
+    y = case(x).all_equal()
     assert isinstance(y, bool)
     assert y == all_equal(x)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), n=none() | small_ints)
-def test_consume(case: Case, data: DataObject, n: Optional[int]) -> None:
-    x, case.cast = data.draw(siterables(case.case, integers()))
-    y = case.case(x).consume(n=n)
-    assert isinstance(y, case.case.case)
-    if case.case in {CIterable, CList, CTuple}:
+def test_consume(cls: Type, data: DataObject, n: Optional[int]) -> None:
+    x, cast = data.draw(siterables(case, integers()))
+    y = case(x).consume(n=n)
+    assert isinstance(y, case)
+    if case in {CIterable, CList, CTuple}:
         iter_x = iter(x)
         consume(iter_x, n=n)
-        assert case.cast(y) == case.cast(iter_x)
+        assert cast(y) == cast(iter_x)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_dotproduct(case: Case, data: DataObject) -> None:
-    x, _ = data.draw(siterables(case.case, integers()))
-    y, _ = data.draw(siterables(case.case, integers(), min_size=len(x), max_size=len(x)))
-    z = case.case(x).dotproduct(y)
+def test_dotproduct(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(case, integers()))
+    y, _ = data.draw(siterables(case, integers(), min_size=len(x), max_size=len(x)))
+    z = case(x).dotproduct(y)
     assert isinstance(z, int)
-    if case.case in {CIterable, CList, CTuple}:
+    if case in {CIterable, CList, CTuple}:
         assert z == dotproduct(x, y)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_flatten(case: Case, data: DataObject) -> None:
-    x, case.cast = data.draw(nested_siterables(case.case, integers()))
-    y = case.case(x).flatten()
-    assert isinstance(y, case.case.case)
-    assert case.cast(y) == case.cast(flatten(x))
+def test_flatten(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(nested_siterables(case, integers()))
+    y = case(x).flatten()
+    assert isinstance(y, case)
+    assert cast(y) == cast(flatten(x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), n=small_ints)
-def test_ncycles(case: Case, data: DataObject, n: int) -> None:
-    x, case.cast = data.draw(siterables(case.case, integers()))
-    y = case.case(x).ncycles(n)
-    assert isinstance(y, case.case.case)
-    assert case.cast(y) == case.cast(ncycles(x, n))
+def test_ncycles(cls: Type, data: DataObject, n: int) -> None:
+    x, cast = data.draw(siterables(case, integers()))
+    y = case(x).ncycles(n)
+    assert isinstance(y, case)
+    assert cast(y) == cast(ncycles(x, n))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), n=small_ints, default=none() | small_ints)
-def test_nth(case: Case, data: DataObject, n: int, default: Optional[int]) -> None:
-    x, _ = data.draw(siterables(case.case, integers()))
-    y = case.case(x).nth(n, default=default)
+def test_nth(cls: Type, data: DataObject, n: int, default: Optional[int]) -> None:
+    x, _ = data.draw(siterables(case, integers()))
+    y = case(x).nth(n, default=default)
     assert isinstance(y, int) or (y is None)
-    if case.case in {CIterable, CList, CTuple}:
+    if case in {CIterable, CList, CTuple}:
         assert y == nth(x, n, default=default)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), n=integers(0, maxsize))
-def test_take(case: Case, data: DataObject, n: int) -> None:
-    x, case.cast = data.draw(siterables(case.case, integers()))
-    y = case.case(x).take(n)
-    assert isinstance(y, case.case.case)
-    if case.case in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(take(n, x))
+def test_take(cls: Type, data: DataObject, n: int) -> None:
+    x, cast = data.draw(siterables(case, integers()))
+    y = case(x).take(n)
+    assert isinstance(y, case)
+    if case in {CIterable, CList, CTuple}:
+        assert cast(y) == cast(take(n, x))
 
 
 @given(x=slists(integers()), n=islice_ints)
@@ -119,51 +119,51 @@ def test_padnone(x: List[int], n: int) -> None:
     assert list(y[:n]) == list(islice(padnone(x), n))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_pairwise(case: Case, data: DataObject) -> None:
-    x, case.cast = data.draw(siterables(case.case, integers()))
-    y = case.case(x).pairwise()
-    assert isinstance(y, case.case.case)
-    if case.case in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(pairwise(x))
+def test_pairwise(cls: Type, data: DataObject) -> None:
+    x, cast = data.draw(siterables(case, integers()))
+    y = case(x).pairwise()
+    assert isinstance(y, case)
+    if case in {CIterable, CList, CTuple}:
+        assert cast(y) == cast(pairwise(x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), value=integers())
-def test_prepend(case: Case, data: DataObject, value: int) -> None:
-    x, case.cast = data.draw(siterables(case.case, integers()))
-    y = case.case(x).prepend(value)
-    assert isinstance(y, case.case.case)
-    assert case.cast(y) == case.cast(prepend(value, x))
+def test_prepend(cls: Type, data: DataObject, value: int) -> None:
+    x, cast = data.draw(siterables(case, integers()))
+    y = case(x).prepend(value)
+    assert isinstance(y, case)
+    assert cast(y) == cast(prepend(value, x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data())
-def test_quantify(case: Case, data: DataObject) -> None:
-    x, _ = data.draw(siterables(case.case, integers()))
-    y = case.case(x).quantify(pred=is_even)
+def test_quantify(cls: Type, data: DataObject) -> None:
+    x, _ = data.draw(siterables(case, integers()))
+    y = case(x).quantify(pred=is_even)
     assert isinstance(y, int)
     assert y == quantify(x, pred=is_even)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), n=islice_ints)
-def test_repeatfunc(case: Case, data: DataObject, n: int) -> None:
+def test_repeatfunc(cls: Type, data: DataObject, n: int) -> None:
     add1 = partial(add, 1)
-    if case.case is CIterable:
+    if case is CIterable:
         times = data.draw(none() | small_ints)
     else:
         times = data.draw(small_ints)
 
-    y = case.case.repeatfunc(add1, times, 0)
-    assert isinstance(y, case.case.case)
-    _, case.cast = data.draw(siterables(case.case, none()))
+    y = repeatfunc(add1, times, 0)
+    assert isinstance(y, case)
+    _, cast = data.draw(siterables(case, none()))
     z = repeatfunc(add1, times, 0)
-    if (case.case is CIterable) and (times is None):
-        assert case.cast(y[:n]) == case.cast(islice(z, n))
+    if (case is CIterable) and (times is None):
+        assert cast(y[:n]) == cast(islice(z, n))
     else:
-        assert case.cast(y) == case.cast(z)
+        assert cast(y) == cast(z)
 
 
 @given(start=integers(), n=islice_ints)
@@ -173,11 +173,11 @@ def test_tabulate(start: int, n: int) -> None:
     assert list(islice(x, n)) == list(islice(tabulate(neg, start=start), n))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), n=small_ints)
-def test_tail(case: Case, data: DataObject, n: int) -> None:
-    x, case.cast = data.draw(siterables(case.case, integers()))
-    y = case.case(x).tail(n)
-    assert isinstance(y, case.case.case)
-    if case.case in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(tail(n, x))
+def test_tail(cls: Type, data: DataObject, n: int) -> None:
+    x, cast = data.draw(siterables(case, integers()))
+    y = case(x).tail(n)
+    assert isinstance(y, case)
+    if case in {CIterable, CList, CTuple}:
+        assert cast(y) == cast(tail(n, x))

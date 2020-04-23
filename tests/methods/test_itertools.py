@@ -25,6 +25,7 @@ from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import Tuple
+from typing import Type
 
 from hypothesis import given
 from hypothesis.strategies import booleans
@@ -37,76 +38,76 @@ from hypothesis.strategies import none
 from hypothesis.strategies import tuples
 from pytest import mark
 
-from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
 from functional_itertools import CList
-from functional_itertools import CSet
 from functional_itertools import CTuple
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
-from tests.strategies import Case
-from tests.strategies import CASES
+from tests.strategies import CLASSES
+from tests.strategies import get_cast
 from tests.strategies import islice_ints
+from tests.strategies import ORDERED_CLASSES
 from tests.strategies import range_args
 from tests.strategies import real_iterables
 from tests.strategies import small_ints
 from tests.test_utilities import is_even
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(
     x=real_iterables(integers()),
     initial=just({})
     if VERSION is Version.py37
     else fixed_dictionaries({"initial": none() | integers()}),
 )
-def test_accumulate(case: Case, x: Iterable[int], initial: Dict[str, Any]) -> None:
-    y = case.cls(x).accumulate(add, **initial)
-    assert isinstance(y, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(accumulate(x, add, **initial))
+def test_accumulate(cls: Type, x: Iterable[int], initial: Dict[str, Any]) -> None:
+    y = cls(x).accumulate(add, **initial)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(accumulate(x, add, **initial))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
-def test_chain(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
-    y = case.cls(x).chain(*xs)
-    assert isinstance(y, case.cls)
-    assert case.cast(y) == case.cast(chain(x, *xs))
+def test_chain(cls: Type, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
+    y = cls(x).chain(*xs)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(chain(x, *xs))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers(), max_size=100), r=integers(0, 10))
-def test_combinations(case: Case, x: Iterable[int], r: int) -> None:
-    y = case.cls(x).combinations(r)
-    assert isinstance(y, case.cls)
-    z = case.cast(y)
+def test_combinations(cls: Type, x: Iterable[int], r: int) -> None:
+    y = cls(x).combinations(r)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert z == case.cast(combinations(x, r))
+    if cls in ORDERED_CLASSES:
+        assert z == list(combinations(x, r))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers(), max_size=100), r=integers(0, 5))
-def test_combinations_with_replacement(case: Case, x: Iterable[int], r: int) -> None:
-    y = case.cls(x).combinations_with_replacement(r)
-    assert isinstance(y, case.cls)
-    z = case.cast(y)
+def test_combinations_with_replacement(cls: Type, x: Iterable[int], r: int) -> None:
+    y = cls(x).combinations_with_replacement(r)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert z == case.cast(combinations_with_replacement(x, r))
+    if cls in ORDERED_CLASSES:
+        assert z == list(combinations_with_replacement(x, r))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(pairs=real_iterables(tuples(integers(), booleans()), min_size=1))
-def test_compress(case: Case, pairs: Iterable[Tuple[int, bool]]) -> None:
+def test_compress(cls: Type, pairs: Iterable[Tuple[int, bool]]) -> None:
     x, selectors = zip(*pairs)
-    y = case.cls(x).compress(selectors)
-    assert isinstance(y, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(compress(x, selectors))
+    y = cls(x).compress(selectors)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(compress(x, selectors))
 
 
 @given(start=integers(), step=integers(), n=islice_ints)
@@ -123,144 +124,139 @@ def test_cycle(x: Iterable[int], n: int) -> None:
     assert list(y[:n]) == list(islice(cycle(x), n))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()))
-def test_dropwhile(case: Case, x: Iterable[int]) -> None:
-    y = case.cls(x).dropwhile(is_even)
-    assert isinstance(y, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(dropwhile(is_even, x))
+def test_dropwhile(cls: Type, x: Iterable[int]) -> None:
+    y = cls(x).dropwhile(is_even)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(dropwhile(is_even, x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()))
-def test_filterfalse(case: Case, x: Iterable[int]) -> None:
-    y = case.cls(x).filterfalse(is_even)
-    assert isinstance(y, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(filterfalse(is_even, x))
+def test_filterfalse(cls: Type, x: Iterable[int]) -> None:
+    y = cls(x).filterfalse(is_even)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(filterfalse(is_even, x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()), key=none() | just(neg))
-def test_groupby(case: Case, x: Iterable[int], key: Optional[Callable[[int], int]]) -> None:
-    y = case.cls(x).groupby(key=key)
-    assert isinstance(y, case.cls)
+def test_groupby(cls: Type, x: Iterable[int], key: Optional[Callable[[int], int]]) -> None:
+    y = cls(x).groupby(key=key)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
     for yi in y:
         assert isinstance(yi, tuple)
-        yi0, yi1 = yi
-        assert isinstance(yi0, int)
-        if case.cls is CSet:
-            assert isinstance(yi1, CFrozenSet)
-        else:
-            assert isinstance(yi1, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
-        for (yi0, yi1), (wi0, wi1) in zip(case.cls(x).groupby(key=key), groupby(x, key=key)):
-            assert yi0 == wi0
-            assert case.cast(yi1) == case.cast(wi1)
+        k, v = yi
+        assert isinstance(k, int)
+        assert isinstance(v, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert [(k, list(v)) for k, v in cls(x).groupby(key=key)] == [
+            (k, list(v)) for k, v in groupby(x, key=key)
+        ]
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()), args=range_args)
 def test_islice(
-    case: Case, x: Iterable[int], args: Tuple[int, Optional[int], Optional[int]],
+    cls: Type, x: Iterable[int], args: Tuple[int, Optional[int], Optional[int]],
 ) -> None:
-    y = case.cls(x).islice(*args)
-    assert isinstance(y, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
+    y = cls(x).islice(*args)
+    assert isinstance(y, CIterable)
+    if cls in ORDERED_CLASSES:
         start, stop, step = args
-        assert case.cast(y) == case.cast(
+        assert list(y) == list(
             islice(
                 x, start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
             ),
         )
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers(), max_size=5), r=none() | integers(0, 3))
-def test_permutations(case: Case, x: Iterable[int], r: Optional[int]) -> None:
-    y = case.cls(x).permutations(r=r)
-    assert isinstance(y, case.cls)
-    z = case.cast(y)
+def test_permutations(cls: Type, x: Iterable[int], r: Optional[int]) -> None:
+    y = cls(x).permutations(r=r)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert z == case.cast(permutations(x, r=r))
+    if cls in ORDERED_CLASSES:
+        assert z == list(permutations(x, r=r))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(
     x=real_iterables(integers(), max_size=3),
     xs=real_iterables(real_iterables(integers(), max_size=3), max_size=3),
     repeat=integers(0, 3),
 )
-def test_product(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], repeat: int) -> None:
-    y = case.cls(x).product(*xs, repeat=repeat)
-    assert isinstance(y, case.cls)
-    z = case.cast(y)
+def test_product(cls: Type, x: Iterable[int], xs: Iterable[Iterable[int]], repeat: int) -> None:
+    y = cls(x).product(*xs, repeat=repeat)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert z == case.cast(product(x, *xs, repeat=repeat))
+    if cls in ORDERED_CLASSES:
+        assert z == list(product(x, *xs, repeat=repeat))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(data=data(), x=integers(), n=islice_ints)
-def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
-    if case.cls is CIterable:
+def test_repeat(cls: Type, data: DataObject, x: int, n: int) -> None:
+    if cls is CIterable:
         times = data.draw(none() | small_ints)
     else:
         times = data.draw(small_ints)
-    y = case.cls.repeat(x, times=times)
-    assert isinstance(y, case.cls)
+    y = cls.repeat(x, times=times)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
     z = repeat(x, *(() if times is None else (times,)))
-    if (case.cls is CIterable) and (times is None):
-        assert case.cast(y[:n]) == case.cast(islice(z, n))
+    if (cls is CIterable) and (times is None):
+        assert list(y[:n]) == list(islice(z, n))
     else:
-        assert case.cast(y) == case.cast(z)
+        assert list(y) == list(z)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(tuples(integers(), integers())))
-def test_starmap(case: Case, x: Iterable[Tuple[int, int]]) -> None:
-    y = case.cls(x).starmap(max)
-    assert isinstance(y, case.cls)
-    assert case.cast(y) == case.cast(starmap(max, x))
+def test_starmap(cls: Type, x: Iterable[Tuple[int, int]]) -> None:
+    y = cls(x).starmap(max)
+    assert isinstance(y, cls)
+    cast = get_cast(cls)
+    assert cast(y) == cast(starmap(max, x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()))
-def test_takewhile(case: Case, x: Iterable[int]) -> None:
-    y = case.cls(x).takewhile(is_even)
-    assert isinstance(y, case.cls)
-    if case.cls in {CIterable, CList, CTuple}:
-        assert case.cast(y) == case.cast(takewhile(is_even, x))
+def test_takewhile(cls: Type, x: Iterable[int]) -> None:
+    y = cls(x).takewhile(is_even)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    if cls in ORDERED_CLASSES:
+        assert list(y) == list(takewhile(is_even, x))
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()), n=integers(0, 10))
-def test_tee(case: Case, x: Iterable[int], n: int) -> None:
-    y = case.cls(x).tee(n=n)
-    assert isinstance(y, case.cls)
+def test_tee(cls: Type, x: Iterable[int], n: int) -> None:
+    y = cls(x).tee(n=n)
+    assert isinstance(y, CIterable)
     for yi in y:
-        if case.cls is CSet:
-            assert isinstance(yi, CFrozenSet)
-        else:
-            assert isinstance(yi, case.cls)
+        assert isinstance(yi, CIterable)
 
 
-@mark.parametrize("case", CASES)
+@mark.parametrize("cls", CLASSES)
 @given(
     x=real_iterables(integers()),
     xs=real_iterables(real_iterables(integers())),
     fillvalue=none() | integers(),
 )
 def test_zip_longest(
-    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], fillvalue: Optional[int],
+    cls: Type, x: Iterable[int], xs: Iterable[Iterable[int]], fillvalue: Optional[int],
 ) -> None:
-    y = case.cls(x).zip_longest(*xs, fillvalue=fillvalue)
-    assert isinstance(y, case.cls)
-    z = case.cast(y)
+    y = cls(x).zip_longest(*xs, fillvalue=fillvalue)
+    assert isinstance(y, CIterable if cls is CIterable else CList)
+    z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert z == case.cast(zip_longest(x, *xs, fillvalue=fillvalue))
+    assert z == list(zip_longest(x, *xs, fillvalue=fillvalue))

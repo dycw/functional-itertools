@@ -1,29 +1,17 @@
 from __future__ import annotations
 
 import builtins
+import itertools
 from functools import reduce
-from itertools import accumulate
 from itertools import chain
-from itertools import combinations
-from itertools import combinations_with_replacement
-from itertools import compress
-from itertools import count
-from itertools import cycle
-from itertools import dropwhile
-from itertools import filterfalse
-from itertools import groupby
 from itertools import islice
-from itertools import permutations
-from itertools import product
-from itertools import repeat
 from itertools import starmap
-from itertools import takewhile
-from itertools import tee
-from itertools import zip_longest
 from multiprocessing import Pool
 from operator import add
 from pathlib import Path
+from re import search
 from sys import maxsize
+from sys import modules
 from types import FunctionType
 from typing import Any
 from typing import Callable
@@ -73,7 +61,7 @@ from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
-from functional_itertools.methods.base import MethodBuilder
+from functional_itertools.methods.base import CIterableOrCList
 from functional_itertools.methods.base import Template
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
@@ -97,13 +85,28 @@ _CFrozenSet = "CFrozenSet"
 # built-ins
 
 
-def defines_method_factory(doc: str) -> Callable[[str], FunctionType]:
-    def decorator(factory):
-        def wrapped(name: str) -> FunctionType:
-            method = factory(name)
-            method.__annotations__ = {
-                k: v.strip("'").format(name=name) for k, v in method.__annotations__.items()
-            }
+def defines_method_factory(
+    doc: str, *, citerable_or_clist: bool = False,
+) -> Callable[[str], FunctionType]:
+    def decorator(
+        factory: Union[Callable[..., FunctionType], Callable[..., FunctionType]],
+    ) -> Callable[[str], FunctionType]:
+        def wrapped(name: str, **kwargs: Any) -> FunctionType:
+            try:
+                method = factory(**kwargs)
+            except TypeError as error:
+                (msg,) = error.args
+                if search("missing 1 required positional argument: 'name'", msg):
+                    method = factory(name, **kwargs)
+                else:
+                    raise
+            for k, v in method.__annotations__.items():
+                new_v = v.replace(Template.__name__, name)
+                if citerable_or_clist:
+                    new_v = new_v.replace(
+                        CIterableOrCList.__name__, _CIterable if name == _CIterable else _CList,
+                    )
+                method.__annotations__[k] = new_v
             method.__doc__ = doc.format(name=name)
             return method
 
@@ -112,514 +115,437 @@ def defines_method_factory(doc: str) -> Callable[[str], FunctionType]:
     return decorator
 
 
-@defines_method_factory(
-    "Return `True` if all elements of the {name} are true (or if the {name} is empty)."
-)
-def _build_all(name: str) -> Callable[..., Any]:
-    def all(self: "{name}[T]") -> bool:  # noqa: A003
+def _get_citerable_or_clist(name: str) -> Type:
+    required = _CIterable if name == _CIterable else _CList
+    return getattr(modules[__name__], required.lstrip("_"))
+
+
+@defines_method_factory("Return `True` if all elements of the {name} are true, or if it is empty.")
+def _build_all() -> Callable:
+    def all(self: Template[T]) -> bool:  # noqa: A001
         return builtins.all(self)
 
     return all
 
 
-@defines_method_factory(
-    "Return `True` if all elements of the {name} are true (or if the {name} is empty)."
-)
-def _build_any(name: str) -> Callable[..., bool]:
-    def any(self: "{name}[T]") -> bool:  # noqa: A003
+@defines_method_factory("Return `True` if at least 1 element of the {name} is true.")
+def _build_any() -> Callable[..., bool]:
+    def any(self: Template[T]) -> bool:  # noqa: A001
         return builtins.any(self)
 
     return any
 
 
-class DictMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: DictMethodBuilder) -> Callable[..., CDict]:
-        def method(self: Template[Tuple[T, U]]) -> CDict[T, U]:
-            return CDict(self)
+@defines_method_factory("Convert the {name} into a CDict.")
+def _build_dict() -> Callable[..., CDict[Any, Any]]:
+    def dict(self: Template[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A001
+        return CDict(self)
 
-        return method
-
-    _doc = "Create a new CDict from the {0}."
+    return dict
 
 
-class EnumerateMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[EnumerateMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], start: int = 0) -> Template[CTuple[Union[int, T]]]:
-            return type(self)(map(CTuple, enumerate(self, start=start)))
+@defines_method_factory("Enumerate the elements of the {name}.", citerable_or_clist=True)
+def _build_enumerate(name: str) -> Callable[..., Iterable[Tuple[int, Any]]]:
+    def enumerate(
+        self: Template[T], start: int = 0,
+    ) -> CIterableOrCList[Tuple[int, T]]:  # noqa: A001
+        return _get_citerable_or_clist(name)(builtins.enumerate(self, start=start))
 
-        return method
-
-    _doc = "Return an enumerate object, cast as a {0}."
-
-
-class FilterMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[FilterMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], func: Optional[Callable[[T], bool]]) -> Template[T]:
-            return type(self)(filter(func, self))
-
-        return method
-
-    _doc = "Construct a {0} from those elements of the {0} for which function returns true."
+    return enumerate
 
 
-class IterMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: IterMethodBuilder) -> Callable[..., CIterable]:
-        def method(self: Template[T]) -> CIterable[T]:
-            return CIterable(self)
+@defines_method_factory("Filter the elements of the {name}.")
+def _build_filter() -> Callable[..., Iterable]:
+    def filter(self: Template[T], func: Optional[Callable[[T], bool]]) -> Template[T]:  # noqa: A001
+        return type(self)(builtins.filter(func, self))
 
-        return method
-
-    _doc = "Create a new CDict from the {0}."
+    return filter
 
 
-class FrozenSetMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: FrozenSetMethodBuilder) -> Callable[..., CFrozenSet]:
-        def method(self: Template[T]) -> CFrozenSet[T]:
-            return CFrozenSet(self)
+@defines_method_factory("Create a CIterable from the {name}.")
+def _build_iter() -> Callable[..., CIterable]:
+    def iter(self: Template[T]) -> CIterable[T]:  # noqa: A001
+        return CIterable(self)
 
-        return method
-
-    _doc = "Create a new CFrozenSet from the {0}."
+    return iter
 
 
-class LenMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[LenMethodBuilder]) -> Callable[..., int]:
-        def method(self: Template[T]) -> int:
-            return len(self)
+@defines_method_factory("Convert the {name} into a CFrozenSet.")
+def _build_frozenset() -> Callable[..., CFrozenSet]:
+    def frozenset(self: Template[T]) -> CFrozenSet[T]:  # noqa: A001
+        return CFrozenSet(self)
 
-        return method
-
-    _doc = "Return the length of the {0}."
+    return frozenset
 
 
-class ListMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: ListMethodBuilder) -> Callable[..., CList]:
-        def method(self: Template[T]) -> CList[T]:
-            return CList(self)
+@defines_method_factory("Return the length of the {name}.")
+def _build_len() -> Callable[..., int]:
+    def len(self: Template[T]) -> int:  # noqa: A001
+        return builtins.len(self)
 
-        return method
-
-    _doc = "Create a new CList from the {0}."
+    return len
 
 
-class MapMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[MapMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], func: Callable[..., U], *iterables: Iterable) -> Template[U]:
-            return type(self)(map(func, self, *iterables))
+@defines_method_factory("Create a CList from the {name}.")
+def _build_list() -> Callable[..., CList]:
+    def list(self: Template[T]) -> CList[T]:  # noqa: A001
+        return CList(self)
 
-        return method
-
-    _doc = "Construct a {0} by applying `func` to every item of the {0}."
+    return list
 
 
-class MaxMinMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(
-        cls: Type[MaxMinMethodBuilder], func: Callable[..., Any],
-    ) -> Callable[..., Any]:
-        if VERSION is Version.py37:
+@defines_method_factory("Map over the elements of the {name}.")
+def _build_map() -> Callable[..., Iterable]:
+    def map(  # noqa: A001
+        self: Template[T], func: Callable[..., U], *iterables: Iterable,
+    ) -> Template[U]:
+        return type(self)(builtins.map(func, self, *iterables))
 
-            def method(
-                self: Template[T],
-                *,
-                key: Union[Callable[[T], Any], Sentinel] = sentinel,
-                default: U = sentinel,
-            ) -> Union[T, U]:
-                return func(
-                    self,
-                    **({} if key is sentinel else {"key": key}),
-                    **({} if default is sentinel else {"default": default}),
-                )
+    return map
 
-        elif VERSION is Version.py38:
 
-            def method(
-                self: Template[T],
-                *,
-                key: Optional[Callable[[T], Any]] = None,
-                default: U = sentinel,
-            ) -> Union[T, U]:
-                return func(self, key=key, **({} if default is sentinel else {"default": default}))
+@defines_method_factory("Return the max/minimum over the {name}.")
+def _build_maxmin(func: Callable) -> Callable:
+    if VERSION is Version.py37:
 
+        def min_max(
+            self: Template[T],
+            *,
+            key: Union[Callable[[T], Any], Sentinel] = sentinel,
+            default: U = sentinel,
+        ) -> Union[T, U]:
+            return func(
+                self,
+                **({} if key is sentinel else {"key": key}),
+                **({} if default is sentinel else {"default": default}),
+            )
+
+    elif VERSION is Version.py38:
+
+        def min_max(
+            self: Template[T], *, key: Optional[Callable[[T], Any]] = None, default: U = sentinel,
+        ) -> Union[T, U]:
+            return func(self, key=key, **({} if default is sentinel else {"default": default}))
+
+    else:
+        raise UnsupportVersionError(VERSION)  # pragma: no cover
+
+    min_max.__name__ = func.__name__
+    return min_max
+
+
+@defines_method_factory("Return a range of integers as a {name}.")
+def _build_range() -> Callable[..., Iterable[int]]:
+    def range(  # noqa: A001
+        cls: Type[Template[T]], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+    ) -> Template[int]:
+        if (stop is None) and (step is not None):
+            raise StopArgumentMissing()
         else:
-            raise UnsupportVersionError(VERSION)  # pragma: no cover
+            return cls(
+                builtins.range(
+                    start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
+                ),
+            )
 
-        return method
-
-    _doc = "Return the maximum/minimum over the {0}."
-
-
-class RangeMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[RangeMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            cls: Type[Template[T]],
-            start: int,
-            stop: Optional[int] = None,
-            step: Optional[int] = None,
-        ) -> Template[int]:
-            if (stop is None) and (step is not None):
-                raise StopArgumentMissing()
-            else:
-                return cls(
-                    range(
-                        start,
-                        *(() if stop is None else (stop,)),
-                        *(() if step is None else (step,)),
-                    ),
-                )
-
-        return method
-
-    _doc = "Return a range of integers as a {0}."
+    return range
 
 
-class SetMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: SetMethodBuilder) -> Callable[..., CSet]:
-        def method(self: Template[T]) -> CSet[T]:
-            return CSet(self)
+@defines_method_factory("Convert the {name} into a CSet.")
+def _build_set() -> Callable[..., CSet]:
+    def set(self: Template[T]) -> CSet[T]:  # noqa: A001
+        return CSet(self)
 
-        return method
-
-    _doc = "Create a new CSet from the {0}."
+    return set
 
 
-class SortedMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: MethodBuilder) -> Callable[..., Any]:
-        def method(
-            self: Template[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-        ) -> CList[T]:
-            return CList(sorted(self, key=key, reverse=reverse))
+@defines_method_factory("Convert the {name} into a sorted CList.")
+def _build_sorted() -> Callable[..., CList]:
+    def sorted(  # noqa: A001
+        self: Template[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
+    ) -> CList[T]:
+        return CList(builtins.sorted(self, key=key, reverse=reverse))
 
-        return method
-
-    _doc = "Return a sorted CList from the items in the {0}."
+    return sorted
 
 
-class SumMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[SumMethodBuilder]) -> Callable[..., int]:
-        def method(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:
-            return sum(self, *(() if start is sentinel else (start,)))
+@defines_method_factory("Sum the elements of the {name}.")
+def _build_sum() -> Callable[..., int]:
+    def sum(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:  # noqa: A001
+        return builtins.sum(self, *(() if start is sentinel else (start,)))
 
-        return method
-
-    _doc = "Return the sum of the elements in {0}."
+    return sum
 
 
-class TupleMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: TupleMethodBuilder) -> Callable[..., CTuple]:
-        def method(self: Template[T]) -> CTuple[T]:
-            return CTuple(self)
+@defines_method_factory("Convert the {name} into a CFrozenSet.")
+def _build_tuple() -> Callable[..., CTuple]:
+    def tuple(self: Template[T]) -> CTuple[T]:  # noqa: A001
+        return CTuple(self)
 
-        return method
-
-    _doc = "Create a new CTuple from the {0}."
+    return tuple
 
 
-class ZipMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[ZipMethodBuilder]) -> Callable[..., int]:
-        def method(self: Template[T], *iterables: Iterable[U]) -> Template[CTuple[Union[T, U]]]:
-            return type(self)(map(CTuple, zip(self, *iterables)))
+@defines_method_factory(
+    "Zip the elements of the {name} with other iterables.", citerable_or_clist=True,
+)
+def _build_zip(name: str) -> Callable[..., Iterable[CTuple]]:
+    def zip(  # noqa: A001
+        self: Template[T], *iterables: Iterable[U],
+    ) -> CIterableOrCList[CTuple[Union[T, U]]]:
+        return _get_citerable_or_clist(name)(map(CTuple, builtins.zip(self, *iterables)))
 
-        return method
-
-    _doc = "Return an iterator that aggregates elements from the {0} and the input iterables."
+    return zip
 
 
 # itertools
 
 
-class AccumulateMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[AccumulateMethodBuilder]) -> Callable[..., Any]:
-        if VERSION is Version.py37:
+@defines_method_factory(
+    "accumulate([1,2,3,4,5]) --> 1 3 6 10 15", citerable_or_clist=True,
+)
+def _build_accumulate(name: str) -> Callable[..., Iterable]:
+    if VERSION is Version.py37:
 
-            def method(self: Template[T], func: Callable[[T, T], T] = add) -> Template[T]:
-                return type(self)(accumulate(self, func))
+        def accumulate(self: Template[T], func: Callable[[T, T], T] = add) -> CIterableOrCList[T]:
+            return _get_citerable_or_clist(name)(itertools.accumulate(self, func))
 
-        elif VERSION is Version.py38:
+    elif VERSION is Version.py38:
 
-            def method(
-                self: Template[T],
-                func: Callable[[Union[T, U], Union[T, U]], Union[T, U]] = add,
-                *,
-                initial: Optional[U] = None,
-            ) -> Template[Union[T, U]]:
-                return type(self)(accumulate(self, func, initial=initial))
+        def method(
+            self: Template[T],
+            func: Callable[[Union[T, U], Union[T, U]], Union[T, U]] = add,
+            *,
+            initial: Optional[U] = None,
+        ) -> CIterableOrCList[Union[T, U]]:
+            return _get_citerable_or_clist(name)(itertools.accumulate(self, func, initial=initial))
 
-        else:
-            raise UnsupportVersionError(VERSION)  # pragma: no cover
+    else:
+        raise UnsupportVersionError(VERSION)  # pragma: no cover
 
-        return method
-
-    _doc = "accumulate([1,2,3,4,5]) --> 1 3 6 10 15"
-
-
-class ChainMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[ChainMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], *iterables: Iterable[U]) -> Template[Union[T, U]]:
-            return type(self)(chain(self, *iterables))
-
-        return method
-
-    _doc = "chain('ABC', 'DEF') --> A B C D E F"
+    return accumulate
 
 
-class CombinationsMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CombinationsMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], r: int) -> Template[CTuple[T]]:
-            return type(self)(map(CTuple, combinations(self, r)))
+@defines_method_factory(
+    "chain('ABC', 'DEF') --> A B C D E F", citerable_or_clist=True,
+)
+def _build_chain(name: str) -> Callable[..., Iterable]:
+    def chain(self: Template[T], *iterables: Iterable[U]) -> CIterableOrCList[Union[T, U]]:
+        return _get_citerable_or_clist(name)(itertools.chain(self, *iterables))
 
-        return method
+    return chain
 
-    _doc = "\n".join(
+
+@defines_method_factory(
+    "\n".join(
         [
             "combinations('ABCD', 2) --> AB AC AD BC BD CD",
             "combinations(range(4), 3) --> 012 013 023 123",
         ],
-    )
+    ),
+    citerable_or_clist=True,
+)
+def _build_combinations(name: str) -> Callable[..., Iterable[CTuple]]:
+    def combinations(self: Template[T], r: int) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(map(CTuple, itertools.combinations(self, r)))
+
+    return combinations
 
 
-class CombinationsWithReplacementMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CombinationsWithReplacementMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], r: int) -> Template[CTuple[T]]:
-            return type(self)(map(CTuple, combinations_with_replacement(self, r)))
+@defines_method_factory(
+    "combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC", citerable_or_clist=True,
+)
+def _build_combinations_with_replacement(name: str) -> Callable[..., Iterable]:
+    def combinations_with_replacement(self: Template[T], r: int) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(
+            map(CTuple, itertools.combinations_with_replacement(self, r)),
+        )
 
-        return method
-
-    _doc = "combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC"
-
-
-class CompressMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CompressMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], selectors: Iterable[Any]) -> Template[T]:
-            return type(self)(compress(self, selectors))
-
-        return method
-
-    _doc = "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F"
+    return combinations_with_replacement
 
 
-class CountMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CountMethodBuilder]) -> Callable[..., Any]:
-        def method(cls: Type[Template[T]], start: int = 0, step: int = 1) -> Template[int]:
-            return cls(count(start=start, step=step))
+@defines_method_factory(
+    "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F", citerable_or_clist=True,
+)
+def _build_compress(name: str) -> Callable[..., Iterable]:
+    def compress(self: Template[T], selectors: Iterable) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(itertools.compress(self, selectors))
 
-        return method
-
-    _doc = "count(10) --> 10 11 12 13 14 ..."
-
-
-class CycleMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[CycleMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T]) -> Template[T]:
-            return type(self)(cycle(self))
-
-        return method
-
-    _doc = "cycle('ABCD') --> A B C D A B C D A B C D ..."
+    return compress
 
 
-class DropWhileMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[DropWhileMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
-            return type(self)(dropwhile(func, self))
+@defines_method_factory(
+    "\n".join(["count(10) --> 10 11 12 13 14 ...", "count(2.5, 0.5) -> 2.5 3.0 3.5 ..."]),
+)
+def _build_count() -> Callable[..., CIterable[int]]:
+    def count(cls: Type[Template[T]], start: int = 0, step: int = 1) -> CIterable[int]:
+        return CIterable(itertools.count(start=start, step=step))
 
-        return method
-
-    _doc = "dropwhile(lambda x: x<5, [1,4,6,4,1]) --> 6 4 1"
-
-
-class FilterFalseMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[FilterFalseMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
-            return type(self)(filterfalse(func, self))
-
-        return method
-
-    _doc = "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8"
+    return count
 
 
-class GroupByMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[GroupByMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[T], key: Optional[Callable[[T], U]] = None,
-        ) -> Template[Tuple[U, Template[T]]]:
-            cls = type(self)
-            if cls is CSet:
-                inner_cls = CFrozenSet
-            else:
-                inner_cls = cls
-            return cls(((k, inner_cls(v))) for k, v in groupby(self, key=key))
+@defines_method_factory("cycle('ABCD') --> A B C D A B C D A B C D ...")
+def _build_cycle(name: str) -> Callable[..., CIterable]:
+    def cycle(self: Template[T]) -> CIterable[T]:
+        return CIterable(itertools.cycle(self))
 
-        return method
+    return cycle
 
-    _doc = "\n".join(
+
+@defines_method_factory(
+    "dropwhile(lambda x: x<5, [1,4,6,4,1]) --> 6 4 1", citerable_or_clist=True,
+)
+def _build_dropwhile(name: str) -> Callable[..., Iterable]:
+    def dropwhile(self: Template[T], func: Callable[[T], bool]) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(itertools.dropwhile(func, self))
+
+    return dropwhile
+
+
+@defines_method_factory(
+    "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8", citerable_or_clist=True,
+)
+def _build_filterfalse(name: str) -> Callable[..., Iterable]:
+    def filterfalse(self: Template[T], func: Callable[[T], bool]) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(itertools.filterfalse(func, self))
+
+    return filterfalse
+
+
+@defines_method_factory(
+    "\n".join(
         [
             "[k for k, g in groupby('AAAABBBCCDAABBB')] --> A B C D A B",
             "[list(g) for k, g in groupby('AAAABBBCCD')] --> AAAA BBB CC D",
         ],
-    )
+    ),
+    citerable_or_clist=True,
+)
+def _build_groupby(name: str) -> Callable[..., Any]:
+    def groupby(
+        self: Template[T], key: Optional[Callable[[T], U]] = None,
+    ) -> CIterableOrCList[Tuple[U, CIterableOrCList[T]]]:
+        cls = _get_citerable_or_clist(name)
+        return cls((k, cls(v)) for k, v in itertools.groupby(self, key=key))
+
+    return groupby
 
 
-class ISliceMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[ISliceMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-        ) -> Template[T]:
-            if (stop is None) and (step is not None):
-                raise StopArgumentMissing()
-            else:
-                return type(self)(
-                    islice(
-                        self,
-                        start,
-                        *(() if stop is None else (stop,)),
-                        *(() if step is None else (step,)),
-                    ),
-                )
-
-        return method
-
-    _doc = "\n".join(
+@defines_method_factory(
+    "\n".join(
         [
             "islice('ABCDEFG', 2) --> A B",
             "islice('ABCDEFG', 2, 4) --> C D",
             "islice('ABCDEFG', 2, None) --> C D E F G",
             "islice('ABCDEFG', 0, None, 2) --> A C E G",
         ],
-    )
+    ),
+)
+def _build_islice() -> Callable[..., CIterable]:
+    def islice(
+        self: Template[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+    ) -> CIterable[T]:
+        if (stop is None) and (step is not None):
+            raise StopArgumentMissing()
+        else:
+            return CIterable(
+                itertools.islice(
+                    self,
+                    start,
+                    *(() if stop is None else (stop,)),
+                    *(() if step is None else (step,)),
+                ),
+            )
+
+    return islice
 
 
-class PermutationsBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[PermutationsBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], r: Optional[int] = None) -> Template[CTuple[T]]:
-            return type(self)(map(CTuple, permutations(self, r=r)))
-
-        return method
-
-    _doc = "\n".join(
+@defines_method_factory(
+    "\n".join(
         [
             "permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC",
             "permutations(range(3)) --> 012 021 102 120 201 210",
         ],
-    )
+    ),
+    citerable_or_clist=True,
+)
+def _build_permutations(name: str) -> Callable[..., Iterable[CTuple]]:
+    def permutations(self: Template[T], r: Optional[int] = None) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(map(CTuple, itertools.permutations(self, r=r)))
+
+    return permutations
 
 
-class ProductMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[ProductMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[T], *iterables: Iterable[U], repeat: int = 1,
-        ) -> Template[CTuple[T]]:
-            return type(self)(map(CTuple, product(self, *iterables, repeat=repeat)))
+@defines_method_factory("Cartesian product of input iterables.", citerable_or_clist=True)
+def _build_product(name: str) -> Callable[..., Iterable[CTuple]]:
+    def product(
+        self: Template[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(
+            map(CTuple, itertools.product(self, *iterables, repeat=repeat)),
+        )
 
-        return method
-
-    _doc = "Cartesian product of input iterables."
-
-
-class RepeatMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(
-        cls: Type[RepeatMethodBuilder], *, allow_infinite: bool,
-    ) -> Callable[..., Any]:
-        if allow_infinite:
-
-            def method(cls: Type[Template[T]], x: T, times: Optional[int] = None) -> Template[T]:
-                return cls(repeat(x, **({} if times is None else {"times": times})))
-
-        else:
-
-            def method(cls: Type[Template[T]], x: T, times: int) -> Template[T]:
-                return cls(repeat(x, times=times))
-
-        return method
-
-    _doc = "repeat(10, 3) --> 10 10 10"
+    return product
 
 
-class StarMapMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[StarMapMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
-        ) -> Template[U]:
-            return type(self)(starmap(func, self))
+@defines_method_factory("Repeat an element", citerable_or_clist=True)
+def _build_repeat(name: str) -> Callable[..., Iterable]:
+    if name == _CIterable:
 
-        return method
+        def repeat(cls: Type[CIterable[T]], x: T, times: Optional[int] = None) -> CIterable[T]:
+            return CIterable(itertools.repeat(x, **({} if times is None else {"times": times})))
 
-    _doc = "starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000"
+    else:
 
+        def repeat(cls: Type[Template[T]], x: T, times: int) -> CList[T]:
+            return CList(itertools.repeat(x, times=times))
 
-class TakeWhileMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[TakeWhileMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], func: Callable[[T], bool]) -> Template[T]:
-            return type(self)(takewhile(func, self))
-
-        return method
-
-    _doc = "takewhile(lambda x: x<5, [1,4,6,4,1]) --> 1 4"
+    return repeat
 
 
-class TeeMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[TeeMethodBuilder]) -> Callable[..., Any]:
-        def method(self: Template[T], n: int = 2) -> Template[Template[T]]:
-            cls = type(self)
-            if cls is CSet:
-                inner_cls = CFrozenSet
-            else:
-                inner_cls = cls
-            return cls(map(inner_cls, tee(self, n)))
+@defines_method_factory("starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000")
+def _build_starmap() -> Callable[Iterable]:
+    def method(self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> Template[U]:
+        return type(self)(starmap(func, self))
 
-        return method
-
-    _doc = "Return n independent iterators from a single iterable."
+    return method
 
 
-class ZipLongestMethodBuilder(MethodBuilder):
-    @classmethod
-    def _build_method(cls: Type[ZipLongestMethodBuilder]) -> Callable[..., Any]:
-        def method(
-            self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
-        ) -> Template[CTuple[T]]:
-            return type(self)(map(CTuple, zip_longest(self, *iterables, fillvalue=fillvalue)))
+@defines_method_factory(
+    "takewhile(lambda x: x<5, [1,4,6,4,1]) --> 1 4", citerable_or_clist=True,
+)
+def _build_takewhile(name: str) -> Callable[Iterable]:
+    def takewhile(self: Template[T], func: Callable[[T], bool]) -> CIterableOrCList[T]:
+        return _get_citerable_or_clist(name)(itertools.takewhile(func, self))
 
-        return method
+    return takewhile
 
-    _doc = "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-"
+
+@defines_method_factory("Return n independent iterators from a single iterable.")
+def _build_tee(name: str) -> Callable[..., CIterable[CIterable]]:
+    def tee(self: Template[T], n: int = 2) -> CIterable[CIterable[T]]:
+        return CIterable(map(CIterable, itertools.tee(self, n)))
+
+    return tee
+
+
+@defines_method_factory(
+    "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-", citerable_or_clist=True,
+)
+def _build_zip_longest(name: str) -> Callable[..., Iterable[Tuple]]:
+    def zip_longest(
+        self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
+    ) -> CIterableOrCList[CTuple[T]]:
+        return _get_citerable_or_clist(name)(
+            map(CTuple, itertools.zip_longest(self, *iterables, fillvalue=fillvalue)),
+        )
+
+    return zip_longest
 
 
 # more-itertools
 
 
-def _build_chunked(name: str) -> Callable[..., Any]:
+def _build_chunked(name: str) -> Callable:
     is_citerable = name == _CIterable
     ann = _CIterable if is_citerable else _CList
 
@@ -630,7 +556,7 @@ def _build_chunked(name: str) -> Callable[..., Any]:
     return chunked
 
 
-def _build_distribute(name: str) -> Callable[..., Any]:
+def _build_distribute(name: str) -> Callable:
     is_citerable = name == _CIterable
     ann = _CIterable if is_citerable else _CList
 
@@ -641,7 +567,7 @@ def _build_distribute(name: str) -> Callable[..., Any]:
     return distribute
 
 
-def _build_divide(name: str) -> Callable[..., Any]:
+def _build_divide(name: str) -> Callable:
     is_citerable = name == _CIterable
     ann = _CIterable if is_citerable else _CList
 
@@ -687,31 +613,31 @@ class CIterable(Iterable[T]):
     def __iter__(self: CIterable[T]) -> Iterator[T]:
         yield from self._iterable
 
-    def __repr__(self: CIterable[Any]) -> str:
+    def __repr__(self: CIterable) -> str:
         return f"{type(self).__name__}({self._iterable!r})"
 
-    def __str__(self: CIterable[Any]) -> str:
+    def __str__(self: CIterable) -> str:
         return f"{type(self).__name__}({self._iterable})"
 
     # built-ins
 
     all = _build_all(_CIterable)  # noqa: A003
     any = _build_any(_CIterable)  # noqa: A003
-    dict = DictMethodBuilder(_CIterable)  # noqa: A003
-    enumerate = EnumerateMethodBuilder(_CIterable)  # noqa: A003
-    filter = FilterMethodBuilder(_CIterable)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder(_CIterable)  # noqa: A003
-    iter = IterMethodBuilder(_CIterable)  # noqa: A003
-    list = ListMethodBuilder(_CIterable)  # noqa: A003
-    map = MapMethodBuilder(_CIterable)  # noqa: A003
-    max = MaxMinMethodBuilder(_CIterable, func=max)  # noqa: A003
-    min = MaxMinMethodBuilder(_CIterable, func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder(_CIterable))  # noqa: A003
-    set = SetMethodBuilder(_CIterable)  # noqa: A003
-    sorted = SortedMethodBuilder(_CIterable)  # noqa: A003
-    sum = SumMethodBuilder(_CIterable)  # noqa: A003
-    tuple = TupleMethodBuilder(_CIterable)  # noqa: A003
-    zip = ZipMethodBuilder(_CIterable)  # noqa: A003
+    dict = _build_dict(_CIterable)  # noqa: A003
+    enumerate = _build_enumerate(_CIterable)  # noqa: A003
+    filter = _build_filter(_CIterable)  # noqa: A003
+    frozenset = _build_frozenset(_CIterable)  # noqa: A003
+    iter = _build_iter(_CIterable)  # noqa: A003
+    list = _build_list(_CIterable)  # noqa: A003
+    map = _build_map(_CIterable)  # noqa: A003
+    max = _build_maxmin(_CIterable, func=max)  # noqa: A003
+    min = _build_maxmin(_CIterable, func=min)  # noqa: A003
+    range = classmethod(_build_range(_CIterable))  # noqa: A003
+    set = _build_set(_CIterable)  # noqa: A003
+    sorted = _build_sorted(_CIterable)  # noqa: A003
+    sum = _build_sum(_CIterable)  # noqa: A003
+    tuple = _build_tuple(_CIterable)  # noqa: A003
+    zip = _build_zip(_CIterable)  # noqa: A003
 
     # functools
 
@@ -743,24 +669,24 @@ class CIterable(Iterable[T]):
 
     # itertools
 
-    combinations = CombinationsMethodBuilder(_CIterable)
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CIterable)
-    count = classmethod(CountMethodBuilder(_CIterable))
-    cycle = CycleMethodBuilder(_CIterable)
-    repeat = classmethod(RepeatMethodBuilder(_CIterable, allow_infinite=True))
-    accumulate = AccumulateMethodBuilder(_CIterable)
-    chain = ChainMethodBuilder(_CIterable)
-    compress = CompressMethodBuilder(_CIterable)
-    dropwhile = DropWhileMethodBuilder(_CIterable)
-    filterfalse = FilterFalseMethodBuilder(_CIterable)
-    groupby = GroupByMethodBuilder(_CIterable)
-    islice = ISliceMethodBuilder(_CIterable)
-    permutations = PermutationsBuilder(_CIterable)
-    product = ProductMethodBuilder(_CIterable)
-    starmap = StarMapMethodBuilder(_CIterable)
-    takewhile = TakeWhileMethodBuilder(_CIterable)
-    tee = TeeMethodBuilder(_CIterable)
-    zip_longest = ZipLongestMethodBuilder(_CIterable)
+    combinations = _build_combinations(_CIterable)
+    combinations_with_replacement = _build_combinations_with_replacement(_CIterable)
+    count = classmethod(_build_count(_CIterable))
+    cycle = _build_cycle(_CIterable)
+    repeat = classmethod(_build_repeat(_CIterable))
+    accumulate = _build_accumulate(_CIterable)
+    chain = _build_chain(_CIterable)
+    compress = _build_compress(_CIterable)
+    dropwhile = _build_dropwhile(_CIterable)
+    filterfalse = _build_filterfalse(_CIterable)
+    groupby = _build_groupby(_CIterable)
+    islice = _build_islice(_CIterable)
+    permutations = _build_permutations(_CIterable)
+    product = _build_product(_CIterable)
+    starmap = _build_starmap(_CIterable)
+    takewhile = _build_takewhile(_CIterable)
+    tee = _build_tee(_CIterable)
+    zip_longest = _build_zip_longest(_CIterable)
 
     # itertools-recipes
 
@@ -785,7 +711,7 @@ class CIterable(Iterable[T]):
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self._iterable, n, default=default)
 
-    def all_equal(self: CIterable[Any]) -> bool:
+    def all_equal(self: CIterable) -> bool:
         return all_equal(self._iterable)
 
     def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
@@ -960,22 +886,22 @@ class CList(List[T]):
 
     all = _build_all(_CList)  # noqa: A003
     any = _build_any(_CList)  # noqa: A003
-    dict = DictMethodBuilder(_CList)  # noqa: A003
-    enumerate = EnumerateMethodBuilder(_CList)  # noqa: A003
-    filter = FilterMethodBuilder(_CList)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder(_CList)  # noqa: A003
-    iter = IterMethodBuilder(_CList)  # noqa: A003
-    len = LenMethodBuilder(_CList)  # noqa: A003
-    list = ListMethodBuilder(_CList)  # noqa: A003
-    map = MapMethodBuilder(_CList)  # noqa: A003
-    max = MaxMinMethodBuilder(_CList, func=max)  # noqa: A003
-    min = MaxMinMethodBuilder(_CList, func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder(_CList))  # noqa: A003
-    set = SetMethodBuilder(_CList)  # noqa: A003
-    sorted = SortedMethodBuilder(_CList)  # noqa: A003
-    sum = SumMethodBuilder(_CList)  # noqa: A003
-    tuple = TupleMethodBuilder(_CList)  # noqa: A003
-    zip = ZipMethodBuilder(_CList)  # noqa: A003
+    dict = _build_dict(_CList)  # noqa: A003
+    enumerate = _build_enumerate(_CList)  # noqa: A003
+    filter = _build_filter(_CList)  # noqa: A003
+    frozenset = _build_frozenset(_CList)  # noqa: A003
+    iter = _build_iter(_CList)  # noqa: A003
+    len = _build_len(_CList)  # noqa: A003
+    list = _build_list(_CList)  # noqa: A003
+    map = _build_map(_CList)  # noqa: A003
+    max = _build_maxmin(_CList, func=max)  # noqa: A003
+    min = _build_maxmin(_CList, func=min)  # noqa: A003
+    range = classmethod(_build_range(_CList))  # noqa: A003
+    set = _build_set(_CList)  # noqa: A003
+    sorted = _build_sorted(_CList)  # noqa: A003
+    sum = _build_sum(_CList)  # noqa: A003
+    tuple = _build_tuple(_CList)  # noqa: A003
+    zip = _build_zip(_CList)  # noqa: A003
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
@@ -998,22 +924,22 @@ class CList(List[T]):
 
     # itertools
 
-    combinations = CombinationsMethodBuilder(_CList)
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CList)
-    repeat = classmethod(RepeatMethodBuilder(_CList, allow_infinite=False))
-    accumulate = AccumulateMethodBuilder(_CList)
-    chain = ChainMethodBuilder(_CList)
-    compress = CompressMethodBuilder(_CList)
-    dropwhile = DropWhileMethodBuilder(_CList)
-    filterfalse = FilterFalseMethodBuilder(_CList)
-    groupby = GroupByMethodBuilder(_CList)
-    islice = ISliceMethodBuilder(_CList)
-    permutations = PermutationsBuilder(_CList)
-    product = ProductMethodBuilder(_CList)
-    starmap = StarMapMethodBuilder(_CList)
-    takewhile = TakeWhileMethodBuilder(_CList)
-    tee = TeeMethodBuilder(_CList)
-    zip_longest = ZipLongestMethodBuilder(_CList)
+    combinations = _build_combinations(_CList)
+    combinations_with_replacement = _build_combinations_with_replacement(_CList)
+    repeat = classmethod(_build_repeat(_CList))
+    accumulate = _build_accumulate(_CList)
+    chain = _build_chain(_CList)
+    compress = _build_compress(_CList)
+    dropwhile = _build_dropwhile(_CList)
+    filterfalse = _build_filterfalse(_CList)
+    groupby = _build_groupby(_CList)
+    islice = _build_islice(_CList)
+    permutations = _build_permutations(_CList)
+    product = _build_product(_CList)
+    starmap = _build_starmap(_CList)
+    takewhile = _build_takewhile(_CList)
+    tee = _build_tee(_CList)
+    zip_longest = _build_zip_longest(_CList)
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
@@ -1035,7 +961,7 @@ class CList(List[T]):
     def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
-    def all_equal(self: CList[Any]) -> bool:
+    def all_equal(self: CList) -> bool:
         return self.iter().all_equal()
 
     def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
@@ -1158,41 +1084,41 @@ class CTuple(Tuple[T]):
 
     all = _build_all(_CTuple)  # noqa: A003
     any = _build_any(_CTuple)  # noqa: A003
-    dict = DictMethodBuilder(_CTuple)  # noqa: A003
-    enumerate = EnumerateMethodBuilder(_CTuple)  # noqa: A003
-    filter = FilterMethodBuilder(_CTuple)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder(_CTuple)  # noqa: A003
-    iter = IterMethodBuilder(_CTuple)  # noqa: A003
-    len = LenMethodBuilder(_CTuple)  # noqa: A003
-    list = ListMethodBuilder(_CTuple)  # noqa: A003
-    map = MapMethodBuilder(_CTuple)  # noqa: A003
-    max = MaxMinMethodBuilder(_CTuple, func=max)  # noqa: A003
-    min = MaxMinMethodBuilder(_CTuple, func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder(_CTuple))  # noqa: A003
-    set = SetMethodBuilder(_CTuple)  # noqa: A003
-    sorted = SortedMethodBuilder(_CTuple)  # noqa: A003
-    sum = SumMethodBuilder(_CTuple)  # noqa: A003
-    tuple = TupleMethodBuilder(_CTuple)  # noqa: A003
-    zip = ZipMethodBuilder(_CTuple)  # noqa: A003
+    dict = _build_dict(_CTuple)  # noqa: A003
+    enumerate = _build_enumerate(_CTuple)  # noqa: A003
+    filter = _build_filter(_CTuple)  # noqa: A003
+    frozenset = _build_frozenset(_CTuple)  # noqa: A003
+    iter = _build_iter(_CTuple)  # noqa: A003
+    len = _build_len(_CTuple)  # noqa: A003
+    list = _build_list(_CTuple)  # noqa: A003
+    map = _build_map(_CTuple)  # noqa: A003
+    max = _build_maxmin(_CTuple, func=max)  # noqa: A003
+    min = _build_maxmin(_CTuple, func=min)  # noqa: A003
+    range = classmethod(_build_range(_CTuple))  # noqa: A003
+    set = _build_set(_CTuple)  # noqa: A003
+    sorted = _build_sorted(_CTuple)  # noqa: A003
+    sum = _build_sum(_CTuple)  # noqa: A003
+    tuple = _build_tuple(_CTuple)  # noqa: A003
+    zip = _build_zip(_CTuple)  # noqa: A003
 
     # itertools
 
-    combinations = CombinationsMethodBuilder(_CTuple)
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CTuple)
-    repeat = classmethod(RepeatMethodBuilder(_CTuple, allow_infinite=False))
-    accumulate = AccumulateMethodBuilder(_CTuple)
-    chain = ChainMethodBuilder(_CTuple)
-    compress = CompressMethodBuilder(_CTuple)
-    dropwhile = DropWhileMethodBuilder(_CTuple)
-    filterfalse = FilterFalseMethodBuilder(_CTuple)
-    groupby = GroupByMethodBuilder(_CTuple)
-    islice = ISliceMethodBuilder(_CTuple)
-    permutations = PermutationsBuilder(_CTuple)
-    product = ProductMethodBuilder(_CTuple)
-    starmap = StarMapMethodBuilder(_CTuple)
-    takewhile = TakeWhileMethodBuilder(_CTuple)
-    tee = TeeMethodBuilder(_CTuple)
-    zip_longest = ZipLongestMethodBuilder(_CTuple)
+    combinations = _build_combinations(_CTuple)
+    combinations_with_replacement = _build_combinations_with_replacement(_CTuple)
+    repeat = classmethod(_build_repeat(_CTuple))
+    accumulate = _build_accumulate(_CTuple)
+    chain = _build_chain(_CTuple)
+    compress = _build_compress(_CTuple)
+    dropwhile = _build_dropwhile(_CTuple)
+    filterfalse = _build_filterfalse(_CTuple)
+    groupby = _build_groupby(_CTuple)
+    islice = _build_islice(_CTuple)
+    permutations = _build_permutations(_CTuple)
+    product = _build_product(_CTuple)
+    starmap = _build_starmap(_CTuple)
+    takewhile = _build_takewhile(_CTuple)
+    tee = _build_tee(_CTuple)
+    zip_longest = _build_zip_longest(_CTuple)
 
     # more-itertools
 
@@ -1208,22 +1134,22 @@ class CSet(Set[T]):
 
     all = _build_all(_CSet)  # noqa: A003
     any = _build_any(_CSet)  # noqa: A003
-    dict = DictMethodBuilder(_CSet)  # noqa: A003
-    enumerate = EnumerateMethodBuilder(_CSet)  # noqa: A003
-    filter = FilterMethodBuilder(_CSet)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder(_CSet)  # noqa: A003
-    iter = IterMethodBuilder(_CSet)  # noqa: A003
-    len = LenMethodBuilder(_CSet)  # noqa: A003
-    list = ListMethodBuilder(_CSet)  # noqa: A003
-    map = MapMethodBuilder(_CSet)  # noqa: A003
-    max = MaxMinMethodBuilder(_CSet, func=max)  # noqa: A003
-    min = MaxMinMethodBuilder(_CSet, func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder(_CSet))  # noqa: A003
-    set = SetMethodBuilder(_CSet)  # noqa: A003
-    sorted = SortedMethodBuilder(_CSet)  # noqa: A003
-    sum = SumMethodBuilder(_CSet)  # noqa: A003
-    tuple = TupleMethodBuilder(_CSet)  # noqa: A003
-    zip = ZipMethodBuilder(_CSet)  # noqa: A003
+    dict = _build_dict(_CSet)  # noqa: A003
+    enumerate = _build_enumerate(_CSet)  # noqa: A003
+    filter = _build_filter(_CSet)  # noqa: A003
+    frozenset = _build_frozenset(_CSet)  # noqa: A003
+    iter = _build_iter(_CSet)  # noqa: A003
+    len = _build_len(_CSet)  # noqa: A003
+    list = _build_list(_CSet)  # noqa: A003
+    map = _build_map(_CSet)  # noqa: A003
+    max = _build_maxmin(_CSet, func=max)  # noqa: A003
+    min = _build_maxmin(_CSet, func=min)  # noqa: A003
+    range = classmethod(_build_range(_CSet))  # noqa: A003
+    set = _build_set(_CSet)  # noqa: A003
+    sorted = _build_sorted(_CSet)  # noqa: A003
+    sum = _build_sum(_CSet)  # noqa: A003
+    tuple = _build_tuple(_CSet)  # noqa: A003
+    zip = _build_zip(_CSet)  # noqa: A003
 
     # set & frozenset methods
 
@@ -1290,22 +1216,22 @@ class CSet(Set[T]):
 
     # itertools
 
-    accumulate = AccumulateMethodBuilder(_CSet)
-    chain = ChainMethodBuilder(_CSet)
-    combinations = CombinationsMethodBuilder(_CSet)
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CSet)
-    compress = CompressMethodBuilder(_CSet)
-    dropwhile = DropWhileMethodBuilder(_CSet)
-    filterfalse = FilterFalseMethodBuilder(_CSet)
-    groupby = GroupByMethodBuilder(_CSet)
-    islice = ISliceMethodBuilder(_CSet)
-    permutations = PermutationsBuilder(_CSet)
-    product = ProductMethodBuilder(_CSet)
-    repeat = classmethod(RepeatMethodBuilder(_CSet, allow_infinite=False))
-    starmap = StarMapMethodBuilder(_CSet)
-    takewhile = TakeWhileMethodBuilder(_CSet)
-    tee = TeeMethodBuilder(_CSet)
-    zip_longest = ZipLongestMethodBuilder(_CSet)
+    accumulate = _build_accumulate(_CSet)
+    chain = _build_chain(_CSet)
+    combinations = _build_combinations(_CSet)
+    combinations_with_replacement = _build_combinations_with_replacement(_CSet)
+    compress = _build_compress(_CSet)
+    dropwhile = _build_dropwhile(_CSet)
+    filterfalse = _build_filterfalse(_CSet)
+    groupby = _build_groupby(_CSet)
+    islice = _build_islice(_CSet)
+    permutations = _build_permutations(_CSet)
+    product = _build_product(_CSet)
+    repeat = classmethod(_build_repeat(_CSet))
+    starmap = _build_starmap(_CSet)
+    takewhile = _build_takewhile(_CSet)
+    tee = _build_tee(_CSet)
+    zip_longest = _build_zip_longest(_CSet)
 
     # itertools - recipes
 
@@ -1324,7 +1250,7 @@ class CSet(Set[T]):
     def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
-    def all_equal(self: CSet[Any]) -> bool:
+    def all_equal(self: CSet) -> bool:
         return self.iter().all_equal()
 
     def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
@@ -1391,22 +1317,22 @@ class CFrozenSet(FrozenSet[T]):
 
     all = _build_all(_CFrozenSet)  # noqa: A003
     any = _build_any(_CFrozenSet)  # noqa: A003
-    dict = DictMethodBuilder(_CFrozenSet)  # noqa: A003
-    enumerate = EnumerateMethodBuilder(_CFrozenSet)  # noqa: A003
-    filter = FilterMethodBuilder(_CFrozenSet)  # noqa: A003
-    frozenset = FrozenSetMethodBuilder(_CFrozenSet)  # noqa: A003
-    iter = IterMethodBuilder(_CFrozenSet)  # noqa: A003
-    len = LenMethodBuilder(_CFrozenSet)  # noqa: A003
-    list = ListMethodBuilder(_CFrozenSet)  # noqa: A003
-    map = MapMethodBuilder(_CFrozenSet)  # noqa: A003
-    max = MaxMinMethodBuilder(_CFrozenSet, func=max)  # noqa: A003
-    min = MaxMinMethodBuilder(_CFrozenSet, func=min)  # noqa: A003
-    range = classmethod(RangeMethodBuilder(_CFrozenSet))  # noqa: A003
-    set = SetMethodBuilder(_CFrozenSet)  # noqa: A003
-    sorted = SortedMethodBuilder(_CFrozenSet)  # noqa: A003
-    sum = SumMethodBuilder(_CFrozenSet)  # noqa: A003
-    tuple = TupleMethodBuilder(_CFrozenSet)  # noqa: A003
-    zip = ZipMethodBuilder(_CFrozenSet)  # noqa: A003
+    dict = _build_dict(_CFrozenSet)  # noqa: A003
+    enumerate = _build_enumerate(_CFrozenSet)  # noqa: A003
+    filter = _build_filter(_CFrozenSet)  # noqa: A003
+    frozenset = _build_frozenset(_CFrozenSet)  # noqa: A003
+    iter = _build_iter(_CFrozenSet)  # noqa: A003
+    len = _build_len(_CFrozenSet)  # noqa: A003
+    list = _build_list(_CFrozenSet)  # noqa: A003
+    map = _build_map(_CFrozenSet)  # noqa: A003
+    max = _build_maxmin(_CFrozenSet, func=max)  # noqa: A003
+    min = _build_maxmin(_CFrozenSet, func=min)  # noqa: A003
+    range = classmethod(_build_range(_CFrozenSet))  # noqa: A003
+    set = _build_set(_CFrozenSet)  # noqa: A003
+    sorted = _build_sorted(_CFrozenSet)  # noqa: A003
+    sum = _build_sum(_CFrozenSet)  # noqa: A003
+    tuple = _build_tuple(_CFrozenSet)  # noqa: A003
+    zip = _build_zip(_CFrozenSet)  # noqa: A003
 
     # set & frozenset methods
 
@@ -1434,22 +1360,22 @@ class CFrozenSet(FrozenSet[T]):
 
     # itertools
 
-    accumulate = AccumulateMethodBuilder(_CFrozenSet)
-    chain = ChainMethodBuilder(_CFrozenSet)
-    combinations = CombinationsMethodBuilder(_CFrozenSet)
-    combinations_with_replacement = CombinationsWithReplacementMethodBuilder(_CFrozenSet)
-    compress = CompressMethodBuilder(_CFrozenSet)
-    dropwhile = DropWhileMethodBuilder(_CFrozenSet)
-    filterfalse = FilterFalseMethodBuilder(_CFrozenSet)
-    groupby = GroupByMethodBuilder(_CFrozenSet)
-    islice = ISliceMethodBuilder(_CFrozenSet)
-    permutations = PermutationsBuilder(_CFrozenSet)
-    product = ProductMethodBuilder(_CFrozenSet)
-    repeat = classmethod(RepeatMethodBuilder(_CFrozenSet, allow_infinite=False))
-    starmap = StarMapMethodBuilder(_CFrozenSet)
-    takewhile = TakeWhileMethodBuilder(_CFrozenSet)
-    tee = TeeMethodBuilder(_CFrozenSet)
-    zip_longest = ZipLongestMethodBuilder(_CFrozenSet)
+    accumulate = _build_accumulate(_CFrozenSet)
+    chain = _build_chain(_CFrozenSet)
+    combinations = _build_combinations(_CFrozenSet)
+    combinations_with_replacement = _build_combinations_with_replacement(_CFrozenSet)
+    compress = _build_compress(_CFrozenSet)
+    dropwhile = _build_dropwhile(_CFrozenSet)
+    filterfalse = _build_filterfalse(_CFrozenSet)
+    groupby = _build_groupby(_CFrozenSet)
+    islice = _build_islice(_CFrozenSet)
+    permutations = _build_permutations(_CFrozenSet)
+    product = _build_product(_CFrozenSet)
+    repeat = classmethod(_build_repeat(_CFrozenSet))
+    starmap = _build_starmap(_CFrozenSet)
+    takewhile = _build_takewhile(_CFrozenSet)
+    tee = _build_tee(_CFrozenSet)
+    zip_longest = _build_zip_longest(_CFrozenSet)
 
     # itertools - recipes
 
@@ -1468,7 +1394,7 @@ class CFrozenSet(FrozenSet[T]):
     def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
-    def all_equal(self: CFrozenSet[Any]) -> bool:
+    def all_equal(self: CFrozenSet) -> bool:
         return self.iter().all_equal()
 
     def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:

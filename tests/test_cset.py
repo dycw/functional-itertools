@@ -4,6 +4,7 @@ from itertools import chain
 from itertools import permutations
 from re import search
 from typing import FrozenSet
+from typing import Type
 
 from hypothesis import given
 from hypothesis.strategies import data
@@ -22,9 +23,9 @@ from tests.strategies import siterables
 # repr and str
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_repr(case: Case, data: DataObject) -> None:
+def test_repr(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     y = repr(cls(x))
     name = cls.__name__
@@ -34,9 +35,9 @@ def test_repr(case: Case, data: DataObject) -> None:
         assert y == f"{name}()"
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_str(case: Case, data: DataObject) -> None:
+def test_str(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     y = str(cls(x))
     name = cls.__name__
@@ -49,52 +50,52 @@ def test_str(case: Case, data: DataObject) -> None:
 # set and frozenset methods
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_union(case: Case, data: DataObject) -> None:
+def test_union(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).union(*xs)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert y == x.union(*xs)
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_intersection(case: Case, data: DataObject) -> None:
+def test_intersection(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).intersection(*xs)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert y == x.intersection(*xs)
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_difference(case: Case, data: DataObject) -> None:
+def test_difference(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     xs, _ = data.draw(nested_siterables(cls, integers()))
     y = cls(x).difference(*xs)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert y == (x.difference(*xs))
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_symmetric_difference(case: Case, data: DataObject) -> None:
+def test_symmetric_difference(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     y, _ = data.draw(siterables(cls, integers()))
     z = cls(x).symmetric_difference(y)
-    assert isinstance(z, case.cls)
+    assert isinstance(z, cls)
     assert z == x.symmetric_difference(y)
 
 
-@mark.parametrize("case", [CSet, CFrozenSet])
+@mark.parametrize("cls", [CSet, CFrozenSet])
 @given(data=data())
-def test_copy(case: Case, data: DataObject) -> None:
+def test_copy(cls: Type, data: DataObject) -> None:
     x, _ = data.draw(siterables(cls, integers()))
     y = cls(x).copy()
-    assert isinstance(y, case.cls)
+    assert isinstance(y, cls)
     assert y == x
 
 
