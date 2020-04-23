@@ -58,7 +58,7 @@ def test_reversed(x: List[int]) -> None:
 
 @given(x=slists(integers()), key=none() | just(neg), reverse=booleans())
 def test_sort(x: List[int], key: Optional[Callable[[int], int]], reverse: bool) -> None:
-    with warns(UserWarning, match="Use the 'sorted' method instead of 'sort'"):
+    with warns(UserWarning, match="Use the 'sorted' name instead of 'sort'"):
         y = CList(x).sort(key=key, reverse=reverse)
     assert isinstance(y, CList)
     assert y == sorted(x, key=key, reverse=reverse)
