@@ -26,7 +26,6 @@ from functional_itertools import CList
 from functional_itertools import CSet
 from functional_itertools import CTuple
 from functional_itertools import EmptyIterableError
-from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from tests.strategies import CLASSES
@@ -38,7 +37,7 @@ from tests.strategies import siterables
 @given(data=data(), initial=integers() | just(sentinel))
 def test_reduce(cls: Type, data: DataObject, initial: Union[int, Sentinel]) -> None:
     x, cast = data.draw(siterables(cls, integers()))
-    args, _ = drop_sentinel(initial)
+    args = () if initial is sentinel else (initial,)
     try:
         y = cls(x).reduce(add, initial=initial)
     except EmptyIterableError:

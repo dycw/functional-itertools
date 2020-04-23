@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import functools
 import itertools
 from itertools import chain
 from itertools import islice
@@ -51,7 +52,6 @@ from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.methods.base import CIterableOrCList
 from functional_itertools.methods.base import Template
-from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
@@ -288,14 +288,13 @@ def _build_zip(name: str) -> Callable[..., Iterable[CTuple]]:
 # functools
 
 
-@_defines_method_factory("Apply a binary function over the elements of the {name}",)
-def _build_reduce(name: str) -> Callable:
+@_defines_method_factory("Apply a binary function over the elements of the {name}")
+def _build_reduce() -> Callable:
     def reduce(
         self: CIterable[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
     ) -> Any:
-        args, _ = drop_sentinel(initial)
         try:
-            result = reduce(func, self, *(() if initial is sentinel else (initial,)))
+            result = functools.reduce(func, self, *(() if initial is sentinel else (initial,)))
         except TypeError as error:
             (msg,) = error.args
             if msg == "reduce() of empty sequence with no initial value":
@@ -729,19 +728,6 @@ def _build_pmap() -> Callable[..., Iterable]:
 
 @_defines_method_factory("Star_map over the elements of the {name} in parallel.")
 def _build_pstarmap() -> Callable[..., Iterable]:
-    def pmap(
-        self: Template[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> Template[U]:
-        try:
-            with Pool(processes=processes) as pool:
-                return type(self)(pool.map(func, self))
-        except AssertionError as error:
-            (msg,) = error.args
-            if msg == "daemonic processes are not allowed to have children":
-                return self.map(func)
-            else:
-                raise NotImplementedError(msg)
-
     def pstarmap(
         self: Template[Tuple[T, ...]],
         func: Callable[[Tuple[T, ...]], U],
