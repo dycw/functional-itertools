@@ -141,9 +141,9 @@ def _build_dict() -> Callable[..., CDict[Any, Any]]:
 
 @_defines_method_factory("Enumerate the elements of the {name}.", citerable_or_clist=True)
 def _build_enumerate(name: str) -> Callable[..., Iterable[Tuple[int, Any]]]:
-    def enumerate(
+    def enumerate(  # noqa: A001
         self: Template[T], start: int = 0,
-    ) -> CIterableOrCList[Tuple[int, T]]:  # noqa: A001
+    ) -> CIterableOrCList[Tuple[int, T]]:
         return _get_citerable_or_clist(name)(builtins.enumerate(self, start=start))
 
     return enumerate
@@ -589,34 +589,35 @@ def _build_tail(name: str) -> Callable[..., Iterable]:
 # more-itertools
 
 
-def _build_chunked(name: str) -> Callable:
-    is_citerable = name == _CIterable
-    ann = _CIterable if is_citerable else _CList
-
-    def chunked(self: f"{name}[T]", n: int) -> f"{ann}[{ann}[T]]":
-        cls = CIterable if is_citerable else CList
+@_defines_method_factory(
+    "chunked([1, 2, 3, 4, 5, 6, 7, 8], 3) --> [[1, 2, 3], [4, 5, 6], [7, 8]]",
+    citerable_or_clist=True,
+)
+def _build_chunked(name: str) -> Callable[..., Iterable[Iterable]]:
+    def chunked(self: Template[T], n: int) -> CIterableOrCList[CIterableOrCList[T]]:
+        cls = _get_citerable_or_clist(name)
         return cls(map(cls, more_itertools.chunked(self, n)))
 
     return chunked
 
 
-def _build_distribute(name: str) -> Callable:
-    is_citerable = name == _CIterable
-    ann = _CIterable if is_citerable else _CList
-
-    def distribute(self: f"{name}[T]", n: int) -> f"{ann}[{ann}[T]]":
-        cls = CIterable if is_citerable else CList
+@_defines_method_factory(
+    "distribute(3, [1, 2, 3, 4, 5, 6, 7]) --> [[1, 4, 7], [2, 5], [3, 6]]", citerable_or_clist=True,
+)
+def _build_distribute(name: str) -> Callable[..., Iterable[Iterable]]:
+    def distribute(self: Template[T], n: int) -> CIterableOrCList[CIterableOrCList[T]]:
+        cls = _get_citerable_or_clist(name)
         return cls(map(cls, more_itertools.distribute(n, self)))
 
     return distribute
 
 
-def _build_divide(name: str) -> Callable:
-    is_citerable = name == _CIterable
-    ann = _CIterable if is_citerable else _CList
-
-    def divide(self: f"{name}[T]", n: int) -> f"{ann}[{ann}[T]]":
-        cls = CIterable if is_citerable else CList
+@_defines_method_factory(
+    "divide(3, [1, 2, 3, 4, 5, 6, 7]) --> [[1, 2, 3], [4, 5], [6, 7]]", citerable_or_clist=True,
+)
+def _build_divide(name: str) -> Callable[Iterable[Iterable]]:
+    def divide(self: Template[T], n: int) -> CIterableOrCList[CIterableOrCList[T]]:
+        cls = _get_citerable_or_clist(name)
         return cls(map(cls, more_itertools.divide(n, list(self))))
 
     return divide
