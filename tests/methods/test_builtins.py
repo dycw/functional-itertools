@@ -8,7 +8,6 @@ from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import Tuple
-from typing import Type
 from typing import Union
 
 from hypothesis import given
@@ -36,24 +35,23 @@ from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
-from tests.strategies import CLASSES
 from tests.strategies import range_args
 from tests.strategies import real_iterables
 from tests.test_utilities import is_even
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(booleans()))
-def test_all(cls: Type, x: Iterable[bool]) -> None:
-    y = cls(x).all()
+def test_all(case: Case, x: Iterable[bool]) -> None:
+    y = case.cls(x).all()
     assert isinstance(y, bool)
     assert y == all(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(booleans()))
-def test_any(cls: Type, x: Iterable[bool]) -> None:
-    y = cls(x).any()
+def test_any(case: Case, x: Iterable[bool]) -> None:
+    y = case.cls(x).any()
     assert isinstance(y, bool)
     assert y == any(x)
 
@@ -84,10 +82,10 @@ def test_filter(case: Case, x: Iterable[int]) -> None:
     assert case.cast(y) == case.cast(filter(is_even, x))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
-def test_frozenset(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).frozenset()
+def test_frozenset(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).frozenset()
     assert isinstance(y, CFrozenSet)
     assert y == frozenset(y)
 
@@ -131,7 +129,7 @@ def test_map(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
     assert case.cast(y) == case.cast(map(neg, x))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @mark.parametrize("func", [max, min])
 @given(
     x=real_iterables(integers()),
@@ -144,14 +142,14 @@ def test_map(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
     default=just({}) | fixed_dictionaries({"default": integers()}),
 )
 def test_max_and_min(
-    cls: Type,
+    case: Case,
     func: Callable[..., int],
     x: Iterable[int],
     key: Dict[str, int],
     default: Dict[str, int],
 ) -> None:
     try:
-        y = getattr(cls(x), func.__name__)(**key, **default)
+        y = getattr(case.cls(x), func.__name__)(**key, **default)
     except ValueError:
         with raises(
             ValueError, match=escape(f"{func.__name__}() arg is an empty sequence"),
@@ -172,10 +170,10 @@ def test_range(case: Case, args: Tuple[int, Optional[int], Optional[int]]) -> No
     assert case.cast(x) == case.cast(range(start, *new_args))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
-def test_set(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).set()
+def test_set(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).set()
     assert isinstance(y, CSet)
     assert y == set(x)
 

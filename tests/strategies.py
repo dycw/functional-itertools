@@ -40,15 +40,6 @@ CASES = [
     Case(cls=CSet, cast=set, ordered=False),
     Case(cls=CFrozenSet, cast=frozenset, ordered=False),
 ]
-ORDERED_CLASSES = [
-    CIterable,
-    CList,
-    CTuple,
-]
-CLASSES = ORDERED_CLASSES + [
-    CSet,
-    CFrozenSet,
-]
 
 
 def real_iterables(
