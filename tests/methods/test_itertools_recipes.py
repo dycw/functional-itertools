@@ -21,6 +21,7 @@ from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
+from more_itertools.recipes import first_true
 from more_itertools.recipes import flatten
 from more_itertools.recipes import grouper
 from more_itertools.recipes import ncycles
@@ -76,6 +77,19 @@ def test_dotproduct(case: Case, pairs: Iterable[Tuple[int, int]]) -> None:
     assert isinstance(z, int)
     if case.ordered:
         assert z == dotproduct(x, y)
+
+
+@mark.parametrize("case", CASES)
+@given(
+    x=real_iterables(integers()), default=integers(), pred=none() | just(is_even),
+)
+def test_first_true(
+    case: Case, x: Iterable[int], default: int, pred: Optional[Callable[[int], bool]],
+) -> None:
+    y = case.cls(x).first_true(default=default, pred=pred)
+    assert isinstance(y, int)
+    if case.ordered:
+        assert y == first_true(x, default=default, pred=pred)
 
 
 @mark.parametrize("case", CASES)

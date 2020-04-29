@@ -371,6 +371,11 @@ class CIterable(Iterable[T]):
     def dotproduct(self: CIterable[T], iterable: Iterable[T]) -> T:
         return dotproduct(self, iterable)
 
+    def first_true(
+        self: CIterable[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+    ) -> Union[T, U]:
+        return first_true(self, default=default, pred=pred)
+
     def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
         return CIterable(flatten(self))
 
@@ -440,11 +445,6 @@ class CIterable(Iterable[T]):
         first: Optional[Callable[..., U]] = None,
     ) -> CIterable[Union[T, U]]:
         return cls(iter_except(func, exception, first=first))
-
-    def first_true(
-        self: CIterable[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
-    ) -> Union[T, U]:
-        return first_true(self, default=default, pred=pred)
 
     def random_product(
         self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
@@ -730,6 +730,11 @@ class CList(List[T]):
     def dotproduct(self: CList[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
+    def first_true(
+        self: CList[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+    ) -> Union[T, U]:
+        return self.iter().first_true(default=default, pred=pred)
+
     def flatten(self: CList[Iterable[T]]) -> CList[T]:
         return self.iter().flatten().list()
 
@@ -791,11 +796,6 @@ class CList(List[T]):
         first: Optional[Callable[..., U]] = None,
     ) -> CList[Union[T, U]]:
         return CIterable.iter_except(func, exception, first=first).list()
-
-    def first_true(
-        self: CList[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
-    ) -> Union[T, U]:
-        return self.iter().first_true(default=default, pred=pred).list()
 
     def random_product(
         self: CList[T], *iterables: Iterable[U], repeat: int = 1,
@@ -1045,6 +1045,11 @@ class CTuple(tuple, Generic[T]):
     def dotproduct(self: CTuple[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
+    def first_true(
+        self: CTuple[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+    ) -> Union[T, U]:
+        return self.iter().first_true(default=default, pred=pred)
+
     def flatten(self: CTuple[Iterable[T]]) -> CTuple[T]:
         return self.iter().flatten().tuple()
 
@@ -1106,11 +1111,6 @@ class CTuple(tuple, Generic[T]):
         first: Optional[Callable[..., U]] = None,
     ) -> CTuple[Union[T, U]]:
         return CIterable.iter_except(func, exception, first=first).list()
-
-    def first_true(
-        self: CTuple[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
-    ) -> Union[T, U]:
-        return self.iter().first_true(default=default, pred=pred).list()
 
     def random_product(
         self: CTuple[T], *iterables: Iterable[U], repeat: int = 1,
@@ -1404,6 +1404,11 @@ class CSet(Set[T]):
     def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
+    def first_true(
+        self: CSet[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+    ) -> Union[T, U]:
+        return self.iter().first_true(default=default, pred=pred)
+
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
 
@@ -1695,6 +1700,11 @@ class CFrozenSet(FrozenSet[T]):
 
     def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
+
+    def first_true(
+        self: CFrozenSet[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+    ) -> Union[T, U]:
+        return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
         return self.iter().flatten().frozenset()
