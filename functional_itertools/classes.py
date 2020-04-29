@@ -40,6 +40,9 @@ from typing import TypeVar
 from typing import Union
 from warnings import warn
 
+from more_itertools import chunked
+from more_itertools import distribute
+from more_itertools import divide
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -349,8 +352,8 @@ class CIterable(Iterable[T]):
 
     def zip_longest(
         self: CIterable[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CIterable[Tuple[Union[T, U, V]]]:
-        return CIterable(zip_longest(self, *iterables, fillvalue=fillvalue))
+    ) -> CIterable[CTuple[Union[T, U, V]]]:
+        return CIterable(zip_longest(self, *iterables, fillvalue=fillvalue)).map(CTuple)
 
     # itertools-recipes
 
@@ -458,6 +461,17 @@ class CIterable(Iterable[T]):
 
     def nth_combination(self: CIterable[T], r: int, index: int) -> Tuple[T, ...]:
         return nth_combination(self, r, index)
+
+    # more-itertools
+
+    def chunked(self: CIterable[T], n: int) -> CIterable[CIterable[T]]:
+        return CIterable(chunked(self, n)).map(CIterable)
+
+    def distribute(self: CIterable[T], n: int) -> CIterable[CIterable[T]]:
+        return CIterable(distribute(n, self)).map(CIterable)
+
+    def divide(self: CIterable[T], n: int) -> CIterable[CIterable[T]]:
+        return CIterable(divide(n, list(self))).map(CIterable)
 
     # multiprocessing
 
@@ -697,11 +711,11 @@ class CList(List[T]):
         return self.iter().takewhile(func).list()
 
     def tee(self: CList[T], n: int = 2) -> CList[CList[T]]:
-        return self.iter().tee(n=n).list().map(CList)
+        return self.iter().tee(n=n).map(CList).list()
 
     def zip_longest(
         self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CList[Tuple[Union[T, U, V]]]:
+    ) -> CList[CTuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
 
     # itertools-recipes
@@ -795,6 +809,17 @@ class CList(List[T]):
 
     def nth_combination(self: CList[T], r: int, index: int) -> Tuple[T, ...]:
         return self.iter().nth_combination(r, index)
+
+    # more-itertools
+
+    def chunked(self: CList[T], n: int) -> CList[CList[T]]:
+        return self.iter().chunked(n).map(CList).list()
+
+    def distribute(self: CList[T], n: int) -> CList[CList[T]]:
+        return self.iter().distribute(n).map(CList).list()
+
+    def divide(self: CList[T], n: int) -> CList[CList[T]]:
+        return self.iter().divide(n).map(CList).list()
 
     # multiprocessing
 
@@ -1001,15 +1026,15 @@ class CTuple(tuple, Generic[T]):
         return self.iter().starmap(func, parallel=parallel, processes=processes).tuple()
 
     def takewhile(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[T]:
-        return self.iter().takewhile(func).list()
+        return self.iter().takewhile(func).tuple()
 
     def tee(self: CTuple[T], n: int = 2) -> CTuple[CTuple[T]]:
-        return self.iter().tee(n=n).list().map(CTuple)
+        return self.iter().tee(n=n).map(CTuple).tuple()
 
     def zip_longest(
         self: CTuple[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CTuple[Tuple[Union[T, U, V]]]:
-        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
+    ) -> CTuple[CTuple[Union[T, U, V]]]:
+        return self.iter().zip_longest(*iterables, fillvalue=fillvalue).tuple()
 
     # itertools-recipes
 
@@ -1102,6 +1127,17 @@ class CTuple(tuple, Generic[T]):
 
     def nth_combination(self: CTuple[T], r: int, index: int) -> Tuple[T, ...]:
         return self.iter().nth_combination(r, index)
+
+    # more-itertools
+
+    def chunked(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
+        return self.iter().chunked(n).map(CTuple).tuple()
+
+    def distribute(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
+        return self.iter().distribute(n).map(CTuple).tuple()
+
+    def divide(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
+        return self.iter().divide(n).map(CTuple).tuple()
 
     # multiprocessing
 
@@ -1350,11 +1386,11 @@ class CSet(Set[T]):
         return self.iter().takewhile(func).set()
 
     def tee(self: CSet[T], n: int = 2) -> CSet[CFrozenSet[T]]:
-        return self.iter().tee(n=n).set().map(CFrozenSet)
+        return self.iter().tee(n=n).map(CFrozenSet).set()
 
     def zip_longest(
         self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CSet[Tuple[Union[T, U, V]]]:
+    ) -> CSet[CTuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).set()
 
     # itertools - recipes
@@ -1397,6 +1433,17 @@ class CSet(Set[T]):
 
     def pairwise(self: CSet[T]) -> CSet[Tuple[T, T]]:
         return self.iter().pairwise().set()
+
+    # more-itertools
+
+    def chunked(self: CSet[T], n: int) -> CSet[CFrozenSet[T]]:
+        return self.iter().chunked(n).map(CFrozenSet).set()
+
+    def distribute(self: CSet[T], n: int) -> CSet[CFrozenSet[T]]:
+        return self.iter().distribute(n).map(CFrozenSet).set()
+
+    def divide(self: CSet[T], n: int) -> CSet[CFrozenSet[T]]:
+        return self.iter().divide(n).map(CFrozenSet).set()
 
     # multiprocessing
 
@@ -1611,11 +1658,11 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().takewhile(func).frozenset()
 
     def tee(self: CFrozenSet[T], n: int = 2) -> CFrozenSet[CFrozenSet[T]]:
-        return self.iter().tee(n=n).frozenset().map(CFrozenSet)
+        return self.iter().tee(n=n).map(CFrozenSet).frozenset()
 
     def zip_longest(
         self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CFrozenSet[Tuple[Union[T, U, V]]]:
+    ) -> CFrozenSet[CTuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
 
     # itertools - recipes
@@ -1658,6 +1705,17 @@ class CFrozenSet(FrozenSet[T]):
 
     def pairwise(self: CFrozenSet[T]) -> CFrozenSet[Tuple[T, T]]:
         return self.iter().pairwise().frozenset()
+
+    # more-itertools
+
+    def chunked(self: CFrozenSet[T], n: int) -> CFrozenSet[CFrozenSet[T]]:
+        return self.iter().chunked(n).map(CFrozenSet).frozenset()
+
+    def distribute(self: CFrozenSet[T], n: int) -> CFrozenSet[CFrozenSet[T]]:
+        return self.iter().distribute(n).map(CFrozenSet).frozenset()
+
+    def divide(self: CFrozenSet[T], n: int) -> CFrozenSet[CFrozenSet[T]]:
+        return self.iter().divide(n).map(CFrozenSet).frozenset()
 
     # multiprocessing
 

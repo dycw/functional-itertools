@@ -226,19 +226,19 @@ def test_starmap(case: Case, x: Iterable[Tuple[int, int]], kwargs: Dict[str, Any
 @mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
 def test_takewhile(case: Case, x: Iterable[int]) -> None:
-    y = cls(x).takewhile(is_even)
+    y = case.cls(x).takewhile(is_even)
     assert isinstance(y, case.cls)
     if case.ordered:
-        assert list(y) == list(takewhile(is_even, x))
+        assert case.cast(y) == case.cast(takewhile(is_even, x))
 
 
 @mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), n=integers(0, 10))
 def test_tee(case: Case, x: Iterable[int], n: int) -> None:
-    y = cls(x).tee(n=n)
-    assert isinstance(y, CIterable)
+    y = case.cls(x).tee(n=n)
+    assert isinstance(y, case.cls)
     for yi in y:
-        assert isinstance(yi, CIterable)
+        assert isinstance(yi, CFrozenSet if case.cls is CSet else case.cls)
 
 
 @mark.parametrize("case", CASES)
@@ -250,10 +250,10 @@ def test_tee(case: Case, x: Iterable[int], n: int) -> None:
 def test_zip_longest(
     case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], fillvalue: Optional[int],
 ) -> None:
-    y = cls(x).zip_longest(*xs, fillvalue=fillvalue)
+    y = case.cls(x).zip_longest(*xs, fillvalue=fillvalue)
     assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
     if case.ordered:
-        assert z == list(zip_longest(x, *xs, fillvalue=fillvalue))
+        assert case.cast(z) == case.cast(zip_longest(x, *xs, fillvalue=fillvalue))
