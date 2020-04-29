@@ -54,6 +54,10 @@ def help_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> boo
     return func(key, value)
 
 
+def help_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
+    return y
+
+
 def help_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
     key, value = item
     return func(key), value

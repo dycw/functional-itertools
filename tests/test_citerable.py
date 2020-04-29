@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import chain
+from itertools import islice
 from re import escape
 from sys import maxsize
 from typing import Iterable
@@ -44,7 +45,7 @@ def test_get_item(x: Iterable[int], index: Union[int, float]) -> None:
         elif 0 <= index < num_ints:
             z = y[index]
             assert isinstance(z, int)
-            assert z == x[index]
+            assert z == next(iter(islice(x, index, index + 1)))
         elif num_ints <= index <= maxsize:
             with raises(IndexError, match="CIterable index out of range"):
                 y[index]
