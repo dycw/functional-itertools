@@ -81,6 +81,7 @@ from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import help_filter_items
 from functional_itertools.utilities import help_filter_keys
 from functional_itertools.utilities import help_filter_values
+from functional_itertools.utilities import help_last
 from functional_itertools.utilities import help_map_items
 from functional_itertools.utilities import help_map_keys
 from functional_itertools.utilities import help_map_values
@@ -513,7 +514,7 @@ class CIterable(Iterable[T]):
             raise EmptyIterableError from None
 
     def last(self: CIterable[T]) -> T:  # dead: disable
-        return self.reduce(lambda x, y: y)
+        return self.reduce(help_last)
 
     def one(self: CIterable[T]) -> T:
         head: CList[T] = self.islice(2).list()
