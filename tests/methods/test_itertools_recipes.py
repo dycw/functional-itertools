@@ -230,7 +230,7 @@ def test_partition(case: Case, x: Iterable[int]) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()))
+@given(x=real_iterables(integers(), max_size=5))
 def test_powerset(case: Case, x: Iterable[int]) -> None:
     y = case.cls(x).powerset()
     assert isinstance(y, case.cls)
