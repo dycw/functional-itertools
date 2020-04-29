@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from operator import neg
+from typing import Any
 from typing import Dict
 from typing import Tuple
 
 from hypothesis import given
+from hypothesis import settings
 from hypothesis.strategies import dictionaries
 from hypothesis.strategies import integers
+from pytest import mark
 
 from functional_itertools import CDict
 from functional_itertools import CIterable
@@ -35,6 +38,8 @@ def test_items(x: Dict[str, int]) -> None:
 
 
 # built-ins
+
+
 @given(x=dictionaries(integers(), integers()))
 def test_filter_keys(x: Dict[int, int]) -> None:
     y = CDict(x).filter_keys(is_even)
@@ -59,25 +64,33 @@ def test_filter_items(x: Dict[int, int]) -> None:
     assert y == {k: v for k, v in x.items() if func(k, v)}
 
 
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=dictionaries(integers(), integers()))
-def test_map_keys(x: Dict[int, int]) -> None:
-    y = CDict(x).map_keys(neg)
+@settings(max_examples=100)
+def test_map_keys(x: Dict[int, int], kwargs: Dict[str, Any]) -> None:
+    y = CDict(x).map_keys(neg, **kwargs)
     assert isinstance(y, CDict)
     assert y == {neg(k): v for k, v in x.items()}
 
 
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=dictionaries(integers(), integers()))
-def test_map_values(x: Dict[int, int]) -> None:
-    y = CDict(x).map_values(neg)
+@settings(max_examples=100)
+def test_map_values(x: Dict[int, int], kwargs: Dict[str, Any]) -> None:
+    y = CDict(x).map_values(neg, **kwargs)
     assert isinstance(y, CDict)
     assert y == {k: neg(v) for k, v in x.items()}
 
 
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=dictionaries(integers(), integers()))
-def test_map_items(x: Dict[int, int]) -> None:
-    def func(key: int, value: int) -> Tuple[int, int]:
-        return neg(key), neg(value)
+@settings(max_examples=100)
+def test_map_items(x: Dict[int, int], kwargs: Dict[str, Any]) -> None:
 
-    y = CDict(x).map_items(func)
+    y = CDict(x).map_items(_helper_test_map_items, **kwargs)
     assert isinstance(y, CDict)
     assert y == {neg(k): neg(v) for k, v in x.items()}
+
+
+def _helper_test_map_items(key: int, value: int) -> Tuple[int, int]:
+    return neg(key), neg(value)
