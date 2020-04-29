@@ -10,6 +10,7 @@ from attr import asdict
 from attr import evolve
 from attr.exceptions import NotAnAttrsClassError
 
+import functional_itertools.utilities
 from functional_itertools.classes import CDict
 from functional_itertools.classes import CIterable
 from functional_itertools.classes import CList
@@ -56,7 +57,9 @@ class CAttrs(Generic[T]):
                 )
                 if recurse:
                     kwargs = mapping.map_values(
-                        lambda x: self._map_values(func, *x, recurse=recurse),
+                        lambda x: functional_itertools.utilities.help_cdict_map_values(
+                            func, *x, recurse=recurse,
+                        ),
                     )
                 else:
                     kwargs = mapping.map_values(lambda x: func(*x))

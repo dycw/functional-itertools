@@ -1,12 +1,69 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from enum import auto
 from enum import Enum
 from sys import version_info
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Generator
+from typing import Tuple
 from typing import Type
+from typing import TypeVar
 from warnings import warn
 
 from functional_itertools.errors import UnsupportVersionError
+
+
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+W = TypeVar("W")
+
+
+# dropper
+
+
+def _drop_object(*args: Any, _obj: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
+    return (
+        tuple(x for x in args if x is not _obj),
+        {k: v for k, v in kwargs.items() if v is not _obj},
+    )
+
+
+def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
+    return _drop_object(*args, _obj=None, **kwargs)
+
+
+# helper functions
+
+
+def help_cdict_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
+    key, value = item
+    return func(key), value
+
+
+def help_cdict_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
+    key, value = item
+    return key, func(value)
+
+
+def help_cdict_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
+    key, value = item
+    return func(key, value)
+
+
+# multiprocessing
+
+
+@contextmanager
+def suppress_daemonic_processes_with_children(error: AssertionError) -> Generator[None, None, None]:
+    (msg,) = error.args
+    if msg == "daemonic processes are not allowed to have children":
+        yield
+    else:
+        raise error
 
 
 # sentinel
@@ -20,6 +77,10 @@ class Sentinel:
 
 
 sentinel = Sentinel()
+
+
+def drop_sentinel(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
+    return _drop_object(*args, _obj=sentinel, **kwargs)
 
 
 # version
