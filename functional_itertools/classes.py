@@ -1065,6 +1065,9 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[Union[T, U]]:
         return cls(CIterable.iter_except(func, exception, first=first))
 
+    def ncycles(self: CTuple[T], n: int) -> CTuple[T]:
+        return self.iter().ncycles(n).tuple()
+
     def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
