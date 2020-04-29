@@ -271,9 +271,8 @@ class CIterable(Iterable[T]):
             else:
                 raise ValueError("The 'initial' argument is introduced in Python 3.8")
         elif VERSION is Version.py38:
-            return CIterable(
-                accumulate(self, func, initial=None if initial is sentinel else sentinel),
-            )
+            _, kwargs = drop_sentinel(initial=initial)
+            return CIterable(accumulate(self, func, **kwargs))
         else:
             raise UnsupportVersionError(VERSION)  # pragma: no cover
 

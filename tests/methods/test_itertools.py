@@ -41,6 +41,7 @@ from pytest import mark
 from functional_itertools import CIterable
 from functional_itertools import CTuple
 from functional_itertools.utilities import drop_none
+from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from tests.strategies import Case
@@ -69,7 +70,8 @@ def test_accumulate(case: Case, x: Iterable[int], initial: Dict[str, Any]) -> No
     y = case.cls(x).accumulate(add, **initial)
     assert isinstance(y, case.cls)
     if case.ordered:
-        assert case.cast(y) == case.cast(accumulate(x, add, **initial))
+        _, kwargs = drop_sentinel(**initial)
+        assert case.cast(y) == case.cast(accumulate(x, add, **kwargs))
 
 
 @mark.parametrize("case", CASES)

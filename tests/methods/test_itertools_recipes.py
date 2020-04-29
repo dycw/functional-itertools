@@ -242,14 +242,20 @@ def test_prepend(case: Case, x: Iterable[int], value: int) -> None:
 def test_quantify(case: Case, x: Iterable[int]) -> None:
     y = case.cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
-    assert y == quantify(x, pred=is_even)
+    if case.ordered:
+        assert y == quantify(x, pred=is_even)
 
 
 @mark.parametrize("case", CASES)
 @given(x=combinations_x, r=combinations_r)
 def test_random_combination(case: Case, x: Iterable[int], r: int) -> None:
-    assume(0 <= r <= len(x))
-    assert isinstance(case.cls(x).random_combination(r), CTuple)
+    y = case.cls(x)
+    if case.cls is CIterable:
+        max_len = len(x)
+    else:
+        max_len = len(y)
+    assume(0 <= r <= max_len)
+    assert isinstance(y.random_combination(r), CTuple)
 
 
 @mark.parametrize("case", CASES)
@@ -261,9 +267,14 @@ def test_random_combination_with_replacement(case: Case, x: Iterable[int], r: in
 @mark.parametrize("case", CASES)
 @given(x=permutations_x, r=permutations_r)
 def test_random_permutation(case: Case, x: Iterable[int], r: Optional[int]) -> None:
+    y = case.cls(x)
     if r is not None:
-        assume(0 <= r <= len(x))
-    assert isinstance(case.cls(x).random_permutation(r=r), CTuple)
+        if case.cls is CIterable:
+            max_len = len(x)
+        else:
+            max_len = len(y)
+        assume(0 <= r <= max_len)
+    assert isinstance(y.random_permutation(r=r), CTuple)
 
 
 @mark.parametrize("case", CASES)
