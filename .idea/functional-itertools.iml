@@ -4,6 +4,7 @@
     <content url="file://$MODULE_DIR$">
       <excludePattern pattern=".cache" />
       <excludePattern pattern=".cenv" />
+      <excludePattern pattern=".coverage*" />
       <excludePattern pattern=".hypothesis" />
       <excludePattern pattern=".idea" />
       <excludePattern pattern=".ipynb_checkpoints" />

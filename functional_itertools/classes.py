@@ -78,9 +78,12 @@ from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
-from functional_itertools.utilities import help_cdict_map_items
-from functional_itertools.utilities import help_cdict_map_keys
-from functional_itertools.utilities import help_cdict_map_values
+from functional_itertools.utilities import help_filter_items
+from functional_itertools.utilities import help_filter_keys
+from functional_itertools.utilities import help_filter_values
+from functional_itertools.utilities import help_map_items
+from functional_itertools.utilities import help_map_keys
+from functional_itertools.utilities import help_map_values
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import suppress_daemonic_processes_with_children
@@ -221,7 +224,7 @@ class CIterable(Iterable[T]):
         args, _ = drop_sentinel(start)
         return sum(self, *args)
 
-    def tuple(self: CIterable[T]) -> CTuple[T, ...]:  # noqa: A003
+    def tuple(self: CIterable[T]) -> CTuple[T]:  # noqa: A003
         return CTuple(self)
 
     def zip(  # noqa: A003
@@ -304,11 +307,7 @@ class CIterable(Iterable[T]):
     def groupby(
         self: CIterable[T], key: Optional[Callable[[T], U]] = None,
     ) -> CIterable[Tuple[U, CTuple[T]]]:
-        def inner(pair: Tuple[T, Iterable[T]]) -> Tuple[T, CTuple[T]]:
-            key, group = pair
-            return key, CTuple(group)
-
-        return CIterable(groupby(self, key=key)).map(inner)
+        return CIterable(groupby(self, key=key)).map(_help_groupby)
 
     def islice(
         self: CIterable[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -316,7 +315,7 @@ class CIterable(Iterable[T]):
         args, _ = drop_none(stop, step)
         return CIterable(islice(self, start, *args))
 
-    def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[CTuple[T, ...]]:
+    def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[CTuple[T]]:
         return CIterable(permutations(self, r=r)).map(CTuple)
 
     def product(
@@ -1884,27 +1883,15 @@ class CDict(Dict[T, U]):
     # built-ins
 
     def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:  # dead: disable
-        def inner(item: Tuple[T, U]) -> bool:
-            key, _ = item
-            return func(key)
-
-        return self.items().filter(inner).dict()
+        return self.items().filter(partial(help_filter_keys, func=func)).dict()
 
     def filter_values(self: CDict[T, U], func: Callable[[U], bool]) -> CDict[T, U]:  # dead: disable
-        def inner(item: Tuple[T, U]) -> bool:
-            _, value = item
-            return func(value)
-
-        return self.items().filter(inner).dict()
+        return self.items().filter(partial(help_filter_values, func=func)).dict()
 
     def filter_items(  # dead: disable
         self: CDict[T, U], func: Callable[[T, U], bool],
     ) -> CDict[T, U]:
-        def inner(item: Tuple[T, U]) -> bool:
-            key, value = item
-            return func(key, value)
-
-        return self.items().filter(inner).dict()
+        return self.items().filter(partial(help_filter_items, func=func)).dict()
 
     def map_keys(  # dead: disable
         self: CDict[T, U],
@@ -1917,7 +1904,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(help_cdict_map_keys, func=func), parallel=parallel, processes=processes)
+            .map(partial(help_map_keys, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1932,7 +1919,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(help_cdict_map_values, func=func), parallel=parallel, processes=processes)
+            .map(partial(help_map_values, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1947,6 +1934,14 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(help_cdict_map_items, func=func), parallel=parallel, processes=processes)
+            .map(partial(help_map_items, func=func), parallel=parallel, processes=processes)
             .dict()
         )
+
+
+# helpers
+
+
+def _help_groupby(pair: Tuple[T, Iterable[T]]) -> Tuple[T, CTuple[T]]:
+    key, group = pair
+    return key, CTuple(group)
