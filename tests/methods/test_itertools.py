@@ -63,42 +63,42 @@ from tests.test_utilities import is_even
 )
 def test_accumulate(case: Case, x: Iterable[int], initial: Dict[str, Any]) -> None:
     y = case.cls(x).accumulate(add, **initial)
-    assert isinstance(y, case.ordered_cls)
+    assert isinstance(y, case.cls)
     if case.ordered:
         assert case.cast(y) == case.cast(accumulate(x, add, **initial))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
-def test_chain(cls: Type, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
-    y = cls(x).chain(*xs)
-    assert isinstance(y, CIterable if cls is CIterable else CList)
-    if cls in ORDERED_CLASSES:
-        assert list(y) == list(chain(x, *xs))
+def test_chain(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
+    y = case.cls(x).chain(*xs)
+    assert isinstance(y, case.cls)
+    if case.ordered:
+        assert case.cast(y) == case.cast(chain(x, *xs))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers(), max_size=100), r=integers(0, 10))
-def test_combinations(cls: Type, x: Iterable[int], r: int) -> None:
-    y = cls(x).combinations(r)
-    assert isinstance(y, CIterable if cls is CIterable else CList)
+def test_combinations(case: Case, x: Iterable[int], r: int) -> None:
+    y = case.cls(x).combinations(r)
+    assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if cls in ORDERED_CLASSES:
-        assert z == list(combinations(x, r))
+    if case.ordered:
+        assert case.cast(z) == case.cast(combinations(x, r))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers(), max_size=100), r=integers(0, 5))
-def test_combinations_with_replacement(cls: Type, x: Iterable[int], r: int) -> None:
-    y = cls(x).combinations_with_replacement(r)
-    assert isinstance(y, CIterable if cls is CIterable else CList)
+def test_combinations_with_replacement(case: Case, x: Iterable[int], r: int) -> None:
+    y = case.cls(x).combinations_with_replacement(r)
+    assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if cls in ORDERED_CLASSES:
-        assert z == list(combinations_with_replacement(x, r))
+    if case.ordered:
+        assert case.cast(z) == case.cast(combinations_with_replacement(x, r))
 
 
 @mark.parametrize("cls", CLASSES)

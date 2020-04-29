@@ -226,7 +226,7 @@ class CIterable(Iterable[T]):
     def zip(  # noqa: A003
         self: CIterable[T], *iterables: Iterable[U],
     ) -> CIterable[CTuple[Union[T, U]]]:
-        return CIterable(map(CTuple, zip(self, *iterables)))
+        return CIterable(zip(self, *iterables)).map(CTuple)
 
     # functools
 
@@ -258,17 +258,6 @@ class CIterable(Iterable[T]):
 
     # itertools
 
-    @classmethod
-    def count(cls: Type[CIterable], start: int = 0, step: int = 1) -> CIterable[int]:
-        return cls(count(start=start, step=step))
-
-    def cycle(self: CIterable[T]) -> CIterable[T]:
-        return CIterable(cycle(self))
-
-    @classmethod
-    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
-        return cls(repeat(x, *(() if times is None else (times,))))
-
     def accumulate(
         self: CIterable[T],
         func: Callable[[T, T], T] = add,
@@ -289,6 +278,23 @@ class CIterable(Iterable[T]):
 
     def chain(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
         return CIterable(chain(self, *iterables))
+
+    def combinations(self: CIterable[T], r: int) -> CIterable[CTuple[T]]:
+        return CIterable(combinations(self, r)).map(CTuple)
+
+    def combinations_with_replacement(self: CIterable[T], r: int) -> CIterable[CTuple[T]]:
+        return CIterable(combinations_with_replacement(self, r)).map(CTuple)
+
+    @classmethod
+    def count(cls: Type[CIterable], start: int = 0, step: int = 1) -> CIterable[int]:
+        return cls(count(start=start, step=step))
+
+    def cycle(self: CIterable[T]) -> CIterable[T]:
+        return CIterable(cycle(self))
+
+    @classmethod
+    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
+        return cls(repeat(x, *(() if times is None else (times,))))
 
     def compress(self: CIterable[T], selectors: Iterable[Any]) -> CIterable[T]:
         return CIterable(compress(self, selectors))
@@ -340,12 +346,6 @@ class CIterable(Iterable[T]):
 
     def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[Tuple[T, ...]]:
         return CIterable(permutations(self, r=r))
-
-    def combinations(self: CIterable[T], r: int) -> CIterable[Tuple[T, ...]]:
-        return CIterable(combinations(self, r))
-
-    def combinations_with_replacement(self: CIterable[T], r: int) -> CIterable[Tuple[T, ...]]:
-        return CIterable(combinations_with_replacement(self, r))
 
     # itertools-recipes
 
@@ -630,10 +630,6 @@ class CList(List[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
-        return cls(CIterable.repeat(x, times=times))
-
     def accumulate(
         self: CList[T], func: Callable[[T, T], T] = add, *, initial: Union[U, Sentinel] = sentinel,
     ) -> CList[Union[T, U]]:
@@ -641,6 +637,16 @@ class CList(List[T]):
 
     def chain(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
         return self.iter().chain(*iterables).list()
+
+    def combinations(self: CList[T], r: int) -> CList[CTuple[T]]:
+        return self.iter().combinations(r).list()
+
+    def combinations_with_replacement(self: CList[T], r: int) -> CList[CTuple[T]]:
+        return self.iter().combinations_with_replacement(r).list()
+
+    @classmethod
+    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
+        return cls(CIterable.repeat(x, times=times))
 
     def compress(self: CList[T], selectors: Iterable[Any]) -> CList[T]:
         return self.iter().compress(selectors).list()
@@ -685,12 +691,6 @@ class CList(List[T]):
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
-
-    def combinations(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
-        return self.iter().combinations(r).list()
-
-    def combinations_with_replacement(self: CList[T], r: int) -> CList[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).list()
 
     # itertools-recipes
 
@@ -929,17 +929,23 @@ class CTuple(tuple, Generic[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CTuple], x: T, times: int) -> CTuple[T]:
-        return cls(CIterable.repeat(x, times=times))
-
     def accumulate(
         self: CTuple[T], func: Callable[[T, T], T] = add, *, initial: Union[U, Sentinel] = sentinel,
     ) -> CTuple[Union[T, U]]:
         return self.iter().accumulate(func, initial=initial).tuple()
 
     def chain(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
-        return self.iter().chain(*iterables).list()
+        return self.iter().chain(*iterables).tuple()
+
+    def combinations(self: CTuple[T], r: int) -> CTuple[CTuple[T]]:
+        return self.iter().combinations(r).tuple()
+
+    def combinations_with_replacement(self: CTuple[T], r: int) -> CTuple[CTuple[T]]:
+        return self.iter().combinations_with_replacement(r).tuple()
+
+    @classmethod
+    def repeat(cls: Type[CTuple], x: T, times: int) -> CTuple[T]:
+        return cls(CIterable.repeat(x, times=times))
 
     def compress(self: CTuple[T], selectors: Iterable[Any]) -> CTuple[T]:
         return self.iter().compress(selectors).list()
@@ -984,12 +990,6 @@ class CTuple(tuple, Generic[T]):
 
     def permutations(self: CTuple[T], r: Optional[int] = None) -> CTuple[Tuple[T, ...]]:
         return self.iter().permutations(r=r).list()
-
-    def combinations(self: CTuple[T], r: int) -> CTuple[Tuple[T, ...]]:
-        return self.iter().combinations(r).list()
-
-    def combinations_with_replacement(self: CTuple[T], r: int) -> CTuple[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).list()
 
     # itertools-recipes
 
@@ -1272,17 +1272,23 @@ class CSet(Set[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
     def accumulate(
         self: CSet[T], func: Callable[[T, T], T] = add, *, initial: Union[U, Sentinel] = sentinel,
-    ) -> CList[Union[T, U]]:
-        return self.iter().accumulate(func, initial=initial).list()
+    ) -> CSet[Union[T, U]]:
+        return self.iter().accumulate(func, initial=initial).set()
 
     def chain(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
         return self.iter().chain(*iterables).set()
+
+    def combinations(self: CSet[T], r: int) -> CSet[CTuple[T]]:
+        return self.iter().combinations(r).set()
+
+    def combinations_with_replacement(self: CSet[T], r: int) -> CSet[CTuple[T]]:
+        return self.iter().combinations_with_replacement(r).set()
+
+    @classmethod
+    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
+        return cls(CIterable.repeat(x, times=times))
 
     def compress(self: CSet[T], selectors: Iterable[Any]) -> CSet[T]:
         return self.iter().compress(selectors).set()
@@ -1327,12 +1333,6 @@ class CSet(Set[T]):
 
     def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[Tuple[T, ...]]:
         return self.iter().permutations(r=r).set()
-
-    def combinations(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
-        return self.iter().combinations(r).set()
-
-    def combinations_with_replacement(self: CSet[T], r: int) -> CSet[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).set()
 
     # itertools - recipes
 
@@ -1520,20 +1520,26 @@ class CFrozenSet(FrozenSet[T]):
 
     # itertools
 
-    @classmethod
-    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
     def accumulate(
         self: CFrozenSet[T],
         func: Callable[[T, T], T] = add,
         *,
         initial: Union[U, Sentinel] = sentinel,
-    ) -> CList[Union[T, U]]:
-        return self.iter().accumulate(func, initial=initial).list()
+    ) -> CFrozenSet[Union[T, U]]:
+        return self.iter().accumulate(func, initial=initial).frozenset()
 
     def chain(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
         return self.iter().chain(*iterables).frozenset()
+
+    def combinations(self: CFrozenSet[T], r: int) -> CFrozenSet[CTuple[T]]:
+        return self.iter().combinations(r).frozenset()
+
+    def combinations_with_replacement(self: CFrozenSet[T], r: int) -> CFrozenSet[CTuple[T]]:
+        return self.iter().combinations_with_replacement(r).frozenset()
+
+    @classmethod
+    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
+        return cls(CIterable.repeat(x, times=times))
 
     def compress(self: CFrozenSet[T], selectors: Iterable[Any]) -> CFrozenSet[T]:
         return self.iter().compress(selectors).frozenset()
@@ -1580,12 +1586,6 @@ class CFrozenSet(FrozenSet[T]):
 
     def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[Tuple[T, ...]]:
         return self.iter().permutations(r=r).frozenset()
-
-    def combinations(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
-        return self.iter().combinations(r).frozenset()
-
-    def combinations_with_replacement(self: CFrozenSet[T], r: int) -> CFrozenSet[Tuple[T, ...]]:
-        return self.iter().combinations_with_replacement(r).frozenset()
 
     # itertools - recipes
 
