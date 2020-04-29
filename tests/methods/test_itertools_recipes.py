@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from functools import partial
+from functools import reduce
 from itertools import islice
 from operator import add
+from operator import mul
 from operator import neg
 from sys import maxsize
 from typing import Callable
@@ -168,16 +170,27 @@ def test_nth(case: Case, x: Iterable[int], n: int, default: Optional[int]) -> No
 
 
 @mark.parametrize("case", CASES)
-@given(
-    data=data(), x=real_iterables(integers(), min_size=2),
-)
+@given(data=data(), x=real_iterables(integers(), min_size=2))
 def test_nth_combination(case: Case, data: DataObject, x: Iterable[int]) -> None:
-    r = data.draw(integers(1, len(x) - 1))
-    index = data.draw(integers(0, r))
-    y = case.cls(x).nth_combination(r, index)
-    assert isinstance(y, CTuple)
+    y = case.cls(x)
+    if case.cls is CIterable:
+        length = len(x)
+    else:
+        length = len(y)
+    assume(length >= 1)
+    r = data.draw(integers(1, length))
+
+    def ncr(n: int, r: int) -> int:
+        r = min(r, n - r)
+        numer = reduce(mul, range(n, n - r, -1), 1)
+        denom = reduce(mul, range(1, r + 1), 1)
+        return int(numer / denom)
+
+    index = data.draw(integers(0, ncr(length, r) - 1))
+    z = y.nth_combination(r, index)
+    assert isinstance(z, CTuple)
     if case.ordered:
-        assert y == nth_combination(x, r, index)
+        assert z == nth_combination(x, r, index)
 
 
 @mark.parametrize("case", CASES)
