@@ -100,16 +100,17 @@ def test_iter(case: Case, x: Iterable[int]) -> None:
     assert case.cast(y) == case.cast(iter(x))
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
-def test_len(cls: Type, x: Iterable[int]) -> None:
-    if cls is CIterable:
+def test_len(case: Case, x: Iterable[int]) -> None:
+    if case.cls is CIterable:
         with raises(AttributeError, match="'CIterable' object has no attribute 'len'"):
-            cls(x).len()
+            case.cls(x).len()
     else:
-        y = cls(x).len()
+        y = case.cls(x).len()
         assert isinstance(y, int)
-        assert y == len(x)
+        if case.ordered:
+            assert y == len(x)
 
 
 @mark.parametrize("case", CASES)
@@ -185,9 +186,9 @@ def test_sorted(
     case: Case, x: Iterable[int], key: Optional[Callable[[int], int]], reverse: bool,
 ) -> None:
     y = case.cls(x).sorted(key=key, reverse=reverse)
-    assert isinstance(y, CList)
+    assert isinstance(y, CTuple if case.cls is CTuple else CList)
     if case.ordered:
-        assert y == sorted(x, key=key, reverse=reverse)
+        assert case.cast(y) == case.cast(sorted(x, key=key, reverse=reverse))
 
 
 @mark.parametrize("case", CASES)

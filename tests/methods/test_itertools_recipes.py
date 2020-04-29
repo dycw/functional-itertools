@@ -56,9 +56,10 @@ def test_all_equal(case: Case, x: Iterable[int]) -> None:
 def test_consume(case: Case, x: Iterable[int], n: Optional[int]) -> None:
     y = case.cls(x).consume(n=n)
     assert isinstance(y, case.cls)
-    iter_x = iter(x)
-    consume(iter_x, n=n)
-    assert case.cast(y) == case.cast(iter_x)
+    if case.ordered:
+        iter_x = iter(x)
+        consume(iter_x, n=n)
+        assert case.cast(y) == case.cast(iter_x)
 
 
 @mark.parametrize("case", CASES)
@@ -105,7 +106,8 @@ def test_nth(case: Case, x: Iterable[int], n: int, default: Optional[int]) -> No
 def test_padnone(case: Case, x: List[int], n: int) -> None:
     y = case.cls(x).padnone()
     assert isinstance(y, CIterable)
-    assert case.cast(y[:n]) == case.cast(islice(padnone(x), n))
+    if case.ordered:
+        assert case.cast(y[:n]) == case.cast(islice(padnone(x), n))
 
 
 @mark.parametrize("case", CASES)

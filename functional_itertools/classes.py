@@ -624,11 +624,11 @@ class CList(List[T]):
     def set(self: CList[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
-    def sort(  # dead: disable
+    def sort(
         self: CList[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
     ) -> CList[T]:
-        warn("Use the 'sorted' method instead of 'sort'")
-        return self.sorted(key=key, reverse=reverse)
+        warn_non_functional(CList, "sort", "sorted")
+        super().sort(key=key, reverse=reverse)
 
     def sorted(  # noqa: A003
         self: CList[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
@@ -945,16 +945,10 @@ class CTuple(tuple, Generic[T]):
     def set(self: CTuple[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
-    def sort(  # dead: disable
-        self: CTuple[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CTuple[T]:
-        warn("Use the 'sorted' method instead of 'sort'")
-        return self.sorted(key=key, reverse=reverse)
-
     def sorted(  # noqa: A003
         self: CTuple[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
     ) -> CTuple[T]:
-        return self.iter().sorted(key=key, reverse=reverse)
+        return self.iter().sorted(key=key, reverse=reverse).tuple()
 
     def sum(self: CTuple[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
@@ -1303,7 +1297,6 @@ class CSet(Set[T]):
     def symmetric_difference_update(self: CSet[T], other: Iterable[U]) -> None:
         warn_non_functional(CSet, "symmetric_difference_update", "symmetric_difference")
         super().symmetric_difference_update(other)
-        return self
 
     def add(self: CSet[T], element: T) -> CSet[T]:
         super().add(element)

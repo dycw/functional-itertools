@@ -27,4 +27,4 @@ def test_iterdir(case: Case, x: Set[str], use_path: bool) -> None:
         else:
             y = case.cls.iterdir(temp_dir_str)
         assert isinstance(y, case.cls)
-        assert case.cast(y) == case.cast(temp_dir.joinpath(i) for i in x)
+        assert set(y) == {temp_dir.joinpath(i) for i in x}
