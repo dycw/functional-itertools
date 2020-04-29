@@ -371,10 +371,8 @@ class CIterable(Iterable[T]):
     def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
         return CIterable(flatten(self))
 
-    def grouper(
-        self: CIterable[T], n: int, fillvalue: U = None,
-    ) -> CIterable[CIterable[Union[T, U]]]:
-        return CIterable(grouper(self, n, fillvalue=fillvalue)).map(CIterable)
+    def grouper(self: CIterable[T], n: int, fillvalue: U = None) -> CIterable[CTuple[Union[T, U]]]:
+        return CIterable(grouper(self, n, fillvalue=fillvalue)).map(CTuple)
 
     def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(ncycles(self, n))
@@ -390,6 +388,9 @@ class CIterable(Iterable[T]):
 
     def partition(self: CIterable[T], func: Callable[[T], bool]) -> CTuple[CIterable[T]]:
         return CIterable(partition(func, self)).map(CIterable).tuple()
+
+    def powerset(self: CIterable[T]) -> CIterable[CTuple[T]]:
+        return CIterable(powerset(self)).map(CTuple)
 
     def prepend(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
         return CIterable(prepend(value, self))
@@ -414,9 +415,6 @@ class CIterable(Iterable[T]):
         return CIterable(take(n, self))
 
     # zzz untested
-
-    def powerset(self: CIterable[T]) -> CIterable[Tuple[T, ...]]:
-        return CIterable(powerset(self))
 
     def roundrobin(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Tuple[T, U]]:
         return CIterable(roundrobin(self, *iterables))
@@ -464,14 +462,14 @@ class CIterable(Iterable[T]):
 
     # more-itertools
 
-    def chunked(self: CIterable[T], n: int) -> CIterable[CIterable[T]]:
-        return CIterable(chunked(self, n)).map(CIterable)
+    def chunked(self: CIterable[T], n: int) -> CIterable[CTuple[T]]:
+        return CIterable(chunked(self, n)).map(CTuple)
 
-    def distribute(self: CIterable[T], n: int) -> CIterable[CIterable[T]]:
-        return CIterable(distribute(n, self)).map(CIterable)
+    def distribute(self: CIterable[T], n: int) -> CIterable[CTuple[T]]:
+        return CIterable(distribute(n, self)).map(CTuple)
 
-    def divide(self: CIterable[T], n: int) -> CIterable[CIterable[T]]:
-        return CIterable(divide(n, list(self))).map(CIterable)
+    def divide(self: CIterable[T], n: int) -> CIterable[CTuple[T]]:
+        return CIterable(divide(n, list(self))).map(CTuple)
 
     # multiprocessing
 
@@ -734,8 +732,8 @@ class CList(List[T]):
 
     def grouper(
         self: CList[T], n: int, fillvalue: Optional[T] = None,
-    ) -> CList[CList[Union[T, U]]]:
-        return self.iter().grouper(n, fillvalue=fillvalue).map(CList).list()
+    ) -> CList[CTuple[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).list()
 
     def ncycles(self: CList[T], n: int) -> CList[T]:
         return self.iter().ncycles(n).list()
@@ -751,6 +749,9 @@ class CList(List[T]):
 
     def partition(self: CList[T], func: Callable[[T], bool]) -> CTuple[CList[T]]:
         return self.iter().partition(func).map(CList)
+
+    def powerset(self: CList[T]) -> CList[CTuple[T]]:
+        return self.iter().powerset().list()
 
     def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
         return self.iter().prepend(value).list()
@@ -769,9 +770,6 @@ class CList(List[T]):
 
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
-
-    def powerset(self: CList[T]) -> CList[Tuple[T, ...]]:
-        return self.iter().powerset().list()
 
     def roundrobin(self: CList[T], *iterables: Iterable[U]) -> CList[Tuple[T, U]]:
         return self.iter().roundrobin(*iterables).list()
@@ -815,14 +813,14 @@ class CList(List[T]):
 
     # more-itertools
 
-    def chunked(self: CList[T], n: int) -> CList[CList[T]]:
-        return self.iter().chunked(n).map(CList).list()
+    def chunked(self: CList[T], n: int) -> CList[CTuple[T]]:
+        return self.iter().chunked(n).list()
 
-    def distribute(self: CList[T], n: int) -> CList[CList[T]]:
-        return self.iter().distribute(n).map(CList).list()
+    def distribute(self: CList[T], n: int) -> CList[CTuple[T]]:
+        return self.iter().distribute(n).list()
 
-    def divide(self: CList[T], n: int) -> CList[CList[T]]:
-        return self.iter().divide(n).map(CList).list()
+    def divide(self: CList[T], n: int) -> CList[CTuple[T]]:
+        return self.iter().divide(n).list()
 
     # multiprocessing
 
@@ -1067,6 +1065,9 @@ class CTuple(tuple, Generic[T]):
     def partition(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[CTuple[T]]:
         return self.iter().partition(func).map(CTuple)
 
+    def powerset(self: CTuple[T]) -> CTuple[CTuple[T]]:
+        return self.iter().powerset().tuple()
+
     def prepend(self: CTuple[T], value: U) -> CTuple[Union[T, U]]:
         return self.iter().prepend(value).tuple()
 
@@ -1084,9 +1085,6 @@ class CTuple(tuple, Generic[T]):
 
     def take(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().take(n).tuple()
-
-    def powerset(self: CTuple[T]) -> CTuple[Tuple[T, ...]]:
-        return self.iter().powerset().tuple()
 
     def roundrobin(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Tuple[T, U]]:
         return self.iter().roundrobin(*iterables).tuple()
@@ -1131,13 +1129,13 @@ class CTuple(tuple, Generic[T]):
     # more-itertools
 
     def chunked(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
-        return self.iter().chunked(n).map(CTuple).tuple()
+        return self.iter().chunked(n).tuple()
 
     def distribute(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
-        return self.iter().distribute(n).map(CTuple).tuple()
+        return self.iter().distribute(n).tuple()
 
     def divide(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
-        return self.iter().divide(n).map(CTuple).tuple()
+        return self.iter().divide(n).tuple()
 
     # multiprocessing
 
@@ -1406,10 +1404,8 @@ class CSet(Set[T]):
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
 
-    def grouper(
-        self: CSet[T], n: int, fillvalue: Optional[T] = None,
-    ) -> CSet[CFrozenSet[Union[T, U]]]:
-        return self.iter().grouper(n, fillvalue=fillvalue).map(CFrozenSet).set()
+    def grouper(self: CSet[T], n: int, fillvalue: Optional[T] = None) -> CSet[CTuple[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).set()
 
     def ncycles(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().ncycles(n).set()
@@ -1425,6 +1421,9 @@ class CSet(Set[T]):
 
     def partition(self: CSet[T], func: Callable[[T], bool]) -> CTuple[CSet[T]]:
         return self.iter().partition(func).map(CSet)
+
+    def powerset(self: CSet[T]) -> CSet[CTuple[T]]:
+        return self.iter().powerset().set()
 
     def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
         return self.iter().prepend(value).set()
@@ -1446,14 +1445,14 @@ class CSet(Set[T]):
 
     # more-itertools
 
-    def chunked(self: CSet[T], n: int) -> CSet[CFrozenSet[T]]:
-        return self.iter().chunked(n).map(CFrozenSet).set()
+    def chunked(self: CSet[T], n: int) -> CSet[CTuple[T]]:
+        return self.iter().chunked(n).set()
 
-    def distribute(self: CSet[T], n: int) -> CSet[CFrozenSet[T]]:
-        return self.iter().distribute(n).map(CFrozenSet).set()
+    def distribute(self: CSet[T], n: int) -> CSet[CTuple[T]]:
+        return self.iter().distribute(n).set()
 
-    def divide(self: CSet[T], n: int) -> CSet[CFrozenSet[T]]:
-        return self.iter().divide(n).map(CFrozenSet).set()
+    def divide(self: CSet[T], n: int) -> CSet[CTuple[T]]:
+        return self.iter().divide(n).set()
 
     # multiprocessing
 
@@ -1690,8 +1689,8 @@ class CFrozenSet(FrozenSet[T]):
 
     def grouper(
         self: CFrozenSet[T], n: int, fillvalue: Optional[T] = None,
-    ) -> CFrozenSet[CFrozenSet[Union[T, U]]]:
-        return self.iter().grouper(n, fillvalue=fillvalue).map(CFrozenSet).frozenset()
+    ) -> CFrozenSet[CTuple[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).frozenset()
 
     def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().ncycles(n).frozenset()
@@ -1707,6 +1706,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def partition(self: CFrozenSet[T], func: Callable[[T], bool]) -> CTuple[CFrozenSet[T]]:
         return self.iter().partition(func).map(CFrozenSet)
+
+    def powerset(self: CFrozenSet[T]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().powerset().frozenset()
 
     def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
         return self.iter().prepend(value).frozenset()
@@ -1728,14 +1730,14 @@ class CFrozenSet(FrozenSet[T]):
 
     # more-itertools
 
-    def chunked(self: CFrozenSet[T], n: int) -> CFrozenSet[CFrozenSet[T]]:
-        return self.iter().chunked(n).map(CFrozenSet).frozenset()
+    def chunked(self: CFrozenSet[T], n: int) -> CFrozenSet[CTuple[T]]:
+        return self.iter().chunked(n).frozenset()
 
-    def distribute(self: CFrozenSet[T], n: int) -> CFrozenSet[CFrozenSet[T]]:
-        return self.iter().distribute(n).map(CFrozenSet).frozenset()
+    def distribute(self: CFrozenSet[T], n: int) -> CFrozenSet[CTuple[T]]:
+        return self.iter().distribute(n).frozenset()
 
-    def divide(self: CFrozenSet[T], n: int) -> CFrozenSet[CFrozenSet[T]]:
-        return self.iter().divide(n).map(CFrozenSet).frozenset()
+    def divide(self: CFrozenSet[T], n: int) -> CFrozenSet[CTuple[T]]:
+        return self.iter().divide(n).frozenset()
 
     # multiprocessing
 

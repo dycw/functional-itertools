@@ -28,6 +28,7 @@ from more_itertools import nth
 from more_itertools import padnone
 from more_itertools import pairwise
 from more_itertools import partition
+from more_itertools import powerset
 from more_itertools import prepend
 from more_itertools import quantify
 from more_itertools import repeatfunc
@@ -36,9 +37,7 @@ from more_itertools import tail
 from more_itertools import take
 from pytest import mark
 
-from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
-from functional_itertools import CSet
 from functional_itertools import CTuple
 from tests.strategies import Case
 from tests.strategies import CASES
@@ -94,7 +93,7 @@ def test_grouper(case: Case, x: Iterable[int], n: int, fillvalue: Optional[int])
     assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
-        assert isinstance(zi, CFrozenSet if case.cls is CSet else case.cls)
+        assert isinstance(zi, CTuple)
     if case.ordered:
         assert case.cast(map(case.cast, z)) == case.cast(
             map(case.cast, grouper(x, n, fillvalue=fillvalue)),
@@ -155,6 +154,18 @@ def test_partition(case: Case, x: Iterable[int]) -> None:
         assert isinstance(yi, case.cls)
     for yi, zi in zip(y, partition(is_even, x)):
         assert case.cast(yi) == case.cast(zi)
+
+
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()))
+def test_powerset(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).powerset()
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    if case.ordered:
+        assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, powerset(x)))
 
 
 @mark.parametrize("case", CASES)

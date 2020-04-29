@@ -9,8 +9,7 @@ from more_itertools import distribute
 from more_itertools import divide
 from pytest import mark
 
-from functional_itertools import CFrozenSet
-from functional_itertools import CSet
+from functional_itertools import CTuple
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import real_iterables
@@ -21,12 +20,11 @@ from tests.strategies import real_iterables
 def test_chunked(case: Case, x: Iterable[int], n: int) -> None:
     y = case.cls(x).chunked(n)
     assert isinstance(y, case.cls)
-    for yi in y:
-        assert isinstance(yi, CFrozenSet if case.cls is CSet else case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
     if case.ordered:
-        assert case.cast(map(case.cast, case.cls(x).chunked(n))) == case.cast(
-            map(case.cast, chunked(x, n)),
-        )
+        assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, chunked(x, n)))
 
 
 @mark.parametrize("case", CASES)
@@ -34,12 +32,11 @@ def test_chunked(case: Case, x: Iterable[int], n: int) -> None:
 def test_distribute(case: Case, x: Iterable[int], n: int) -> None:
     y = case.cls(x).distribute(n)
     assert isinstance(y, case.cls)
-    for yi in y:
-        assert isinstance(yi, CFrozenSet if case.cls is CSet else case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
     if case.ordered:
-        assert case.cast(map(case.cast, case.cls(x).distribute(n))) == case.cast(
-            map(case.cast, distribute(n, x)),
-        )
+        assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, distribute(n, x)))
 
 
 @mark.parametrize("case", CASES)
@@ -47,9 +44,8 @@ def test_distribute(case: Case, x: Iterable[int], n: int) -> None:
 def test_divide(case: Case, x: Iterable[int], n: int) -> None:
     y = case.cls(x).divide(n)
     assert isinstance(y, case.cls)
-    for yi in y:
-        assert isinstance(yi, CFrozenSet if case.cls is CSet else case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
     if case.ordered:
-        assert case.cast(map(case.cast, case.cls(x).divide(n))) == case.cast(
-            map(case.cast, divide(n, x)),
-        )
+        assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, divide(n, x)))
