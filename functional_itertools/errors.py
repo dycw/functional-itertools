@@ -11,7 +11,3 @@ class EmptyIterableError(ValueError):
 
 class MultipleElementsError(ValueError):
     """Raised when an Iterable unexpectedly contains more than 1 element."""
-
-
-class StopArgumentMissing(ValueError):
-    """Raised when the 'stop' argument is missing."""
