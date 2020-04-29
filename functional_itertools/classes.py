@@ -409,6 +409,20 @@ class CIterable(Iterable[T]):
     def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
         return quantify(self, pred=pred)
 
+    def random_combination(self: CIterable[T], r: int) -> CTuple[T]:
+        return CTuple(random_combination(self, r))
+
+    def random_combination_with_replacement(self: CIterable[T], r: int) -> CTuple[T]:
+        return CTuple(random_combination_with_replacement(self, r))
+
+    def random_permutation(self: CIterable[T], r: Optional[int] = None) -> CTuple[T]:
+        return CTuple(random_permutation(self, r=r))
+
+    def random_product(
+        self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CTuple[Union[T, U]]:
+        return CTuple(random_product(self, *iterables, repeat=repeat))
+
     @classmethod
     def repeatfunc(
         cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
@@ -448,20 +462,6 @@ class CIterable(Iterable[T]):
         first: Optional[Callable[..., U]] = None,
     ) -> CIterable[Union[T, U]]:
         return cls(iter_except(func, exception, first=first))
-
-    def random_product(
-        self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> Tuple[Union[T, U], ...]:
-        return random_product(self, *iterables, repeat=repeat)
-
-    def random_permutation(self: CIterable[T], r: Optional[int] = None) -> Tuple[Union[T, U], ...]:
-        return random_permutation(self, r=r)
-
-    def random_combination(self: CIterable[T], r: int) -> Tuple[T, ...]:
-        return random_combination(self, r)
-
-    def random_combination_with_replacement(self: CIterable[T], r: int) -> Tuple[T, ...]:
-        return random_combination_with_replacement(self, r)
 
     # more-itertools
 
@@ -770,6 +770,20 @@ class CList(List[T]):
     def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
+    def random_combination(self: CList[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination(r)
+
+    def random_combination_with_replacement(self: CList[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination_with_replacement(r)
+
+    def random_permutation(self: CList[T], r: Optional[int] = None) -> CTuple[T]:
+        return self.iter().random_permutation(r=r)
+
+    def random_product(
+        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CTuple[Union[T, U]]:
+        return self.iter().random_product(*iterables, repeat=repeat)
+
     @classmethod
     def repeatfunc(
         cls: Type[CList], func: Callable[..., T], times: Optional[int] = None, *args: Any,
@@ -799,20 +813,6 @@ class CList(List[T]):
         first: Optional[Callable[..., U]] = None,
     ) -> CList[Union[T, U]]:
         return CIterable.iter_except(func, exception, first=first).list()
-
-    def random_product(
-        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> Tuple[Union[T, U], ...]:
-        return self.iter().random_product(*iterables, repeat=repeat)
-
-    def random_permutation(self: CList[T], r: Optional[int] = None) -> Tuple[T, ...]:
-        return self.iter().random_permutation(r=r)
-
-    def random_combination(self: CList[T], r: int) -> Tuple[T, ...]:
-        return self.iter().random_combination(r)
-
-    def random_combination_with_replacement(self: CList[T], r: int) -> Tuple[T, ...]:
-        return self.iter().random_combination_with_replacement(r)
 
     # more-itertools
 
@@ -1085,6 +1085,20 @@ class CTuple(tuple, Generic[T]):
     def quantify(self: CTuple[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
+    def random_combination(self: CTuple[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination(r)
+
+    def random_combination_with_replacement(self: CTuple[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination_with_replacement(r)
+
+    def random_permutation(self: CTuple[T], r: Optional[int] = None) -> CTuple[T]:
+        return self.iter().random_permutation(r=r)
+
+    def random_product(
+        self: CTuple[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CTuple[Union[T, U]]:
+        return self.iter().random_product(*iterables, repeat=repeat)
+
     @classmethod
     def repeatfunc(
         cls: Type[CTuple], func: Callable[..., T], times: Optional[int] = None, *args: Any,
@@ -1114,20 +1128,6 @@ class CTuple(tuple, Generic[T]):
         first: Optional[Callable[..., U]] = None,
     ) -> CTuple[Union[T, U]]:
         return CIterable.iter_except(func, exception, first=first).list()
-
-    def random_product(
-        self: CTuple[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> Tuple[Union[T, U], ...]:
-        return self.iter().random_product(*iterables, repeat=repeat)
-
-    def random_permutation(self: CTuple[T], r: Optional[int] = None) -> Tuple[T, ...]:
-        return self.iter().random_permutation(r=r)
-
-    def random_combination(self: CTuple[T], r: int) -> Tuple[T, ...]:
-        return self.iter().random_combination(r)
-
-    def random_combination_with_replacement(self: CTuple[T], r: int) -> Tuple[T, ...]:
-        return self.iter().random_combination_with_replacement(r)
 
     # more-itertools
 
@@ -1442,6 +1442,20 @@ class CSet(Set[T]):
     def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
+    def random_combination(self: CSet[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination(r)
+
+    def random_combination_with_replacement(self: CSet[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination_with_replacement(r)
+
+    def random_permutation(self: CSet[T], r: Optional[int] = None) -> CTuple[T]:
+        return self.iter().random_permutation(r=r)
+
+    def random_product(
+        self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CTuple[Union[T, U]]:
+        return self.iter().random_product(*iterables, repeat=repeat)
+
     @classmethod
     def repeatfunc(
         cls: Type[CSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
@@ -1743,6 +1757,20 @@ class CFrozenSet(FrozenSet[T]):
 
     def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
+
+    def random_combination(self: CFrozenSet[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination(r)
+
+    def random_combination_with_replacement(self: CFrozenSet[T], r: int) -> CTuple[T]:
+        return self.iter().random_combination_with_replacement(r)
+
+    def random_permutation(self: CFrozenSet[T], r: Optional[int] = None) -> CTuple[T]:
+        return self.iter().random_permutation(r=r)
+
+    def random_product(
+        self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CTuple[Union[T, U]]:
+        return self.iter().random_product(*iterables, repeat=repeat)
 
     @classmethod
     def repeatfunc(

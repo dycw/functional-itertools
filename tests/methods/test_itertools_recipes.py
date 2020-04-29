@@ -11,6 +11,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+from hypothesis import assume
 from hypothesis import given
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
@@ -46,7 +47,14 @@ from functional_itertools import CIterable
 from functional_itertools import CTuple
 from tests.strategies import Case
 from tests.strategies import CASES
+from tests.strategies import combinations_r
+from tests.strategies import combinations_x
 from tests.strategies import islice_ints
+from tests.strategies import permutations_r
+from tests.strategies import permutations_x
+from tests.strategies import product_repeat
+from tests.strategies import product_x
+from tests.strategies import product_xs
 from tests.strategies import real_iterables
 from tests.test_utilities import is_even
 
@@ -214,6 +222,37 @@ def test_quantify(case: Case, x: Iterable[int]) -> None:
     y = case.cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
     assert y == quantify(x, pred=is_even)
+
+
+@mark.parametrize("case", CASES)
+@given(x=combinations_x, r=combinations_r)
+def test_random_combination(case: Case, x: Iterable[int], r: int) -> None:
+    assume(0 <= r <= len(x))
+    assert isinstance(case.cls(x).random_combination(r), CTuple)
+
+
+@mark.parametrize("case", CASES)
+@given(x=combinations_x, r=combinations_r)
+def test_random_combination_with_replacement(case: Case, x: Iterable[int], r: int) -> None:
+    assert isinstance(case.cls(x).random_combination_with_replacement(r), CTuple)
+
+
+@mark.parametrize("case", CASES)
+@given(x=permutations_x, r=permutations_r)
+def test_random_permutation(case: Case, x: Iterable[int], r: Optional[int]) -> None:
+    if r is not None:
+        assume(0 <= r <= len(x))
+    assert isinstance(case.cls(x).random_permutation(r=r), CTuple)
+
+
+@mark.parametrize("case", CASES)
+@given(
+    x=product_x, xs=product_xs, repeat=product_repeat,
+)
+def test_random_product(
+    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], repeat: int,
+) -> None:
+    assert isinstance(case.cls(x).random_product(*xs, repeat=repeat), CTuple)
 
 
 @mark.parametrize("case", CASES)

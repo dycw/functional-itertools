@@ -45,7 +45,14 @@ from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
+from tests.strategies import combinations_r
+from tests.strategies import combinations_x
 from tests.strategies import islice_ints
+from tests.strategies import permutations_r
+from tests.strategies import permutations_x
+from tests.strategies import product_repeat
+from tests.strategies import product_x
+from tests.strategies import product_xs
 from tests.strategies import range_args
 from tests.strategies import real_iterables
 from tests.test_utilities import is_even
@@ -75,7 +82,7 @@ def test_chain(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> Non
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers(), max_size=100), r=integers(0, 10))
+@given(x=combinations_x, r=combinations_r)
 def test_combinations(case: Case, x: Iterable[int], r: int) -> None:
     y = case.cls(x).combinations(r)
     assert isinstance(y, case.cls)
@@ -87,7 +94,7 @@ def test_combinations(case: Case, x: Iterable[int], r: int) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers(), max_size=100), r=integers(0, 5))
+@given(x=combinations_x, r=combinations_r)
 def test_combinations_with_replacement(case: Case, x: Iterable[int], r: int) -> None:
     y = case.cls(x).combinations_with_replacement(r)
     assert isinstance(y, case.cls)
@@ -170,7 +177,7 @@ def test_islice(
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers(), max_size=5), r=none() | integers(0, 3))
+@given(x=permutations_x, r=permutations_r)
 def test_permutations(case: Case, x: Iterable[int], r: Optional[int]) -> None:
     y = case.cls(x).permutations(r=r)
     assert isinstance(y, case.cls)
@@ -183,9 +190,7 @@ def test_permutations(case: Case, x: Iterable[int], r: Optional[int]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(
-    x=real_iterables(integers(), max_size=3),
-    xs=real_iterables(real_iterables(integers(), max_size=3), max_size=3),
-    repeat=integers(0, 3),
+    x=product_x, xs=product_xs, repeat=product_repeat,
 )
 def test_product(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], repeat: int) -> None:
     y = case.cls(x).product(*xs, repeat=repeat)

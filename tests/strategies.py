@@ -65,3 +65,12 @@ range_args = (
     | tuples(integers(0, MAX_SIZE), integers(0, MAX_SIZE), none())
     | tuples(integers(0, MAX_SIZE), integers(0, MAX_SIZE), integers(1, 10))
 )
+combinations_x = real_iterables(integers(), min_size=1, max_size=100)
+combinations_r = integers(0, 10)
+permutations_x = real_iterables(integers(), max_size=5)
+permutations_r = none() | integers(0, 3)
+product_x = real_iterables(integers(), min_size=1, max_size=3)
+product_xs = real_iterables(
+    real_iterables(integers(), min_size=1, max_size=3), min_size=1, max_size=3,
+)
+product_repeat = integers(0, 3)
