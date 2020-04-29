@@ -6,14 +6,13 @@ from operator import or_
 from re import escape
 from typing import Any
 from typing import Callable
+from typing import Iterable
 from typing import NoReturn
 from typing import Tuple
 from typing import Type
 from typing import Union
 
 from hypothesis import given
-from hypothesis.strategies import data
-from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import tuples
@@ -26,20 +25,19 @@ from functional_itertools import CList
 from functional_itertools import CSet
 from functional_itertools import CTuple
 from functional_itertools import EmptyIterableError
+from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from tests.strategies import CLASSES
-from tests.strategies import nested_siterables
-from tests.strategies import siterables
+from tests.strategies import real_iterables
 
 
 @mark.parametrize("cls", CLASSES)
-@given(data=data(), initial=integers() | just(sentinel))
-def test_reduce(cls: Type, data: DataObject, initial: Union[int, Sentinel]) -> None:
-    x, cast = data.draw(siterables(cls, integers()))
-    args = () if initial is sentinel else (initial,)
+@given(x=real_iterables(integers()), initial=integers() | just(sentinel))
+def test_reduce(cls: Type, x: Iterable[int], initial: Union[int, Sentinel]) -> None:
+    args, _ = drop_sentinel(initial)
     try:
-        y = cls(x).reduce(add, initial=initial)
+        y = cls(x).reduce(add, *args)
     except EmptyIterableError:
         with raises(
             TypeError, match=escape("reduce() of empty sequence with no initial value"),
@@ -63,9 +61,8 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
     "cls, cls_base, func",
     [(CList, list, add), (CTuple, tuple, add), (CSet, set, or_), (CFrozenSet, frozenset, or_)],
 )
-@given(data=data())
+@given(x=real_iterables(real_iterables(integers(), min_size=1), min_size=1))
 def test_reduce_returning_c_classes(
-    cls: Type, data: DataObject, cls_base: Type, func: Callable[[Any, Any], Any],
+    cls: Type, x: Iterable[int], cls_base: Type, func: Callable[[Any, Any], Any],
 ) -> None:
-    x, cast = data.draw(nested_siterables(cls, integers(), min_size=1))
     assert isinstance(CIterable(x).map(cls_base).reduce(func), cls)

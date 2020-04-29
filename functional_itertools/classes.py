@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import builtins
-import functools
-import itertools
 from functools import partial
 from functools import reduce
 from itertools import accumulate
@@ -26,10 +23,7 @@ from itertools import zip_longest
 from multiprocessing import Pool
 from operator import add
 from pathlib import Path
-from re import search
 from sys import maxsize
-from sys import modules
-from types import FunctionType
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -46,7 +40,6 @@ from typing import TypeVar
 from typing import Union
 from warnings import warn
 
-import more_itertools
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -79,10 +72,11 @@ from functional_itertools.compat import MAX_MIN_KEY_ANNOTATION
 from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
-from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
-from functional_itertools.methods.base import CIterableOrCList
-from functional_itertools.methods.base import Template
+from functional_itertools.utilities import apply_to_item
+from functional_itertools.utilities import apply_to_key
+from functional_itertools.utilities import apply_to_value
+from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -95,598 +89,6 @@ T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
 W = TypeVar("W")
-_CIterable = "CIterable"
-_CList = "CList"
-_CTuple = "CTuple"
-_CSet = "CSet"
-_CFrozenSet = "CFrozenSet"
-
-
-# built-ins
-
-
-def _defines_method_factory(
-    doc: str, *, citerable_or_clist: bool = False,
-) -> Callable[[str], FunctionType]:
-    def decorator(
-        factory: Union[Callable[..., FunctionType], Callable[..., FunctionType]],
-    ) -> Callable[[str], FunctionType]:
-        def wrapped(name: str, **kwargs: Any) -> FunctionType:
-            try:
-                method = factory(**kwargs)
-            except TypeError as error:
-                (msg,) = error.args
-                if search("missing 1 required positional argument: 'name'", msg):
-                    method = factory(name, **kwargs)
-                else:
-                    raise
-            for k, v in method.__annotations__.items():
-                new_v = v.replace(Template.__name__, name)
-                if citerable_or_clist:
-                    new_v = new_v.replace(
-                        CIterableOrCList.__name__, _CIterable if name == _CIterable else _CList,
-                    )
-                method.__annotations__[k] = new_v
-            method.__doc__ = doc.format(name=name)
-            return method
-
-        return wrapped
-
-    return decorator
-
-
-def _get_citerable_or_clist(name: str) -> Type:
-    required = _CIterable if name == _CIterable else _CList
-    return getattr(modules[__name__], required.lstrip("_"))
-
-
-@_defines_method_factory("Convert the {name} into a CFrozenSet.")
-def _build_frozenset() -> Callable[..., CFrozenSet]:
-    def frozenset(self: Template[T]) -> CFrozenSet[T]:  # noqa: A001
-        return CFrozenSet(self)
-
-    return frozenset
-
-
-@_defines_method_factory("Return the length of the {name}.")
-def _build_len() -> Callable[..., int]:
-    def len(self: Template[T]) -> int:  # noqa: A001
-        return builtins.len(self)
-
-    return len
-
-
-@_defines_method_factory("Create a CList from the {name}.")
-def _build_list() -> Callable[..., CList]:
-    def list(self: Template[T]) -> CList[T]:  # noqa: A001
-        return CList(self)
-
-    return list
-
-
-@_defines_method_factory("Return the max/minimum over the {name}.")
-def _build_maxmin(func: Callable) -> Callable:
-    if VERSION is Version.py37:
-
-        def min_max(
-            self: Template[T],
-            *,
-            key: Union[Callable[[T], Any], Sentinel] = sentinel,
-            default: U = sentinel,
-        ) -> Union[T, U]:
-            return func(
-                self,
-                **({} if key is sentinel else {"key": key}),
-                **({} if default is sentinel else {"default": default}),
-            )
-
-    elif VERSION is Version.py38:
-
-        def min_max(
-            self: Template[T], *, key: Optional[Callable[[T], Any]] = None, default: U = sentinel,
-        ) -> Union[T, U]:
-            return func(self, key=key, **({} if default is sentinel else {"default": default}))
-
-    else:
-        raise UnsupportVersionError(VERSION)  # pragma: no cover
-
-    min_max.__name__ = func.__name__
-    return min_max
-
-
-@_defines_method_factory("Return a range of integers as a {name}.")
-def _build_range() -> Callable[..., Iterable[int]]:
-    def range(  # noqa: A001
-        cls: Type[Template], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> Template[int]:
-        if (stop is None) and (step is not None):
-            raise StopArgumentMissing()
-        else:
-            return cls(
-                builtins.range(
-                    start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
-                ),
-            )
-
-    return range
-
-
-@_defines_method_factory("Convert the {name} into a CSet.")
-def _build_set() -> Callable[..., CSet]:
-    def set(self: Template[T]) -> CSet[T]:  # noqa: A001
-        return CSet(self)
-
-    return set
-
-
-@_defines_method_factory("Convert the {name} into a sorted CList.")
-def _build_sorted() -> Callable[..., CList]:
-    def sorted(  # noqa: A001
-        self: Template[T], *, key: Optional[Callable[[T], Any]] = None, reverse: bool = False,
-    ) -> CList[T]:
-        return CList(builtins.sorted(self, key=key, reverse=reverse))
-
-    return sorted
-
-
-@_defines_method_factory("Sum the elements of the {name}.")
-def _build_sum() -> Callable[..., int]:
-    def sum(self: Template[T], start: Union[U, Sentinel] = sentinel) -> Union[T, U]:  # noqa: A001
-        return builtins.sum(self, *(() if start is sentinel else (start,)))
-
-    return sum
-
-
-# functools
-
-
-@_defines_method_factory("Apply a binary function over the elements of the {name}")
-def _build_reduce() -> Callable:
-    def reduce(
-        self: CIterable[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
-    ) -> Any:
-        try:
-            result = functools.reduce(func, self, *(() if initial is sentinel else (initial,)))
-        except TypeError as error:
-            (msg,) = error.args
-            if msg == "reduce() of empty sequence with no initial value":
-                raise EmptyIterableError from None
-            else:
-                raise error
-        else:
-            if isinstance(result, list):
-                return CList(result)
-            elif isinstance(result, tuple):
-                return CTuple(result)
-            elif isinstance(result, set):
-                return CSet(result)
-            elif isinstance(result, frozenset):
-                return CFrozenSet(result)
-            elif isinstance(result, dict):
-                return CDict(result)
-            else:
-                return result
-
-    return reduce
-
-
-# itertools
-
-
-@_defines_method_factory(
-    "chain('ABC', 'DEF') --> A B C D E F", citerable_or_clist=True,
-)
-def _build_chain(name: str) -> Callable[..., Iterable]:
-    def chain(self: Template[T], *iterables: Iterable[U]) -> CIterableOrCList[Union[T, U]]:
-        return _get_citerable_or_clist(name)(itertools.chain(self, *iterables))
-
-    return chain
-
-
-@_defines_method_factory(
-    "\n".join(
-        [
-            "combinations('ABCD', 2) --> AB AC AD BC BD CD",
-            "combinations(range(4), 3) --> 012 013 023 123",
-        ],
-    ),
-    citerable_or_clist=True,
-)
-def _build_combinations(name: str) -> Callable[..., Iterable[CTuple]]:
-    def combinations(self: Template[T], r: int) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(map(CTuple, itertools.combinations(self, r)))
-
-    return combinations
-
-
-@_defines_method_factory(
-    "combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC", citerable_or_clist=True,
-)
-def _build_combinations_with_replacement(name: str) -> Callable[..., Iterable]:
-    def combinations_with_replacement(self: Template[T], r: int) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(
-            map(CTuple, itertools.combinations_with_replacement(self, r)),
-        )
-
-    return combinations_with_replacement
-
-
-@_defines_method_factory(
-    "compress('ABCDEF', [1,0,1,0,1,1]) --> A C E F", citerable_or_clist=True,
-)
-def _build_compress(name: str) -> Callable[..., Iterable]:
-    def compress(self: Template[T], selectors: Iterable) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(itertools.compress(self, selectors))
-
-    return compress
-
-
-@_defines_method_factory(
-    "\n".join(["count(10) --> 10 11 12 13 14 ...", "count(2.5, 0.5) -> 2.5 3.0 3.5 ..."]),
-)
-def _build_count() -> Callable[..., CIterable[int]]:
-    def count(cls: Type[Template[T]], start: int = 0, step: int = 1) -> CIterable[int]:
-        return CIterable(itertools.count(start=start, step=step))
-
-    return count
-
-
-@_defines_method_factory("cycle('ABCD') --> A B C D A B C D A B C D ...")
-def _build_cycle() -> Callable[..., CIterable]:
-    def cycle(self: Template[T]) -> CIterable[T]:
-        return CIterable(itertools.cycle(self))
-
-    return cycle
-
-
-@_defines_method_factory(
-    "dropwhile(lambda x: x<5, [1,4,6,4,1]) --> 6 4 1", citerable_or_clist=True,
-)
-def _build_dropwhile(name: str) -> Callable[..., Iterable]:
-    def dropwhile(self: Template[T], func: Callable[[T], bool]) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(itertools.dropwhile(func, self))
-
-    return dropwhile
-
-
-@_defines_method_factory(
-    "filterfalse(lambda x: x%2, range(10)) --> 0 2 4 6 8", citerable_or_clist=True,
-)
-def _build_filterfalse(name: str) -> Callable[..., Iterable]:
-    def filterfalse(self: Template[T], func: Callable[[T], bool]) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(itertools.filterfalse(func, self))
-
-    return filterfalse
-
-
-@_defines_method_factory(
-    "\n".join(
-        [
-            "[k for k, g in groupby('AAAABBBCCDAABBB')] --> A B C D A B",
-            "[list(g) for k, g in groupby('AAAABBBCCD')] --> AAAA BBB CC D",
-        ],
-    ),
-    citerable_or_clist=True,
-)
-def _build_groupby(name: str) -> Callable[..., Any]:
-    def groupby(
-        self: Template[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CIterableOrCList[Tuple[U, CIterableOrCList[T]]]:
-        cls = _get_citerable_or_clist(name)
-        return cls((k, cls(v)) for k, v in itertools.groupby(self, key=key))
-
-    return groupby
-
-
-@_defines_method_factory(
-    "\n".join(
-        [
-            "islice('ABCDEFG', 2) --> A B",
-            "islice('ABCDEFG', 2, 4) --> C D",
-            "islice('ABCDEFG', 2, None) --> C D E F G",
-            "islice('ABCDEFG', 0, None, 2) --> A C E G",
-        ],
-    ),
-)
-def _build_islice() -> Callable[..., CIterable]:
-    def islice(
-        self: Template[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        if (stop is None) and (step is not None):
-            raise StopArgumentMissing()
-        else:
-            return CIterable(
-                itertools.islice(
-                    self,
-                    start,
-                    *(() if stop is None else (stop,)),
-                    *(() if step is None else (step,)),
-                ),
-            )
-
-    return islice
-
-
-@_defines_method_factory(
-    "\n".join(
-        [
-            "permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC",
-            "permutations(range(3)) --> 012 021 102 120 201 210",
-        ],
-    ),
-    citerable_or_clist=True,
-)
-def _build_permutations(name: str) -> Callable[..., Iterable[CTuple]]:
-    def permutations(self: Template[T], r: Optional[int] = None) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(map(CTuple, itertools.permutations(self, r=r)))
-
-    return permutations
-
-
-@_defines_method_factory("Cartesian product of input iterables.", citerable_or_clist=True)
-def _build_product(name: str) -> Callable[..., Iterable[CTuple]]:
-    def product(
-        self: Template[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(
-            map(CTuple, itertools.product(self, *iterables, repeat=repeat)),
-        )
-
-    return product
-
-
-@_defines_method_factory("Repeat an element", citerable_or_clist=True)
-def _build_repeat(name: str) -> Callable[..., Iterable]:
-    if name == _CIterable:
-
-        def repeat(cls: Type[CIterable[T]], x: T, times: Optional[int] = None) -> CIterable[T]:
-            return CIterable(itertools.repeat(x, **({} if times is None else {"times": times})))
-
-    else:
-
-        def repeat(cls: Type[Template[T]], x: T, times: int) -> CList[T]:
-            return CList(itertools.repeat(x, times=times))
-
-    return repeat
-
-
-@_defines_method_factory("starmap(pow, [(2,5), (3,2), (10,3)]) --> 32 9 1000")
-def _build_starmap() -> Callable[Iterable]:
-    def starmap(self: Template[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> Template[U]:
-        return type(self)(itertools.starmap(func, self))
-
-    return starmap
-
-
-@_defines_method_factory(
-    "takewhile(lambda x: x<5, [1,4,6,4,1]) --> 1 4", citerable_or_clist=True,
-)
-def _build_takewhile(name: str) -> Callable[Iterable]:
-    def takewhile(self: Template[T], func: Callable[[T], bool]) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(itertools.takewhile(func, self))
-
-    return takewhile
-
-
-@_defines_method_factory("Return n independent iterators from a single iterable.")
-def _build_tee() -> Callable[..., CIterable[CIterable]]:
-    def tee(self: Template[T], n: int = 2) -> CIterable[CIterable[T]]:
-        return CIterable(map(CIterable, itertools.tee(self, n)))
-
-    return tee
-
-
-@_defines_method_factory(
-    "zip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-", citerable_or_clist=True,
-)
-def _build_zip_longest(name: str) -> Callable[..., Iterable[Tuple]]:
-    def zip_longest(
-        self: Template[T], *iterables: Iterable[U], fillvalue: V = None,
-    ) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(
-            map(CTuple, itertools.zip_longest(self, *iterables, fillvalue=fillvalue)),
-        )
-
-    return zip_longest
-
-
-# itertools-recipes
-
-
-@_defines_method_factory("Returns True if all the elements are equal to each other")
-def _build_all_equal() -> Callable[..., bool]:
-    def all_equal(self: Template[T]) -> bool:
-        return more_itertools.all_equal(self)
-
-    return all_equal
-
-
-@_defines_method_factory("Advance the iterator n-steps ahead. If n is None, consume entirely.")
-def _build_consume() -> Callable[..., CIterable]:
-    def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
-        iterator = iter(self)
-        more_itertools.consume(iterator, n=n)
-        return CIterable(iterator)
-
-    return consume
-
-
-@_defines_method_factory("Returns True if all the elements are equal to each other")
-def _build_dotproduct() -> Callable[..., Any]:
-    def dotproduct(self: Template[T], x: Iterable[T]) -> T:
-        return more_itertools.dotproduct(self, x)
-
-    return dotproduct
-
-
-@_defines_method_factory(
-    "Flatten one level of nesting", citerable_or_clist=True,
-)
-def _build_flatten(name: str) -> Callable[..., Iterable]:
-    def flatten(self: Template[Iterable[T]]) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(more_itertools.flatten(self))
-
-    return flatten
-
-
-@_defines_method_factory(
-    "Returns the sequence elements n times", citerable_or_clist=True,
-)
-def _build_ncycles(name: str) -> Callable[..., Iterable]:
-    def ncycles(self: Template[T], n: int) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(more_itertools.ncycles(self, n))
-
-    return ncycles
-
-
-@_defines_method_factory("Returns the nth item or a default value")
-def _build_nth() -> Callable[..., Any]:
-    def nth(self: Template[T], n: int, default: Optional[int] = None) -> T:
-        return more_itertools.nth(self, n, default=default)
-
-    return nth
-
-
-@_defines_method_factory(
-    "s -> (s0,s1), (s1,s2), (s2, s3), ...", citerable_or_clist=True,
-)
-def _build_pairwise(name: str) -> Callable[..., Iterable[CTuple]]:
-    def pairwise(self: Template[T]) -> CIterableOrCList[CTuple[T]]:
-        return _get_citerable_or_clist(name)(map(CTuple, more_itertools.pairwise(self)))
-
-    return pairwise
-
-
-@_defines_method_factory(
-    "prepend(1, [2, 3, 4]) -> 1 2 3 4", citerable_or_clist=True,
-)
-def _build_prepend(name: str) -> Callable[..., Iterable]:
-    def prepend(self: Template[T], value: U) -> CIterableOrCList[Union[T, U]]:
-        return _get_citerable_or_clist(name)(more_itertools.prepend(value, self))
-
-    return prepend
-
-
-@_defines_method_factory("Count how many times the predicate is true")
-def _build_quantify() -> Callable[..., int]:
-    def quantify(self: Template[T], pred: Callable[[T], bool] = bool) -> int:
-        return more_itertools.quantify(self, pred=pred)
-
-    return quantify
-
-
-@_defines_method_factory("Repeat calls to func with specified arguments", citerable_or_clist=True)
-def _build_repeatfunc(name: str) -> Callable[..., Iterable]:
-    if name == _CIterable:
-
-        def repeatfunc(
-            cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
-        ) -> CIterable[T]:
-            return CIterable(more_itertools.repeatfunc(func, times, *args))
-
-    else:
-
-        def repeatfunc(
-            cls: Type[Template], func: Callable[..., T], times: int, *args: Any,
-        ) -> CList[T]:
-            return CList(more_itertools.repeatfunc(func, times, *args))
-
-    return repeatfunc
-
-
-@_defines_method_factory(
-    "Return an iterator over the last n items", citerable_or_clist=True,
-)
-def _build_tail(name: str) -> Callable[..., Iterable]:
-    def tail(self: Template[T], n: int) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(more_itertools.tail(n, self))
-
-    return tail
-
-
-@_defines_method_factory(
-    "Return first n items of the iterable", citerable_or_clist=True,
-)
-def _build_take(name: str) -> Callable[..., Iterable]:
-    def take(self: Template[T], n: int) -> CIterableOrCList[T]:
-        return _get_citerable_or_clist(name)(more_itertools.take(n, self))
-
-    return take
-
-
-# more-itertools
-
-
-@_defines_method_factory(
-    "chunked([1, 2, 3, 4, 5, 6, 7, 8], 3) --> [[1, 2, 3], [4, 5, 6], [7, 8]]",
-    citerable_or_clist=True,
-)
-def _build_chunked(name: str) -> Callable[..., Iterable[Iterable]]:
-    def chunked(self: Template[T], n: int) -> CIterableOrCList[CIterableOrCList[T]]:
-        cls = _get_citerable_or_clist(name)
-        return cls(map(cls, more_itertools.chunked(self, n)))
-
-    return chunked
-
-
-@_defines_method_factory(
-    "distribute(3, [1, 2, 3, 4, 5, 6, 7]) --> [[1, 4, 7], [2, 5], [3, 6]]", citerable_or_clist=True,
-)
-def _build_distribute(name: str) -> Callable[..., Iterable[Iterable]]:
-    def distribute(self: Template[T], n: int) -> CIterableOrCList[CIterableOrCList[T]]:
-        cls = _get_citerable_or_clist(name)
-        return cls(map(cls, more_itertools.distribute(n, self)))
-
-    return distribute
-
-
-@_defines_method_factory(
-    "divide(3, [1, 2, 3, 4, 5, 6, 7]) --> [[1, 2, 3], [4, 5], [6, 7]]", citerable_or_clist=True,
-)
-def _build_divide(name: str) -> Callable[Iterable[Iterable]]:
-    def divide(self: Template[T], n: int) -> CIterableOrCList[CIterableOrCList[T]]:
-        cls = _get_citerable_or_clist(name)
-        return cls(map(cls, more_itertools.divide(n, list(self))))
-
-    return divide
-
-
-# multiprocessing
-
-
-@_defines_method_factory("Star_map over the elements of the {name} in parallel.")
-def _build_pstarmap() -> Callable[..., Iterable]:
-    def pstarmap(
-        self: Template[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> Template[U]:
-        try:
-            with Pool(processes=processes) as pool:
-                return type(self)(pool.starmap(func, self))
-        except AssertionError as error:
-            (msg,) = error.args
-            if msg == "daemonic processes are not allowed to have children":
-                return self.starmap(func)
-            else:
-                raise NotImplementedError(msg)
-
-    return pstarmap
-
-
-# pathlib
-
-
-@_defines_method_factory("Return a collection of paths as a {name}.")
-def _build_iterdir() -> Callable[..., Iterable[Path]]:
-    def iterdir(cls: Type[Template], path: Union[Path, str]) -> Template[Path]:
-        return cls(Path(path).iterdir())
-
-    return iterdir
-
-
-# classes
 
 
 class CIterable(Iterable[T]):
@@ -800,28 +202,13 @@ class CIterable(Iterable[T]):
     def range(  # noqa: A003
         cls: Type[CIterable], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CIterable[int]:
-        """
-        >>> CIterable.range(5).list()
-        [0, 1, 2, 3, 4]
-        >>> CIterable.range(1, 5).list()
-        [1, 2, 3, 4]
-        >>> CIterable.range(1, 5, 2).list()
-        [1, 3]
-        """
         if (stop is None) and (step is not None):
             raise ValueError("'stop' cannot be None if 'step' is provided")
         else:
-            return cls(
-                range(
-                    start, *(() if stop is None else (stop,)), *(() if step is None else (step,)),
-                ),
-            )
+            args, _ = drop_none(stop, step)
+            return cls(range(start, *args))
 
     def set(self: CIterable[T]) -> CSet[T]:  # noqa: A003
-        """
-        >>> CIterable([1, 2, 2, 3]).set()
-        CSet({1, 2, 3})
-        """
         return CSet(self)
 
     def sorted(  # noqa: A003
@@ -858,6 +245,8 @@ class CIterable(Iterable[T]):
         else:
             if isinstance(result, list):
                 return CList(result)
+            elif isinstance(result, tuple):
+                return CTuple(result)
             elif isinstance(result, set):
                 return CSet(result)
             elif isinstance(result, frozenset):
@@ -1175,13 +564,13 @@ class CList(List[T]):
     def list(self: CFrozenSet[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(
+    def map(  # noqa: A003
         self: CList[T],
         func: Callable[..., U],
         *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CList[U]:  # noqa: A003
+    ) -> CList[U]:
         return self.iter().map(func, *iterables, parallel=parallel, processes=processes).list()
 
     def max(  # noqa: A003
@@ -1204,14 +593,6 @@ class CList(List[T]):
     def range(  # noqa: A003
         cls: Type[CList], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CList[int]:
-        """
-        >>> CList.range(5)
-        [0, 1, 2, 3, 4]
-        >>> CList.range(1, 5)
-        [1, 2, 3, 4]
-        >>> CList.range(1, 5, 2)
-        [1, 3]
-        """
         return cls(CIterable.range(start, stop=stop, step=step))
 
     def reversed(self: CList[T]) -> CList[T]:  # noqa: A003
@@ -1778,13 +1159,13 @@ class CSet(Set[T]):
     def list(self: CSet[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(
+    def map(  # noqa: A003
         self: CSet[T],
         func: Callable[..., U],
         *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CSet[U]:  # noqa: A003
+    ) -> CSet[U]:
         return self.iter().map(func, *iterables, parallel=parallel, processes=processes).set()
 
     def max(  # noqa: A003
@@ -1823,8 +1204,8 @@ class CSet(Set[T]):
     def tuple(self: CSet[T]) -> CTuple[T]:  # noqa: A003
         return self.iter().tuple()
 
-    def zip(self: CSet[T], *iterables: Iterable[U]) -> CList[CTuple[Union[T, U]]]:  # noqa: A003
-        return self.iter().zip(*iterables).list()
+    def zip(self: CSet[T], *iterables: Iterable[U]) -> CSet[CTuple[Union[T, U]]]:  # noqa: A003
+        return self.iter().zip(*iterables).set()
 
     # set & frozenset methods
 
@@ -2092,14 +1473,6 @@ class CFrozenSet(FrozenSet[T]):
     def range(  # noqa: A003
         cls: Type[CFrozenSet], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CFrozenSet[int]:
-        """
-        >>> CFrozenSet.range(5)
-        CFrozenSet({0, 1, 2, 3, 4})
-        >>> CFrozenSet.range(1, 5)
-        CFrozenSet({1, 2, 3, 4})
-        >>> CFrozenSet.range(1, 5, 2)
-        CFrozenSet({1, 3})
-        """
         return cls(CIterable.range(start, stop=stop, step=step))
 
     def set(self: CFrozenSet[T]) -> CSet[T]:  # noqa: A003
@@ -2118,8 +1491,8 @@ class CFrozenSet(FrozenSet[T]):
 
     def zip(  # noqa: A003
         self: CFrozenSet[T], *iterables: Iterable[U],
-    ) -> CList[CTuple[Union[T, U]]]:
-        return self.iter().zip(*iterables).list()
+    ) -> CFrozenSet[CTuple[Union[T, U]]]:
+        return self.iter().zip(*iterables).frozenset()
 
     # set & frozenset methods
 
@@ -2334,37 +1707,46 @@ class CDict(Dict[T, U]):
         return self.items().filter(inner).dict()
 
     def map_keys(  # dead: disable
-        self: CDict[T, U], func: Callable[[T], V], *, parallel: bool = False,
+        self: CDict[T, U],
+        func: Callable[[T], V],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
     ) -> CDict[V, U]:
         """Map a function of the form key_0 -> key_1 over the keys."""
 
-        return self.items().map(partial(_apply_to_key, func=func), parallel=parallel).dict()
+        return (
+            self.items()
+            .map(partial(apply_to_key, func=func), parallel=parallel, processes=processes)
+            .dict()
+        )
 
     def map_values(
-        self: CDict[T, U], func: Callable[[U], V], *, parallel: bool = False,
+        self: CDict[T, U],
+        func: Callable[[U], V],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
     ) -> CDict[T, V]:
         """Map a function of the form value_0 -> value_1 over the values."""
 
-        return self.items().map(partial(_apply_to_value, func=func), parallel=parallel).dict()
+        return (
+            self.items()
+            .map(partial(apply_to_value, func=func), parallel=parallel, processes=processes)
+            .dict()
+        )
 
     def map_items(  # dead: disable
-        self: CDict[T, U], func: Callable[[T, U], Tuple[V, W]], *, parallel: bool = False,
+        self: CDict[T, U],
+        func: Callable[[T, U], Tuple[V, W]],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
     ) -> CDict[V, W]:
         """Map a function of the form (key_0, value_0) -> (key_1, value_1) over the items."""
 
-        return self.items().map(partial(_apply_to_item, func=func), parallel=parallel).dict()
-
-
-def _apply_to_key(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
-    key, value = item
-    return func(key), value
-
-
-def _apply_to_value(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
-    key, value = item
-    return key, func(value)
-
-
-def _apply_to_item(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
-    key, value = item
-    return func(key, value)
+        return (
+            self.items()
+            .map(partial(apply_to_item, func=func), parallel=parallel, processes=processes)
+            .dict()
+        )

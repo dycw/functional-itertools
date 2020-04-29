@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from operator import neg
 from re import escape
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
@@ -26,6 +27,7 @@ from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
 from functional_itertools import CTuple
+from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
@@ -34,7 +36,6 @@ from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import CLASSES
 from tests.strategies import get_cast
-from tests.strategies import ORDERED_CLASSES
 from tests.strategies import range_args
 from tests.strategies import real_iterables
 from tests.test_utilities import is_even
@@ -90,30 +91,32 @@ def test_frozenset(cls: Type, x: Iterable[int]) -> None:
     assert y == frozenset(y)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
-def test_iter(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).iter()
+def test_iter(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).iter()
     assert isinstance(y, CIterable)
-    cast = get_cast(cls)
-    assert cast(y) == cast(iter(x))
+    assert case.cast(y) == case.cast(iter(x))
 
 
-@mark.parametrize("cls", [cls for cls in CLASSES if cls is not CIterable])
+@mark.parametrize("cls", CLASSES)
 @given(x=real_iterables(integers()))
 def test_len(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).len()
-    assert isinstance(y, int)
-    assert y == len(x)
+    if cls is CIterable:
+        with raises(AttributeError, match="rst"):
+            cls(x).len()
+    else:
+        y = cls(x).len()
+        assert isinstance(y, int)
+        assert y == len(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
-def test_list(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).list()
+def test_list(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).list()
     assert isinstance(y, CList)
-    cast = get_cast(cls)
-    assert cast(y) == cast(x)
+    assert case.cast(y) == case.cast(x)
 
 
 @mark.parametrize("case", CASES)
@@ -176,32 +179,33 @@ def test_set(cls: Type, x: Iterable[int]) -> None:
     assert y == set(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), key=none() | just(neg), reverse=booleans())
 def test_sorted(
-    cls: Type, x: Iterable[int], key: Optional[Callable[[int], int]], reverse: bool,
+    case: Case, x: Iterable[int], key: Optional[Callable[[int], int]], reverse: bool,
 ) -> None:
-    y = cls(x).sorted(key=key, reverse=reverse)
+    y = case.cls(x).sorted(key=key, reverse=reverse)
     assert isinstance(y, CList)
-    if cls in ORDERED_CLASSES:
+    if case.ordered:
         assert y == sorted(x, key=key, reverse=reverse)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), start=integers() | just(sentinel))
-def test_sum(cls: Type, x: Iterable[int], start: Union[int, Sentinel]) -> None:
-    y = cls(x).sum(start=start)
+def test_sum(case: Case, x: Iterable[int], start: Union[int, Sentinel]) -> None:
+    y = case.cls(x).sum(start=start)
     assert isinstance(y, int)
-    if cls in ORDERED_CLASSES:
-        assert y == sum(x, *(() if start is sentinel else (start,)))
+    if case.ordered:
+        args, _ = drop_sentinel(start)
+        assert y == sum(x, *args)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
-def test_tuple(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).tuple()
+def test_tuple(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).tuple()
     assert isinstance(y, CTuple)
-    if cls in ORDERED_CLASSES:
+    if case.ordered:
         assert y == tuple(x)
 
 
@@ -209,7 +213,7 @@ def test_tuple(cls: Type, x: Iterable[int]) -> None:
 @given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
 def test_zip(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
     y = case.cls(x).zip(*xs)
-    assert isinstance(y, case.ordered_cls)
+    assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
