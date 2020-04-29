@@ -43,6 +43,8 @@ from functional_itertools import CList
 from functional_itertools import CTuple
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from tests.strategies import Case
+from tests.strategies import CASES
 from tests.strategies import CLASSES
 from tests.strategies import get_cast
 from tests.strategies import islice_ints
@@ -52,18 +54,18 @@ from tests.strategies import real_iterables
 from tests.test_utilities import is_even
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(
     x=real_iterables(integers()),
     initial=just({})
     if VERSION is Version.py37
     else fixed_dictionaries({"initial": none() | integers()}),
 )
-def test_accumulate(cls: Type, x: Iterable[int], initial: Dict[str, Any]) -> None:
-    y = cls(x).accumulate(add, **initial)
-    assert isinstance(y, CIterable if cls is CIterable else CList)
-    if cls in ORDERED_CLASSES:
-        assert list(y) == list(accumulate(x, add, **initial))
+def test_accumulate(case: Case, x: Iterable[int], initial: Dict[str, Any]) -> None:
+    y = case.cls(x).accumulate(add, **initial)
+    assert isinstance(y, case.ordered_cls)
+    if case.ordered:
+        assert case.cast(y) == case.cast(accumulate(x, add, **initial))
 
 
 @mark.parametrize("cls", CLASSES)

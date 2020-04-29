@@ -37,6 +37,10 @@ class Case:
     cast: Type
     ordered: bool
 
+    @property
+    def ordered_cls(self: Case) -> Type:
+        return self.cls if self.ordered else CList
+
 
 CASES = [
     Case(cls=CIterable, cast=list, ordered=True),

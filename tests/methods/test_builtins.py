@@ -6,7 +6,6 @@ from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import Optional
-from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -17,7 +16,6 @@ from hypothesis.strategies import fixed_dictionaries
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import none
-from hypothesis.strategies import sets
 from hypothesis.strategies import tuples
 from pytest import mark
 from pytest import raises
@@ -32,6 +30,8 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
+from tests.strategies import Case
+from tests.strategies import CASES
 from tests.strategies import CLASSES
 from tests.strategies import get_cast
 from tests.strategies import ORDERED_CLASSES
@@ -56,31 +56,30 @@ def test_any(cls: Type, x: Iterable[bool]) -> None:
     assert y == any(x)
 
 
-@mark.parametrize("cls", CLASSES)
-@given(x=sets(tuples(integers(), integers())))
-def test_dict(cls: Type, x: Set[Tuple[int, int]]) -> None:
-    y = cls(x).dict()
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(tuples(integers(), integers())))
+def test_dict(case: Case, x: Iterable[Tuple[int, int]]) -> None:
+    y = case.cls(x).dict()
     assert isinstance(y, CDict)
-    if cls in ORDERED_CLASSES:
+    if case.ordered:
         assert y == dict(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), start=integers())
-def test_enumerate(cls: Type, x: Iterable[int], start: int) -> None:
-    y = cls(x).enumerate(start=start)
-    assert isinstance(y, CIterable if cls is CIterable else CList)
-    if cls in ORDERED_CLASSES:
-        assert list(y) == list(enumerate(x, start=start))
+def test_enumerate(case: Case, x: Iterable[int], start: int) -> None:
+    y = case.cls(x).enumerate(start=start)
+    assert isinstance(y, case.cls)
+    if case.ordered:
+        assert case.cast(y) == case.cast(enumerate(x, start=start))
 
 
-@mark.parametrize("cls", CLASSES)
-@given(x=sets(integers()))
-def test_filter(cls: Type, x: Set[int]) -> None:
-    y = cls(x).filter(is_even)
-    assert isinstance(y, cls)
-    cast = get_cast(cls)
-    assert cast(y) == cast(filter(is_even, x))
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()))
+def test_filter(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).filter(is_even)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(filter(is_even, x))
 
 
 @mark.parametrize("cls", CLASSES)
@@ -101,12 +100,11 @@ def test_iter(cls: Type, x: Iterable[int]) -> None:
 
 
 @mark.parametrize("cls", [cls for cls in CLASSES if cls is not CIterable])
-@given(x=sets(integers()))
-def test_len(cls: Type, x: Set[int]) -> None:
+@given(x=real_iterables(integers()))
+def test_len(cls: Type, x: Iterable[int]) -> None:
     y = cls(x).len()
     assert isinstance(y, int)
-    if cls in ORDERED_CLASSES:
-        assert y == len(x)
+    assert y == len(x)
 
 
 @mark.parametrize("cls", CLASSES)
@@ -118,13 +116,13 @@ def test_list(cls: Type, x: Iterable[int]) -> None:
     assert cast(y) == cast(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=real_iterables(integers()))
-def test_map(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).map(neg)
-    assert isinstance(y, cls)
-    cast = get_cast(cls)
-    assert cast(y) == cast(map(neg, x))
+def test_map(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
+    y = case.cls(x).map(neg, **kwargs)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(map(neg, x))
 
 
 @mark.parametrize("cls", CLASSES)
@@ -207,13 +205,13 @@ def test_tuple(cls: Type, x: Iterable[int]) -> None:
         assert y == tuple(x)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
-def test_zip(cls: Type, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
-    y = cls(x).zip(*xs)
-    assert isinstance(y, CIterable if cls is CIterable else CList)
+def test_zip(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
+    y = case.cls(x).zip(*xs)
+    assert isinstance(y, case.ordered_cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if cls in ORDERED_CLASSES:
-        assert z == list(zip(x, *xs))
+    if case.ordered:
+        assert case.cast(z) == case.cast(zip(x, *xs))

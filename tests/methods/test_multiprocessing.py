@@ -18,15 +18,6 @@ from tests.strategies import real_iterables
 
 
 @mark.parametrize("cls", CLASSES)
-@given(x=real_iterables(integers(), max_size=10))
-def test_pmap(cls: Type, x: Iterable[int]) -> None:
-    y = cls(x).pmap(neg, processes=1)
-    assert isinstance(y, cls)
-    cast = get_cast(cls)
-    assert cast(y) == cast(map(neg, x))
-
-
-@mark.parametrize("cls", CLASSES)
 @given(
     x=real_iterables(real_iterables(integers(), min_size=1, max_size=10), min_size=1, max_size=10),
 )
