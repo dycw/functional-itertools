@@ -39,17 +39,32 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # helper functions
 
 
-def help_cdict_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
+def help_filter_keys(item: Tuple[T, Any], *, func: Callable[[T], bool]) -> bool:
+    key, _ = item
+    return func(key)
+
+
+def help_filter_values(item: Tuple[Any, U], *, func: Callable[[U], bool]) -> bool:
+    _, value = item
+    return func(value)
+
+
+def help_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> bool:
+    key, value = item
+    return func(key, value)
+
+
+def help_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
     key, value = item
     return func(key), value
 
 
-def help_cdict_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
+def help_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
     key, value = item
     return key, func(value)
 
 
-def help_cdict_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
+def help_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
     key, value = item
     return func(key, value)
 

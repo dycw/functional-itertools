@@ -101,14 +101,15 @@ def test_iter(case: Case, x: Iterable[int]) -> None:
 @mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()))
 def test_len(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x)
     if case.cls is CIterable:
         with raises(AttributeError, match="'CIterable' object has no attribute 'len'"):
-            case.cls(x).len()
+            y.len()
     else:
-        y = case.cls(x).len()
-        assert isinstance(y, int)
+        z = y.len()
+        assert isinstance(z, int)
         if case.ordered:
-            assert y == len(x)
+            assert z == len(x)
 
 
 @mark.parametrize("case", CASES)
