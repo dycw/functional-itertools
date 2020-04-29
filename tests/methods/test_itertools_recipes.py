@@ -22,6 +22,7 @@ from more_itertools import all_equal
 from more_itertools import consume
 from more_itertools import dotproduct
 from more_itertools import flatten
+from more_itertools import grouper
 from more_itertools import ncycles
 from more_itertools import nth
 from more_itertools import padnone
@@ -34,7 +35,9 @@ from more_itertools import tail
 from more_itertools import take
 from pytest import mark
 
+from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
+from functional_itertools import CSet
 from functional_itertools import CTuple
 from tests.strategies import Case
 from tests.strategies import CASES
@@ -79,6 +82,22 @@ def test_flatten(case: Case, x: Iterable[Iterable[int]]) -> None:
     assert isinstance(y, case.cls)
     if case.ordered:
         assert case.cast(y) == case.cast(flatten(x))
+
+
+@mark.parametrize("case", CASES)
+@given(
+    x=real_iterables(integers()), n=integers(0, 1000), fillvalue=none() | integers(),
+)
+def test_grouper(case: Case, x: Iterable[int], n: int, fillvalue: Optional[int]) -> None:
+    y = case.cls(x).grouper(n, fillvalue=fillvalue)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CFrozenSet if case.cls is CSet else case.cls)
+    if case.ordered:
+        assert case.cast(map(case.cast, z)) == case.cast(
+            map(case.cast, grouper(x, n, fillvalue=fillvalue)),
+        )
 
 
 @mark.parametrize("case", CASES)

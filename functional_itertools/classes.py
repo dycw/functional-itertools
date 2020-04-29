@@ -371,6 +371,11 @@ class CIterable(Iterable[T]):
     def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
         return CIterable(flatten(self))
 
+    def grouper(
+        self: CIterable[T], n: int, fillvalue: U = None,
+    ) -> CIterable[CIterable[Union[T, U]]]:
+        return CIterable(grouper(self, n, fillvalue=fillvalue)).map(CIterable)
+
     def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(ncycles(self, n))
 
@@ -404,11 +409,6 @@ class CIterable(Iterable[T]):
 
     def take(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(take(n, self))
-
-    def grouper(
-        self: CIterable[T], n: int, fillvalue: U = None,
-    ) -> CIterable[Tuple[Union[T, U], ...]]:
-        return CIterable(grouper(self, n, fillvalue=fillvalue))
 
     def partition(
         self: CIterable[T], func: Callable[[T], bool],
@@ -732,6 +732,11 @@ class CList(List[T]):
     def flatten(self: CList[Iterable[T]]) -> CList[T]:
         return self.iter().flatten().list()
 
+    def grouper(
+        self: CList[T], n: int, fillvalue: Optional[T] = None,
+    ) -> CList[CList[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).map(CList).list()
+
     def ncycles(self: CList[T], n: int) -> CList[T]:
         return self.iter().ncycles(n).list()
 
@@ -761,11 +766,6 @@ class CList(List[T]):
 
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
-
-    def grouper(
-        self: CList[T], n: int, fillvalue: Optional[T] = None,
-    ) -> CList[Tuple[Union[T, U], ...]]:
-        return self.iter().grouper(n, fillvalue=fillvalue).list()
 
     def partition(self: CList[T], func: Callable[[T], bool]) -> Tuple[CList[T], CList[T]]:
         return self.iter().partition(func).map(CList).tuple()
@@ -1047,6 +1047,11 @@ class CTuple(tuple, Generic[T]):
     def flatten(self: CTuple[Iterable[T]]) -> CTuple[T]:
         return self.iter().flatten().tuple()
 
+    def grouper(
+        self: CTuple[T], n: int, fillvalue: Optional[T] = None,
+    ) -> CTuple[CTuple[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).map(CTuple).tuple()
+
     def ncycles(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().ncycles(n).tuple()
 
@@ -1076,11 +1081,6 @@ class CTuple(tuple, Generic[T]):
 
     def take(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().take(n).tuple()
-
-    def grouper(
-        self: CTuple[T], n: int, fillvalue: Optional[T] = None,
-    ) -> CTuple[Tuple[Union[T, U], ...]]:
-        return self.iter().grouper(n, fillvalue=fillvalue).tuple()
 
     def partition(self: CTuple[T], func: Callable[[T], bool]) -> Tuple[CTuple[T], CTuple[T]]:
         return self.iter().partition(func).map(CTuple).tuple()
@@ -1406,6 +1406,11 @@ class CSet(Set[T]):
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
 
+    def grouper(
+        self: CSet[T], n: int, fillvalue: Optional[T] = None,
+    ) -> CSet[CFrozenSet[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).map(CFrozenSet).set()
+
     def ncycles(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().ncycles(n).set()
 
@@ -1679,6 +1684,11 @@ class CFrozenSet(FrozenSet[T]):
 
     def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
         return self.iter().flatten().frozenset()
+
+    def grouper(
+        self: CFrozenSet[T], n: int, fillvalue: Optional[T] = None,
+    ) -> CFrozenSet[CFrozenSet[Union[T, U]]]:
+        return self.iter().grouper(n, fillvalue=fillvalue).map(CFrozenSet).frozenset()
 
     def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().ncycles(n).frozenset()
