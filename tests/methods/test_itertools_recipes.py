@@ -5,36 +5,39 @@ from itertools import islice
 from operator import add
 from operator import neg
 from sys import maxsize
+from typing import Callable
 from typing import Iterable
 from typing import List
 from typing import Optional
-from typing import Set
 from typing import Tuple
 
 from hypothesis import given
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
+from hypothesis.strategies import just
 from hypothesis.strategies import none
-from hypothesis.strategies import sets
 from hypothesis.strategies import tuples
-from more_itertools import all_equal
-from more_itertools import consume
-from more_itertools import dotproduct
-from more_itertools import flatten
-from more_itertools import grouper
-from more_itertools import ncycles
-from more_itertools import nth
-from more_itertools import padnone
-from more_itertools import pairwise
-from more_itertools import partition
-from more_itertools import powerset
-from more_itertools import prepend
-from more_itertools import quantify
-from more_itertools import repeatfunc
-from more_itertools import tabulate
-from more_itertools import tail
-from more_itertools import take
+from more_itertools.recipes import all_equal
+from more_itertools.recipes import consume
+from more_itertools.recipes import dotproduct
+from more_itertools.recipes import flatten
+from more_itertools.recipes import grouper
+from more_itertools.recipes import ncycles
+from more_itertools.recipes import nth
+from more_itertools.recipes import padnone
+from more_itertools.recipes import pairwise
+from more_itertools.recipes import partition
+from more_itertools.recipes import powerset
+from more_itertools.recipes import prepend
+from more_itertools.recipes import quantify
+from more_itertools.recipes import repeatfunc
+from more_itertools.recipes import roundrobin
+from more_itertools.recipes import tabulate
+from more_itertools.recipes import tail
+from more_itertools.recipes import take
+from more_itertools.recipes import unique_everseen
+from more_itertools.recipes import unique_justseen
 from pytest import mark
 
 from functional_itertools import CIterable
@@ -178,8 +181,8 @@ def test_prepend(case: Case, x: Iterable[int], value: int) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=sets(integers()))
-def test_quantify(case: Case, x: Set[int]) -> None:
+@given(x=real_iterables(integers()))
+def test_quantify(case: Case, x: Iterable[int]) -> None:
     y = case.cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
     assert y == quantify(x, pred=is_even)
@@ -200,6 +203,14 @@ def test_repeatfunc(case: Case, data: DataObject, n: int) -> None:
         assert case.cast(y[:n]) == case.cast(islice(z, n))
     else:
         assert case.cast(y) == case.cast(z)
+
+
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
+def test_roundrobin(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
+    y = case.cls(x).roundrobin(*xs)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(roundrobin(x, *xs))
 
 
 @given(start=integers(), n=islice_ints)
@@ -225,3 +236,25 @@ def test_take(case: Case, x: Iterable[int], n: int) -> None:
     assert isinstance(y, case.cls)
     if case.ordered:
         assert case.cast(y) == case.cast(take(n, x))
+
+
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()), key=none() | just(neg))
+def test_unique_everseen(
+    case: Case, x: Iterable[int], key: Optional[Callable[[int], int]],
+) -> None:
+    y = case.cls(x).unique_everseen(key=key)
+    assert isinstance(y, case.cls)
+    if case.ordered:
+        assert case.cast(y) == case.cast(unique_everseen(x, key=key))
+
+
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()), key=none() | just(neg))
+def test_unique_justseen(
+    case: Case, x: Iterable[int], key: Optional[Callable[[int], int]],
+) -> None:
+    y = case.cls(x).unique_justseen(key=key)
+    assert isinstance(y, case.cls)
+    if case.ordered:
+        assert case.cast(y) == case.cast(unique_justseen(x, key=key))

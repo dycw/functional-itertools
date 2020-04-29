@@ -38,9 +38,7 @@ from hypothesis.strategies import none
 from hypothesis.strategies import tuples
 from pytest import mark
 
-from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
-from functional_itertools import CSet
 from functional_itertools import CTuple
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import VERSION
@@ -147,13 +145,14 @@ def test_filterfalse(case: Case, x: Iterable[int]) -> None:
 def test_groupby(case: Case, x: Iterable[int], key: Optional[Callable[[int], int]]) -> None:
     y = case.cls(x).groupby(key=key)
     assert isinstance(y, case.cls)
-    for yi in y:
-        assert isinstance(yi, tuple)
-        k, v = yi
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, tuple)
+        k, v = zi
         assert isinstance(k, int)
-        assert isinstance(v, CFrozenSet if case.cls is CSet else case.cls)
+        assert isinstance(v, CTuple)
     if case.ordered:
-        assert [(k, case.cast(v)) for k, v in case.cls(x).groupby(key=key)] == [
+        assert [(k, case.cast(v)) for k, v in z] == [
             (k, case.cast(v)) for k, v in groupby(x, key=key)
         ]
 
@@ -238,9 +237,9 @@ def test_takewhile(case: Case, x: Iterable[int]) -> None:
 @given(x=real_iterables(integers()), n=integers(0, 10))
 def test_tee(case: Case, x: Iterable[int], n: int) -> None:
     y = case.cls(x).tee(n=n)
-    assert isinstance(y, case.cls)
+    assert isinstance(y, CIterable)
     for yi in y:
-        assert isinstance(yi, CFrozenSet if case.cls is CSet else case.cls)
+        assert isinstance(yi, CIterable)
 
 
 @mark.parametrize("case", CASES)

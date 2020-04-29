@@ -81,7 +81,6 @@ from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import help_cdict_map_items
 from functional_itertools.utilities import help_cdict_map_keys
 from functional_itertools.utilities import help_cdict_map_values
-from functional_itertools.utilities import help_groupby
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import suppress_daemonic_processes_with_children
@@ -305,8 +304,12 @@ class CIterable(Iterable[T]):
 
     def groupby(
         self: CIterable[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CIterable[Tuple[U, CIterable[T]]]:
-        return CIterable(groupby(self, key=key)).map(partial(help_groupby, cls=CIterable))
+    ) -> CIterable[Tuple[U, CTuple[T]]]:
+        def inner(pair: Tuple[T, Iterable[T]]) -> Tuple[T, CTuple[T]]:
+            key, group = pair
+            return key, CTuple(group)
+
+        return CIterable(groupby(self, key=key)).map(inner)
 
     def islice(
         self: CIterable[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -347,7 +350,7 @@ class CIterable(Iterable[T]):
     def takewhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(takewhile(func, self))
 
-    def tee(self: CIterable[T], n: int = 2) -> CIterable[Iterator[T]]:
+    def tee(self: CIterable[T], n: int = 2) -> CIterable[CIterable[T]]:
         return CIterable(tee(self, n)).map(CIterable)
 
     def zip_longest(
@@ -404,6 +407,9 @@ class CIterable(Iterable[T]):
     ) -> CIterable[T]:
         return cls(repeatfunc(func, times, *args))
 
+    def roundrobin(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
+        return CIterable(roundrobin(self, *iterables))
+
     @classmethod
     def tabulate(cls: Type[CIterable], func: Callable[[int], T], start: int = 0) -> CIterable[T]:
         return cls(tabulate(func, start=start))
@@ -414,11 +420,6 @@ class CIterable(Iterable[T]):
     def take(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(take(n, self))
 
-    # zzz untested
-
-    def roundrobin(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Tuple[T, U]]:
-        return CIterable(roundrobin(self, *iterables))
-
     def unique_everseen(
         self: CIterable[T], key: Optional[Callable[[T], Any]] = None,
     ) -> CIterable[T]:
@@ -428,6 +429,8 @@ class CIterable(Iterable[T]):
         self: CIterable[T], key: Optional[Callable[[T], Any]] = None,
     ) -> CIterable[T]:
         return CIterable(unique_justseen(self, key=key))
+
+    # zzz untested
 
     @classmethod
     def iter_except(
@@ -676,8 +679,8 @@ class CList(List[T]):
 
     def groupby(
         self: CList[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CList[Tuple[U, CList[T]]]:
-        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CList)).list()
+    ) -> CList[Tuple[U, CTuple[T]]]:
+        return self.iter().groupby(key=key).list()
 
     def islice(
         self: CList[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -708,8 +711,8 @@ class CList(List[T]):
     def takewhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
         return self.iter().takewhile(func).list()
 
-    def tee(self: CList[T], n: int = 2) -> CList[CList[T]]:
-        return self.iter().tee(n=n).map(CList).list()
+    def tee(self: CList[T], n: int = 2) -> CIterable[CIterable[T]]:
+        return self.iter().tee(n=n)
 
     def zip_longest(
         self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -765,14 +768,14 @@ class CList(List[T]):
     ) -> CList[T]:
         return CIterable.repeatfunc(func, times, *args).list()
 
+    def roundrobin(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
+        return self.iter().roundrobin(*iterables).list()
+
     def tail(self: CList[T], n: int) -> CList[T]:
         return self.iter().tail(n).list()
 
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
-
-    def roundrobin(self: CList[T], *iterables: Iterable[U]) -> CList[Tuple[T, U]]:
-        return self.iter().roundrobin(*iterables).list()
 
     def unique_everseen(self: CList[T], key: Optional[Callable[[T], Any]] = None) -> CList[T]:
         return self.iter().unique_everseen(key=key).list()
@@ -992,7 +995,7 @@ class CTuple(tuple, Generic[T]):
     def groupby(
         self: CTuple[T], key: Optional[Callable[[T], U]] = None,
     ) -> CTuple[Tuple[U, CTuple[T]]]:
-        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CTuple)).tuple()
+        return self.iter().groupby(key=key).tuple()
 
     def islice(
         self: CTuple[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -1023,8 +1026,8 @@ class CTuple(tuple, Generic[T]):
     def takewhile(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().takewhile(func).tuple()
 
-    def tee(self: CTuple[T], n: int = 2) -> CTuple[CTuple[T]]:
-        return self.iter().tee(n=n).map(CTuple).tuple()
+    def tee(self: CTuple[T], n: int = 2) -> CIterable[CIterable[T]]:
+        return self.iter().tee(n=n)
 
     def zip_longest(
         self: CTuple[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -1080,14 +1083,14 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[T]:
         return CIterable.repeatfunc(func, times, *args).tuple()
 
+    def roundrobin(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
+        return self.iter().roundrobin(*iterables).tuple()
+
     def tail(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().tail(n).tuple()
 
     def take(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().take(n).tuple()
-
-    def roundrobin(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Tuple[T, U]]:
-        return self.iter().roundrobin(*iterables).tuple()
 
     def unique_everseen(self: CTuple[T], key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
         return self.iter().unique_everseen(key=key).tuple()
@@ -1350,8 +1353,8 @@ class CSet(Set[T]):
 
     def groupby(
         self: CSet[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CSet[Tuple[U, CFrozenSet[T]]]:
-        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CFrozenSet)).set()
+    ) -> CSet[Tuple[U, CTuple[T]]]:
+        return self.iter().groupby(key=key).set()
 
     def islice(
         self: CSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -1382,8 +1385,8 @@ class CSet(Set[T]):
     def takewhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
         return self.iter().takewhile(func).set()
 
-    def tee(self: CSet[T], n: int = 2) -> CSet[CFrozenSet[T]]:
-        return self.iter().tee(n=n).map(CFrozenSet).set()
+    def tee(self: CSet[T], n: int = 2) -> CIterable[CIterable[T]]:
+        return self.iter().tee(n=n)
 
     def zip_longest(
         self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -1437,11 +1440,20 @@ class CSet(Set[T]):
     ) -> CSet[T]:
         return CIterable.repeatfunc(func, times, *args).set()
 
+    def roundrobin(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
+        return self.iter().roundrobin(*iterables).set()
+
     def tail(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().tail(n).set()
 
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
+
+    def unique_everseen(self: CSet[T], key: Optional[Callable[[T], Any]] = None) -> CSet[T]:
+        return self.iter().unique_everseen(key=key).set()
+
+    def unique_justseen(self: CSet[T], key: Optional[Callable[[T], Any]] = None) -> CSet[T]:
+        return self.iter().unique_justseen(key=key).set()
 
     # more-itertools
 
@@ -1634,8 +1646,8 @@ class CFrozenSet(FrozenSet[T]):
 
     def groupby(
         self: CFrozenSet[T], key: Optional[Callable[[T], U]] = None,
-    ) -> CFrozenSet[Tuple[U, CFrozenSet[T]]]:
-        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CFrozenSet)).frozenset()
+    ) -> CFrozenSet[Tuple[U, CTuple[T]]]:
+        return self.iter().groupby(key=key).frozenset()
 
     def islice(
         self: CFrozenSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -1666,8 +1678,8 @@ class CFrozenSet(FrozenSet[T]):
     def takewhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().takewhile(func).frozenset()
 
-    def tee(self: CFrozenSet[T], n: int = 2) -> CFrozenSet[CFrozenSet[T]]:
-        return self.iter().tee(n=n).map(CFrozenSet).frozenset()
+    def tee(self: CFrozenSet[T], n: int = 2) -> CIterable[CIterable[T]]:
+        return self.iter().tee(n=n)
 
     def zip_longest(
         self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
@@ -1722,11 +1734,24 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[T]:
         return CIterable.repeatfunc(func, times, *args).frozenset()
 
+    def roundrobin(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
+        return self.iter().roundrobin(*iterables).frozenset()
+
     def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().tail(n).frozenset()
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().take(n).frozenset()
+
+    def unique_everseen(
+        self: CFrozenSet[T], key: Optional[Callable[[T], Any]] = None,
+    ) -> CFrozenSet[T]:
+        return self.iter().unique_everseen(key=key).frozenset()
+
+    def unique_justseen(
+        self: CFrozenSet[T], key: Optional[Callable[[T], Any]] = None,
+    ) -> CFrozenSet[T]:
+        return self.iter().unique_justseen(key=key).frozenset()
 
     # more-itertools
 

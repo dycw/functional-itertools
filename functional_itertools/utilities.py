@@ -8,8 +8,6 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generator
-from typing import Iterable
-from typing import Iterator
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -39,11 +37,6 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 
 
 # helper functions
-
-
-def help_groupby(x: Tuple[U, Iterator[T]], *, cls: Type) -> Tuple[U, Iterable[T]]:
-    key, group = x
-    return key, cls(group)
 
 
 def help_cdict_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
