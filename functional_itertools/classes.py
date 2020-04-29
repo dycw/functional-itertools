@@ -73,13 +73,15 @@ from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
-from functional_itertools.utilities import apply_to_item
-from functional_itertools.utilities import apply_to_key
-from functional_itertools.utilities import apply_to_value
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
+from functional_itertools.utilities import help_cdict_map_items
+from functional_itertools.utilities import help_cdict_map_keys
+from functional_itertools.utilities import help_cdict_map_values
+from functional_itertools.utilities import help_groupby
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
+from functional_itertools.utilities import suppress_daemonic_processes_with_children
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from functional_itertools.utilities import warn_non_functional
@@ -123,18 +125,18 @@ class CIterable(Iterable[T]):
     def __iter__(self: CIterable[T]) -> Iterator[T]:
         yield from self._iterable
 
-    def __repr__(self: CIterable[Any]) -> str:
+    def __repr__(self: CIterable) -> str:
         return f"{type(self).__name__}({self._iterable!r})"
 
-    def __str__(self: CIterable[Any]) -> str:
+    def __str__(self: CIterable) -> str:
         return f"{type(self).__name__}({self._iterable})"
 
     # built-in
 
-    def all(self: CIterable[Any]) -> bool:  # noqa: A003
+    def all(self: CIterable) -> bool:  # noqa: A003
         return all(self)
 
-    def any(self: CIterable[Any]) -> bool:  # noqa: A003
+    def any(self: CIterable) -> bool:  # noqa: A003
         return any(self)
 
     def dict(self: CIterable[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
@@ -172,11 +174,8 @@ class CIterable(Iterable[T]):
                     with Pool(processes=processes) as pool:
                         return CIterable(pool.map(func, self))
                 except AssertionError as error:
-                    (msg,) = error.args
-                    if msg == "daemonic processes are not allowed to have children":
+                    with suppress_daemonic_processes_with_children(error):
                         return self.map(func)
-                    else:
-                        raise error
         else:
             return CIterable(map(func, self, *iterables))
 
@@ -285,19 +284,15 @@ class CIterable(Iterable[T]):
     def combinations_with_replacement(self: CIterable[T], r: int) -> CIterable[CTuple[T]]:
         return CIterable(combinations_with_replacement(self, r)).map(CTuple)
 
+    def compress(self: CIterable[T], selectors: Iterable) -> CIterable[T]:
+        return CIterable(compress(self, selectors))
+
     @classmethod
     def count(cls: Type[CIterable], start: int = 0, step: int = 1) -> CIterable[int]:
         return cls(count(start=start, step=step))
 
     def cycle(self: CIterable[T]) -> CIterable[T]:
         return CIterable(cycle(self))
-
-    @classmethod
-    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
-        return cls(repeat(x, *(() if times is None else (times,))))
-
-    def compress(self: CIterable[T], selectors: Iterable[Any]) -> CIterable[T]:
-        return CIterable(compress(self, selectors))
 
     def dropwhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(dropwhile(func, self))
@@ -308,25 +303,43 @@ class CIterable(Iterable[T]):
     def groupby(
         self: CIterable[T], key: Optional[Callable[[T], U]] = None,
     ) -> CIterable[Tuple[U, CIterable[T]]]:
-        def inner(x: Tuple[U, Iterator[T]]) -> Tuple[U, CIterable[T]]:
-            key, group = x
-            return key, CIterable(group)
-
-        return CIterable(groupby(self, key=key)).map(inner)
+        return CIterable(groupby(self, key=key)).map(partial(help_groupby, cls=CIterable))
 
     def islice(
-        self: CIterable[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
+        self: CIterable[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CIterable[T]:
-        args, _ = drop_sentinel(stop, step)
+        args, _ = drop_none(stop, step)
         return CIterable(islice(self, start, *args))
 
+    def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[CTuple[T, ...]]:
+        return CIterable(permutations(self, r=r)).map(CTuple)
+
+    def product(
+        self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CIterable[CTuple[Union[T, U]]]:
+        return CIterable(product(self, *iterables, repeat=repeat)).map(CTuple)
+
+    @classmethod
+    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
+        args, _ = drop_none(times)
+        return cls(repeat(x, *args))
+
     def starmap(
-        self: CIterable[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
+        self: CIterable[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
     ) -> CIterable[U]:
-        return CIterable(starmap(func, self))
+        if parallel:
+            try:
+                with Pool(processes=processes) as pool:
+                    return CIterable(pool.starmap(func, self))
+            except AssertionError as error:
+                with suppress_daemonic_processes_with_children(error):
+                    return self.starmap(func)
+        else:
+            return CIterable(starmap(func, self))
 
     def takewhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(takewhile(func, self))
@@ -338,14 +351,6 @@ class CIterable(Iterable[T]):
         self: CIterable[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CIterable[Tuple[Union[T, U, V]]]:
         return CIterable(zip_longest(self, *iterables, fillvalue=fillvalue))
-
-    def product(
-        self: CIterable[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CIterable[Tuple[Union[T, U], ...]]:
-        return CIterable(product(self, *iterables, repeat=repeat))
-
-    def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[Tuple[T, ...]]:
-        return CIterable(permutations(self, r=r))
 
     # itertools-recipes
 
@@ -370,7 +375,7 @@ class CIterable(Iterable[T]):
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self, n, default=default)
 
-    def all_equal(self: CIterable[Any]) -> bool:
+    def all_equal(self: CIterable) -> bool:
         return all_equal(self)
 
     def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
@@ -456,7 +461,7 @@ class CIterable(Iterable[T]):
 
     # multiprocessing
 
-    def pmap(
+    def pmap(  # dead: disable
         self: CIterable[T], func: Callable[[T], U], *, processes: Optional[int] = None,
     ) -> CIterable[U]:
         warn(
@@ -466,14 +471,18 @@ class CIterable(Iterable[T]):
         )
         return self.map(func, parallel=True, processes=processes)
 
-    def pstarmap(
+    def pstarmap(  # dead: disable
         self: CIterable[Tuple[T, ...]],
         func: Callable[[Tuple[T, ...]], U],
         *,
         processes: Optional[int] = None,
     ) -> CIterable[U]:
-        with Pool(processes=processes) as pool:
-            return CIterable(pool.starmap(func, self))
+        warn(
+            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -644,11 +653,7 @@ class CList(List[T]):
     def combinations_with_replacement(self: CList[T], r: int) -> CList[CTuple[T]]:
         return self.iter().combinations_with_replacement(r).list()
 
-    @classmethod
-    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    def compress(self: CList[T], selectors: Iterable[Any]) -> CList[T]:
+    def compress(self: CList[T], selectors: Iterable) -> CList[T]:
         return self.iter().compress(selectors).list()
 
     def dropwhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
@@ -660,18 +665,33 @@ class CList(List[T]):
     def groupby(
         self: CList[T], key: Optional[Callable[[T], U]] = None,
     ) -> CList[Tuple[U, CList[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CList(x[1]))).list()
+        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CList)).list()
 
     def islice(
-        self: CList[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CList[T]:
-        return self.iter().islice(start, stop=stop, step=step).list()
+        self: CList[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+    ) -> CIterable[T]:
+        return self.iter().islice(start, stop=stop, step=step)
 
-    def starmap(self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CList[U]:
-        return self.iter().starmap(func).list()
+    def permutations(self: CList[T], r: Optional[int] = None) -> CList[CTuple[T]]:
+        return self.iter().permutations(r=r).list()
+
+    def product(
+        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CList[CTuple[Union[T, U]]]:
+        return self.iter().product(*iterables, repeat=repeat).list()
+
+    @classmethod
+    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
+        return cls(CIterable.repeat(x, times=times))
+
+    def starmap(
+        self: CList[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> CList[U]:
+        return self.iter().starmap(func, parallel=parallel, processes=processes).list()
 
     def takewhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
         return self.iter().takewhile(func).list()
@@ -683,14 +703,6 @@ class CList(List[T]):
         self: CList[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CList[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
-
-    def product(
-        self: CList[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CList[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).list()
-
-    def permutations(self: CList[T], r: Optional[int] = None) -> CList[Tuple[T, ...]]:
-        return self.iter().permutations(r=r).list()
 
     # itertools-recipes
 
@@ -786,7 +798,7 @@ class CList(List[T]):
 
     # multiprocessing
 
-    def pmap(
+    def pmap(  # dead: disable
         self: CList[T], func: Callable[[T], U], *, processes: Optional[int] = None,
     ) -> CList[U]:
         warn(
@@ -794,15 +806,20 @@ class CList(List[T]):
             category=DeprecationWarning,
             stacklevel=2,
         )
-        return self.iter().pmap(func, processes=processes).list()
+        return self.map(func, parallel=True, processes=processes)
 
-    def pstarmap(
+    def pstarmap(  # dead: disable
         self: CList[Tuple[T, ...]],
         func: Callable[[Tuple[T, ...]], U],
         *,
         processes: Optional[int] = None,
     ) -> CList[U]:
-        return self.iter().pstarmap(func, processes=processes).list()
+        warn(
+            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -943,34 +960,45 @@ class CTuple(tuple, Generic[T]):
     def combinations_with_replacement(self: CTuple[T], r: int) -> CTuple[CTuple[T]]:
         return self.iter().combinations_with_replacement(r).tuple()
 
-    @classmethod
-    def repeat(cls: Type[CTuple], x: T, times: int) -> CTuple[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    def compress(self: CTuple[T], selectors: Iterable[Any]) -> CTuple[T]:
-        return self.iter().compress(selectors).list()
+    def compress(self: CTuple[T], selectors: Iterable) -> CTuple[T]:
+        return self.iter().compress(selectors).tuple()
 
     def dropwhile(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[T]:
-        return self.iter().dropwhile(func).list()
+        return self.iter().dropwhile(func).tuple()
 
     def filterfalse(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[T]:
-        return self.iter().filterfalse(func).list()
+        return self.iter().filterfalse(func).tuple()
 
     def groupby(
         self: CTuple[T], key: Optional[Callable[[T], U]] = None,
     ) -> CTuple[Tuple[U, CTuple[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CTuple(x[1]))).list()
+        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CTuple)).tuple()
 
     def islice(
-        self: CTuple[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CTuple[T]:
-        return self.iter().islice(start, stop=stop, step=step).list()
+        self: CTuple[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+    ) -> CIterable[T]:
+        return self.iter().islice(start, stop=stop, step=step)
 
-    def starmap(self: CTuple[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CTuple[U]:
-        return self.iter().starmap(func).list()
+    def permutations(self: CTuple[T], r: Optional[int] = None) -> CTuple[CTuple[T]]:
+        return self.iter().permutations(r=r).tuple()
+
+    def product(
+        self: CTuple[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CTuple[CTuple[Union[T, U]]]:
+        return self.iter().product(*iterables, repeat=repeat).tuple()
+
+    @classmethod
+    def repeat(cls: Type[CTuple], x: T, times: int) -> CTuple[T]:
+        return cls(CIterable.repeat(x, times=times))
+
+    def starmap(
+        self: CTuple[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> CTuple[U]:
+        return self.iter().starmap(func, parallel=parallel, processes=processes).tuple()
 
     def takewhile(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().takewhile(func).list()
@@ -982,14 +1010,6 @@ class CTuple(tuple, Generic[T]):
         self: CTuple[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CTuple[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).list()
-
-    def product(
-        self: CTuple[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CTuple[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).list()
-
-    def permutations(self: CTuple[T], r: Optional[int] = None) -> CTuple[Tuple[T, ...]]:
-        return self.iter().permutations(r=r).list()
 
     # itertools-recipes
 
@@ -1085,7 +1105,7 @@ class CTuple(tuple, Generic[T]):
 
     # multiprocessing
 
-    def pmap(
+    def pmap(  # dead: disable
         self: CTuple[T], func: Callable[[T], U], *, processes: Optional[int] = None,
     ) -> CTuple[U]:
         warn(
@@ -1093,15 +1113,15 @@ class CTuple(tuple, Generic[T]):
             category=DeprecationWarning,
             stacklevel=2,
         )
-        return self.iter().pmap(func, processes=processes).tuple()
+        return self.map(func, parallel=True, processes=processes)
 
-    def pstarmap(
+    def pstarmap(  # dead: disable
         self: CTuple[Tuple[T, ...]],
         func: Callable[[Tuple[T, ...]], U],
         *,
         processes: Optional[int] = None,
     ) -> CTuple[U]:
-        return self.iter().pstarmap(func, processes=processes).list()
+        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -1286,11 +1306,7 @@ class CSet(Set[T]):
     def combinations_with_replacement(self: CSet[T], r: int) -> CSet[CTuple[T]]:
         return self.iter().combinations_with_replacement(r).set()
 
-    @classmethod
-    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    def compress(self: CSet[T], selectors: Iterable[Any]) -> CSet[T]:
+    def compress(self: CSet[T], selectors: Iterable) -> CSet[T]:
         return self.iter().compress(selectors).set()
 
     def dropwhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
@@ -1302,18 +1318,33 @@ class CSet(Set[T]):
     def groupby(
         self: CSet[T], key: Optional[Callable[[T], U]] = None,
     ) -> CSet[Tuple[U, CFrozenSet[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).set()
+        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CFrozenSet)).set()
 
     def islice(
-        self: CSet[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CSet[T]:
-        return self.iter().islice(start, stop=stop, step=step).set()
+        self: CSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+    ) -> CIterable[T]:
+        return self.iter().islice(start, stop=stop, step=step)
 
-    def starmap(self: CSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U]) -> CSet[U]:
-        return self.iter().starmap(func).set()
+    def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[CTuple[T]]:
+        return self.iter().permutations(r=r).set()
+
+    def product(
+        self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CSet[CTuple[Union[T, U]]]:
+        return self.iter().product(*iterables, repeat=repeat).set()
+
+    @classmethod
+    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
+        return cls(CIterable.repeat(x, times=times))
+
+    def starmap(
+        self: CSet[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> CSet[U]:
+        return self.iter().starmap(func, parallel=parallel, processes=processes).set()
 
     def takewhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
         return self.iter().takewhile(func).set()
@@ -1325,14 +1356,6 @@ class CSet(Set[T]):
         self: CSet[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CSet[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).set()
-
-    def product(
-        self: CSet[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CSet[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).set()
-
-    def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[Tuple[T, ...]]:
-        return self.iter().permutations(r=r).set()
 
     # itertools - recipes
 
@@ -1377,21 +1400,28 @@ class CSet(Set[T]):
 
     # multiprocessing
 
-    def pmap(self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None) -> CSet[U]:
+    def pmap(  # dead: disable
+        self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None,
+    ) -> CSet[U]:
         warn(
             "'pmap' is going to be deprecated; use 'map(..., parallel=True)' instead",
             category=DeprecationWarning,
             stacklevel=2,
         )
-        return self.iter().pmap(func, processes=processes).set()
+        return self.map(func, parallel=True, processes=processes)
 
-    def pstarmap(
+    def pstarmap(  # dead: disable
         self: CSet[Tuple[T, ...]],
         func: Callable[[Tuple[T, ...]], U],
         *,
         processes: Optional[int] = None,
     ) -> CSet[U]:
-        return self.iter().pstarmap(func, processes=processes).set()
+        warn(
+            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -1537,11 +1567,7 @@ class CFrozenSet(FrozenSet[T]):
     def combinations_with_replacement(self: CFrozenSet[T], r: int) -> CFrozenSet[CTuple[T]]:
         return self.iter().combinations_with_replacement(r).frozenset()
 
-    @classmethod
-    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
-        return cls(CIterable.repeat(x, times=times))
-
-    def compress(self: CFrozenSet[T], selectors: Iterable[Any]) -> CFrozenSet[T]:
+    def compress(self: CFrozenSet[T], selectors: Iterable) -> CFrozenSet[T]:
         return self.iter().compress(selectors).frozenset()
 
     def dropwhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
@@ -1553,20 +1579,33 @@ class CFrozenSet(FrozenSet[T]):
     def groupby(
         self: CFrozenSet[T], key: Optional[Callable[[T], U]] = None,
     ) -> CFrozenSet[Tuple[U, CFrozenSet[T]]]:
-        return self.iter().groupby(key=key).map(lambda x: (x[0], CFrozenSet(x[1]))).frozenset()
+        return self.iter().groupby(key=key).map(partial(help_groupby, cls=CFrozenSet)).frozenset()
 
     def islice(
-        self: CFrozenSet[T],
-        start: int,
-        stop: Union[int, Sentinel] = sentinel,
-        step: Union[int, Sentinel] = sentinel,
-    ) -> CFrozenSet[T]:
-        return self.iter().islice(start, stop=stop, step=step).frozenset()
+        self: CFrozenSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+    ) -> CIterable[T]:
+        return self.iter().islice(start, stop=stop, step=step)
+
+    def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[CTuple[T]]:
+        return self.iter().permutations(r=r).frozenset()
+
+    def product(
+        self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
+    ) -> CFrozenSet[CTuple[Union[T, U]]]:
+        return self.iter().product(*iterables, repeat=repeat).frozenset()
+
+    @classmethod
+    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
+        return cls(CIterable.repeat(x, times=times))
 
     def starmap(
-        self: CFrozenSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], U],
+        self: CFrozenSet[Tuple[T, ...]],
+        func: Callable[[Tuple[T, ...]], U],
+        *,
+        parallel: bool = False,
+        processes: Optional[int] = None,
     ) -> CFrozenSet[U]:
-        return self.iter().starmap(func).frozenset()
+        return self.iter().starmap(func, parallel=parallel, processes=processes).frozenset()
 
     def takewhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().takewhile(func).frozenset()
@@ -1578,14 +1617,6 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T], *iterables: Iterable[U], fillvalue: V = None,
     ) -> CFrozenSet[Tuple[Union[T, U, V]]]:
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
-
-    def product(
-        self: CFrozenSet[T], *iterables: Iterable[U], repeat: int = 1,
-    ) -> CFrozenSet[Tuple[Union[T, U], ...]]:
-        return self.iter().product(*iterables, repeat=repeat).frozenset()
-
-    def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[Tuple[T, ...]]:
-        return self.iter().permutations(r=r).frozenset()
 
     # itertools - recipes
 
@@ -1630,7 +1661,7 @@ class CFrozenSet(FrozenSet[T]):
 
     # multiprocessing
 
-    def pmap(
+    def pmap(  # dead: disable
         self: CFrozenSet[T], func: Callable[[T], U], *, processes: Optional[int] = None,
     ) -> CFrozenSet[U]:
         warn(
@@ -1638,15 +1669,20 @@ class CFrozenSet(FrozenSet[T]):
             category=DeprecationWarning,
             stacklevel=2,
         )
-        return self.iter().pmap(func, processes=processes).frozenset()
+        return self.map(func, parallel=True, processes=processes)
 
-    def pstarmap(
+    def pstarmap(  # dead: disable
         self: CFrozenSet[Tuple[T, ...]],
         func: Callable[[Tuple[T, ...]], U],
         *,
         processes: Optional[int] = None,
     ) -> CFrozenSet[U]:
-        return self.iter().pstarmap(func, processes=processes).frozenset()
+        warn(
+            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -1717,7 +1753,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(apply_to_key, func=func), parallel=parallel, processes=processes)
+            .map(partial(help_cdict_map_keys, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1732,7 +1768,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(apply_to_value, func=func), parallel=parallel, processes=processes)
+            .map(partial(help_cdict_map_values, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1747,6 +1783,6 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(apply_to_item, func=func), parallel=parallel, processes=processes)
+            .map(partial(help_cdict_map_items, func=func), parallel=parallel, processes=processes)
             .dict()
         )

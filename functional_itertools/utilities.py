@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from enum import auto
 from enum import Enum
 from sys import version_info
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Generator
+from typing import Iterable
+from typing import Iterator
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -20,7 +24,7 @@ V = TypeVar("V")
 W = TypeVar("W")
 
 
-# drop
+# dropper
 
 
 def _drop_object(*args: Any, _obj: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
@@ -32,6 +36,41 @@ def _drop_object(*args: Any, _obj: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str,
 
 def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
     return _drop_object(*args, _obj=None, **kwargs)
+
+
+# helper functions
+
+
+def help_groupby(x: Tuple[U, Iterator[T]], *, cls: Type) -> Tuple[U, Iterable[T]]:
+    key, group = x
+    return key, cls(group)
+
+
+def help_cdict_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
+    key, value = item
+    return func(key), value
+
+
+def help_cdict_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
+    key, value = item
+    return key, func(value)
+
+
+def help_cdict_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
+    key, value = item
+    return func(key, value)
+
+
+# multiprocessing
+
+
+@contextmanager
+def suppress_daemonic_processes_with_children(error: AssertionError) -> Generator[None, None, None]:
+    (msg,) = error.args
+    if msg == "daemonic processes are not allowed to have children":
+        yield
+    else:
+        raise error
 
 
 # sentinel
@@ -81,21 +120,3 @@ def warn_non_functional(cls: Type, incorrect: str, suggestion: str) -> None:
     warn(
         f"{name}.{incorrect} is a non-functional method, did you mean {name}.{suggestion} instead?",
     )
-
-
-# CDict.map_* methods
-
-
-def apply_to_key(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
-    key, value = item
-    return func(key), value
-
-
-def apply_to_value(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
-    key, value = item
-    return key, func(value)
-
-
-def apply_to_item(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
-    key, value = item
-    return func(key, value)
