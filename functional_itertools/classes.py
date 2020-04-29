@@ -388,6 +388,9 @@ class CIterable(Iterable[T]):
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self, n, default=default)
 
+    def nth_combination(self: CIterable[T], r: int, index: int) -> CTuple[T]:
+        return CTuple(nth_combination(self, r, index))
+
     def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
         return CIterable(padnone(self))
 
@@ -459,9 +462,6 @@ class CIterable(Iterable[T]):
 
     def random_combination_with_replacement(self: CIterable[T], r: int) -> Tuple[T, ...]:
         return random_combination_with_replacement(self, r)
-
-    def nth_combination(self: CIterable[T], r: int, index: int) -> Tuple[T, ...]:
-        return nth_combination(self, r, index)
 
     # more-itertools
 
@@ -749,6 +749,9 @@ class CList(List[T]):
     def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
+    def nth_combination(self: CList[T], r: int, index: int) -> CTuple[T]:
+        return self.iter().nth_combination(r, index)
+
     def padnone(self: CList[T]) -> CIterable[Optional[T]]:
         return self.iter().padnone()
 
@@ -810,9 +813,6 @@ class CList(List[T]):
 
     def random_combination_with_replacement(self: CList[T], r: int) -> Tuple[T, ...]:
         return self.iter().random_combination_with_replacement(r)
-
-    def nth_combination(self: CList[T], r: int, index: int) -> Tuple[T, ...]:
-        return self.iter().nth_combination(r, index)
 
     # more-itertools
 
@@ -1064,6 +1064,9 @@ class CTuple(tuple, Generic[T]):
     def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
+    def nth_combination(self: CTuple[T], r: int, index: int) -> CTuple[T]:
+        return self.iter().nth_combination(r, index)
+
     def padnone(self: CFrozenSet[T]) -> CIterable[Optional[T]]:
         return self.iter().padnone()
 
@@ -1125,9 +1128,6 @@ class CTuple(tuple, Generic[T]):
 
     def random_combination_with_replacement(self: CTuple[T], r: int) -> Tuple[T, ...]:
         return self.iter().random_combination_with_replacement(r)
-
-    def nth_combination(self: CTuple[T], r: int, index: int) -> Tuple[T, ...]:
-        return self.iter().nth_combination(r, index)
 
     # more-itertools
 
@@ -1420,6 +1420,9 @@ class CSet(Set[T]):
 
     def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
+
+    def nth_combination(self: CSet[T], r: int, index: int) -> CTuple[T]:
+        return self.iter().nth_combination(r, index)
 
     def padnone(self: CSet[T]) -> CIterable[Optional[T]]:
         return self.iter().padnone()
@@ -1719,6 +1722,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
+
+    def nth_combination(self: CFrozenSet[T], r: int, index: int) -> CTuple[T]:
+        return self.iter().nth_combination(r, index)
 
     def padnone(self: CFrozenSet[T]) -> CIterable[Optional[T]]:
         return self.iter().padnone()

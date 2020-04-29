@@ -18,6 +18,7 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import none
 from hypothesis.strategies import tuples
+from more_itertools import nth_combination
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -135,6 +136,19 @@ def test_nth(case: Case, x: Iterable[int], n: int, default: Optional[int]) -> No
     assert isinstance(y, int) or (y is None)
     if case.ordered:
         assert y == nth(x, n, default=default)
+
+
+@mark.parametrize("case", CASES)
+@given(
+    data=data(), x=real_iterables(integers(), min_size=2),
+)
+def test_nth_combination(case: Case, data: DataObject, x: Iterable[int]) -> None:
+    r = data.draw(integers(1, len(x) - 1))
+    index = data.draw(integers(0, r))
+    y = case.cls(x).nth_combination(r, index)
+    assert isinstance(y, CTuple)
+    if case.ordered:
+        assert y == nth_combination(x, r, index)
 
 
 @mark.parametrize("case", CASES)
