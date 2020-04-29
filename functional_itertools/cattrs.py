@@ -57,7 +57,7 @@ class CAttrs(Generic[T]):
                 )
                 if recurse:
                     kwargs = mapping.map_values(
-                        lambda x: functional_itertools.utilities.help_map_values(
+                        lambda x: functional_itertools.utilities.helper_map_values(
                             func, *x, recurse=recurse,
                         ),
                     )
