@@ -19,15 +19,16 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import none
 from hypothesis.strategies import tuples
-from more_itertools import nth_combination
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
 from more_itertools.recipes import first_true
 from more_itertools.recipes import flatten
 from more_itertools.recipes import grouper
+from more_itertools.recipes import iter_except
 from more_itertools.recipes import ncycles
 from more_itertools.recipes import nth
+from more_itertools.recipes import nth_combination
 from more_itertools.recipes import padnone
 from more_itertools.recipes import pairwise
 from more_itertools.recipes import partition
@@ -124,6 +125,26 @@ def test_grouper(case: Case, x: Iterable[int], n: int, fillvalue: Optional[int])
         assert case.cast(map(case.cast, z)) == case.cast(
             map(case.cast, grouper(x, n, fillvalue=fillvalue)),
         )
+
+
+@mark.parametrize("case", CASES)
+def test_iter_except(case: Case) -> None:
+    def create_adder() -> Callable[[], int]:
+        x = set()
+
+        def adder() -> int:
+            len_x = len(x)
+            if len_x <= 10:
+                x.add(len_x)
+                return len_x
+            else:
+                raise ValueError()
+
+        return adder
+
+    y = case.cls.iter_except(create_adder(), ValueError)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(iter_except(create_adder(), ValueError))
 
 
 @mark.parametrize("case", CASES)

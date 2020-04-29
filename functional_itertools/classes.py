@@ -382,6 +382,15 @@ class CIterable(Iterable[T]):
     def grouper(self: CIterable[T], n: int, fillvalue: U = None) -> CIterable[CTuple[Union[T, U]]]:
         return CIterable(grouper(self, n, fillvalue=fillvalue)).map(CTuple)
 
+    @classmethod
+    def iter_except(
+        cls: Type[CIterable],
+        func: Callable[..., T],
+        exception: Type[Exception],
+        first: Optional[Callable[..., U]] = None,
+    ) -> CIterable[Union[T, U]]:
+        return cls(iter_except(func, exception, first=first))
+
     def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(ncycles(self, n))
 
@@ -451,17 +460,6 @@ class CIterable(Iterable[T]):
         self: CIterable[T], key: Optional[Callable[[T], Any]] = None,
     ) -> CIterable[T]:
         return CIterable(unique_justseen(self, key=key))
-
-    # zzz untested
-
-    @classmethod
-    def iter_except(
-        cls: Type[CIterable],
-        func: Callable[..., T],
-        exception: Type[Exception],
-        first: Optional[Callable[..., U]] = None,
-    ) -> CIterable[Union[T, U]]:
-        return cls(iter_except(func, exception, first=first))
 
     # more-itertools
 
@@ -743,6 +741,15 @@ class CList(List[T]):
     ) -> CList[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).list()
 
+    @classmethod
+    def iter_except(
+        cls: Type[CList],
+        func: Callable[..., T],
+        exception: Type[Exception],
+        first: Optional[Callable[..., U]] = None,
+    ) -> CList[Union[T, U]]:
+        return cls(CIterable.iter_except(func, exception, first=first))
+
     def ncycles(self: CList[T], n: int) -> CList[T]:
         return self.iter().ncycles(n).list()
 
@@ -804,15 +811,6 @@ class CList(List[T]):
 
     def unique_justseen(self: CList[T], key: Optional[Callable[[T], Any]] = None) -> CList[T]:
         return self.iter().unique_justseen(key=key).list()
-
-    @classmethod
-    def iter_except(
-        cls: Type[CList],
-        func: Callable[..., T],
-        exception: Type[Exception],
-        first: Optional[Callable[..., U]] = None,
-    ) -> CList[Union[T, U]]:
-        return CIterable.iter_except(func, exception, first=first).list()
 
     # more-itertools
 
@@ -1058,8 +1056,14 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).map(CTuple).tuple()
 
-    def ncycles(self: CTuple[T], n: int) -> CTuple[T]:
-        return self.iter().ncycles(n).tuple()
+    @classmethod
+    def iter_except(
+        cls: Type[CTuple],
+        func: Callable[..., T],
+        exception: Type[Exception],
+        first: Optional[Callable[..., U]] = None,
+    ) -> CTuple[Union[T, U]]:
+        return cls(CIterable.iter_except(func, exception, first=first))
 
     def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
@@ -1119,15 +1123,6 @@ class CTuple(tuple, Generic[T]):
 
     def unique_justseen(self: CTuple[T], key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
         return self.iter().unique_justseen(key=key).tuple()
-
-    @classmethod
-    def iter_except(
-        cls: Type[CTuple],
-        func: Callable[..., T],
-        exception: Type[Exception],
-        first: Optional[Callable[..., U]] = None,
-    ) -> CTuple[Union[T, U]]:
-        return CIterable.iter_except(func, exception, first=first).list()
 
     # more-itertools
 
@@ -1414,6 +1409,15 @@ class CSet(Set[T]):
 
     def grouper(self: CSet[T], n: int, fillvalue: Optional[T] = None) -> CSet[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).set()
+
+    @classmethod
+    def iter_except(
+        cls: Type[CSet],
+        func: Callable[..., T],
+        exception: Type[Exception],
+        first: Optional[Callable[..., U]] = None,
+    ) -> CSet[Union[T, U]]:
+        return cls(CIterable.iter_except(func, exception, first=first))
 
     def ncycles(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().ncycles(n).set()
@@ -1730,6 +1734,15 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T], n: int, fillvalue: Optional[T] = None,
     ) -> CFrozenSet[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).frozenset()
+
+    @classmethod
+    def iter_except(
+        cls: Type[CFrozenSet],
+        func: Callable[..., T],
+        exception: Type[Exception],
+        first: Optional[Callable[..., U]] = None,
+    ) -> CFrozenSet[Union[T, U]]:
+        return cls(CIterable.iter_except(func, exception, first=first))
 
     def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().ncycles(n).frozenset()
