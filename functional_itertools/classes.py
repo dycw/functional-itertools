@@ -365,11 +365,35 @@ class CIterable(Iterable[T]):
         consume(iterator, n=n)
         return CIterable(iterator)
 
-    def take(self: CIterable[T], n: int) -> CIterable[T]:
-        return CIterable(take(n, self))
+    def dotproduct(self: CIterable[T], iterable: Iterable[T]) -> T:
+        return dotproduct(self, iterable)
+
+    def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
+        return CIterable(flatten(self))
+
+    def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
+        return CIterable(ncycles(self, n))
+
+    def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
+        return nth(self, n, default=default)
+
+    def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
+        return CIterable(padnone(self))
+
+    def pairwise(self: CIterable[T]) -> CIterable[CTuple[T]]:
+        return CIterable(pairwise(self)).map(CTuple)
 
     def prepend(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
         return CIterable(prepend(value, self))
+
+    def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
+        return quantify(self, pred=pred)
+
+    @classmethod
+    def repeatfunc(
+        cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+    ) -> CIterable[T]:
+        return cls(repeatfunc(func, times, *args))
 
     @classmethod
     def tabulate(cls: Type[CIterable], func: Callable[[int], T], start: int = 0) -> CIterable[T]:
@@ -378,32 +402,8 @@ class CIterable(Iterable[T]):
     def tail(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(tail(n, self))
 
-    def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
-        return nth(self, n, default=default)
-
-    def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
-        return quantify(self, pred=pred)
-
-    def padnone(self: CIterable[T]) -> CIterable[Optional[T]]:
-        return CIterable(padnone(self))
-
-    def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
-        return CIterable(ncycles(self, n))
-
-    def dotproduct(self: CIterable[T], iterable: Iterable[T]) -> T:
-        return dotproduct(self, iterable)
-
-    def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
-        return CIterable(flatten(self))
-
-    @classmethod
-    def repeatfunc(
-        cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
-    ) -> CIterable[T]:
-        return cls(repeatfunc(func, times, *args))
-
-    def pairwise(self: CIterable[T]) -> CIterable[Tuple[T, T]]:
-        return CIterable(pairwise(self))
+    def take(self: CIterable[T], n: int) -> CIterable[T]:
+        return CIterable(take(n, self))
 
     def grouper(
         self: CIterable[T], n: int, fillvalue: U = None,
@@ -726,29 +726,29 @@ class CList(List[T]):
     def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
         return self.iter().consume(n=n).list()
 
-    def take(self: CList[T], n: int) -> CList[T]:
-        return self.iter().take(n).list()
-
-    def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
-        return self.iter().prepend(value).list()
-
-    def tail(self: CList[T], n: int) -> CList[T]:
-        return self.iter().tail(n).list()
-
-    def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CList[T], n: int) -> CList[T]:
-        return self.iter().ncycles(n).list()
-
     def dotproduct(self: CList[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def flatten(self: CList[Iterable[T]]) -> CList[T]:
         return self.iter().flatten().list()
+
+    def ncycles(self: CList[T], n: int) -> CList[T]:
+        return self.iter().ncycles(n).list()
+
+    def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
+    def padnone(self: CList[T]) -> CIterable[Optional[T]]:
+        return self.iter().padnone()
+
+    def pairwise(self: CList[T]) -> CList[CTuple[T]]:
+        return self.iter().pairwise().list()
+
+    def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
+        return self.iter().prepend(value).list()
+
+    def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
+        return self.iter().quantify(pred=pred)
 
     @classmethod
     def repeatfunc(
@@ -756,8 +756,11 @@ class CList(List[T]):
     ) -> CList[T]:
         return CIterable.repeatfunc(func, times, *args).list()
 
-    def pairwise(self: CList[T]) -> CList[Tuple[T, T]]:
-        return self.iter().pairwise().list()
+    def tail(self: CList[T], n: int) -> CList[T]:
+        return self.iter().tail(n).list()
+
+    def take(self: CList[T], n: int) -> CList[T]:
+        return self.iter().take(n).list()
 
     def grouper(
         self: CList[T], n: int, fillvalue: Optional[T] = None,
@@ -1044,58 +1047,61 @@ class CTuple(tuple, Generic[T]):
     def consume(self: CTuple[T], n: Optional[int] = None) -> CTuple[T]:
         return self.iter().consume(n=n).tuple()
 
-    def take(self: CTuple[T], n: int) -> CTuple[T]:
-        return self.iter().take(n).list()
-
-    def prepend(self: CTuple[T], value: U) -> CTuple[Union[T, U]]:
-        return self.iter().prepend(value).list()
-
-    def tail(self: CTuple[T], n: int) -> CTuple[T]:
-        return self.iter().tail(n).list()
-
-    def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CTuple[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CTuple[T], n: int) -> CTuple[T]:
-        return self.iter().ncycles(n).list()
-
     def dotproduct(self: CTuple[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def flatten(self: CTuple[Iterable[T]]) -> CTuple[T]:
-        return self.iter().flatten().list()
+        return self.iter().flatten().tuple()
+
+    def ncycles(self: CTuple[T], n: int) -> CTuple[T]:
+        return self.iter().ncycles(n).tuple()
+
+    def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
+    def padnone(self: CFrozenSet[T]) -> CIterable[Optional[T]]:
+        return self.iter().padnone()
+
+    def pairwise(self: CTuple[T]) -> CTuple[CTuple[T]]:
+        return self.iter().pairwise().tuple()
+
+    def prepend(self: CTuple[T], value: U) -> CTuple[Union[T, U]]:
+        return self.iter().prepend(value).tuple()
+
+    def quantify(self: CTuple[T], pred: Callable[[T], bool] = bool) -> int:
+        return self.iter().quantify(pred=pred)
 
     @classmethod
     def repeatfunc(
         cls: Type[CTuple], func: Callable[..., T], times: Optional[int] = None, *args: Any,
     ) -> CTuple[T]:
-        return CIterable.repeatfunc(func, times, *args).list()
+        return CIterable.repeatfunc(func, times, *args).tuple()
 
-    def pairwise(self: CTuple[T]) -> CTuple[Tuple[T, T]]:
-        return self.iter().pairwise().list()
+    def tail(self: CTuple[T], n: int) -> CTuple[T]:
+        return self.iter().tail(n).tuple()
+
+    def take(self: CTuple[T], n: int) -> CTuple[T]:
+        return self.iter().take(n).tuple()
 
     def grouper(
         self: CTuple[T], n: int, fillvalue: Optional[T] = None,
     ) -> CTuple[Tuple[Union[T, U], ...]]:
-        return self.iter().grouper(n, fillvalue=fillvalue).list()
+        return self.iter().grouper(n, fillvalue=fillvalue).tuple()
 
     def partition(self: CTuple[T], func: Callable[[T], bool]) -> Tuple[CTuple[T], CTuple[T]]:
         return self.iter().partition(func).map(CTuple).tuple()
 
     def powerset(self: CTuple[T]) -> CTuple[Tuple[T, ...]]:
-        return self.iter().powerset().list()
+        return self.iter().powerset().tuple()
 
     def roundrobin(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Tuple[T, U]]:
-        return self.iter().roundrobin(*iterables).list()
+        return self.iter().roundrobin(*iterables).tuple()
 
     def unique_everseen(self: CTuple[T], key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
-        return self.iter().unique_everseen(key=key).list()
+        return self.iter().unique_everseen(key=key).tuple()
 
     def unique_justseen(self: CTuple[T], key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
-        return self.iter().unique_justseen(key=key).list()
+        return self.iter().unique_justseen(key=key).tuple()
 
     @classmethod
     def iter_except(
@@ -1401,29 +1407,29 @@ class CSet(Set[T]):
     def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
         return self.iter().consume(n=n).set()
 
-    def take(self: CSet[T], n: int) -> CSet[T]:
-        return self.iter().take(n).set()
-
-    def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
-        return self.iter().prepend(value).set()
-
-    def tail(self: CSet[T], n: int) -> CSet[T]:
-        return self.iter().tail(n).set()
-
-    def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CSet[T], n: int) -> CSet[T]:
-        return self.iter().ncycles(n).set()
-
     def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
+
+    def ncycles(self: CSet[T], n: int) -> CSet[T]:
+        return self.iter().ncycles(n).set()
+
+    def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
+    def padnone(self: CSet[T]) -> CIterable[Optional[T]]:
+        return self.iter().padnone()
+
+    def pairwise(self: CSet[T]) -> CSet[CTuple[T]]:
+        return self.iter().pairwise().set()
+
+    def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
+        return self.iter().prepend(value).set()
+
+    def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
+        return self.iter().quantify(pred=pred)
 
     @classmethod
     def repeatfunc(
@@ -1431,8 +1437,11 @@ class CSet(Set[T]):
     ) -> CSet[T]:
         return CIterable.repeatfunc(func, times, *args).set()
 
-    def pairwise(self: CSet[T]) -> CSet[Tuple[T, T]]:
-        return self.iter().pairwise().set()
+    def tail(self: CSet[T], n: int) -> CSet[T]:
+        return self.iter().tail(n).set()
+
+    def take(self: CSet[T], n: int) -> CSet[T]:
+        return self.iter().take(n).set()
 
     # more-itertools
 
@@ -1672,29 +1681,29 @@ class CFrozenSet(FrozenSet[T]):
     def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
         return self.iter().consume(n=n).frozenset()
 
-    def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
-        return self.iter().take(n).frozenset()
-
-    def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
-        return self.iter().prepend(value).frozenset()
-
-    def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
-        return self.iter().tail(n).frozenset()
-
-    def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
-        return self.iter().nth(n, default=default)
-
-    def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
-        return self.iter().quantify(pred=pred)
-
-    def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
-        return self.iter().ncycles(n).frozenset()
-
     def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
         return self.iter().flatten().frozenset()
+
+    def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
+        return self.iter().ncycles(n).frozenset()
+
+    def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
+        return self.iter().nth(n, default=default)
+
+    def padnone(self: CFrozenSet[T]) -> CIterable[Optional[T]]:
+        return self.iter().padnone()
+
+    def pairwise(self: CFrozenSet[T]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().pairwise().frozenset()
+
+    def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
+        return self.iter().prepend(value).frozenset()
+
+    def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
+        return self.iter().quantify(pred=pred)
 
     @classmethod
     def repeatfunc(
@@ -1702,8 +1711,11 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[T]:
         return CIterable.repeatfunc(func, times, *args).frozenset()
 
-    def pairwise(self: CFrozenSet[T]) -> CFrozenSet[Tuple[T, T]]:
-        return self.iter().pairwise().frozenset()
+    def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
+        return self.iter().tail(n).frozenset()
+
+    def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
+        return self.iter().take(n).frozenset()
 
     # more-itertools
 
