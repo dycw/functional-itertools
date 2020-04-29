@@ -78,13 +78,14 @@ from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
-from functional_itertools.utilities import help_filter_items
-from functional_itertools.utilities import help_filter_keys
-from functional_itertools.utilities import help_filter_values
-from functional_itertools.utilities import help_last
-from functional_itertools.utilities import help_map_items
-from functional_itertools.utilities import help_map_keys
-from functional_itertools.utilities import help_map_values
+from functional_itertools.utilities import helper_expand_as_dict
+from functional_itertools.utilities import helper_filter_items
+from functional_itertools.utilities import helper_filter_keys
+from functional_itertools.utilities import helper_filter_values
+from functional_itertools.utilities import helper_last
+from functional_itertools.utilities import helper_map_items
+from functional_itertools.utilities import helper_map_keys
+from functional_itertools.utilities import helper_map_values
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import suppress_daemonic_processes_with_children
@@ -308,7 +309,7 @@ class CIterable(Iterable[T]):
     def groupby(
         self: CIterable[T], key: Optional[Callable[[T], U]] = None,
     ) -> CIterable[Tuple[U, CTuple[T]]]:
-        return CIterable(groupby(self, key=key)).map(_help_groupby)
+        return CIterable(groupby(self, key=key)).map(_helper_groupby)
 
     def islice(
         self: CIterable[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
@@ -507,6 +508,9 @@ class CIterable(Iterable[T]):
     def append(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:  # dead: disable
         return self.chain([value])
 
+    def expand_as_dict(self: CIterable[T]) -> CDict[T, T]:
+        return self.map(helper_expand_as_dict).dict()
+
     def first(self: CIterable[T]) -> T:
         try:
             return next(iter(self))
@@ -514,7 +518,7 @@ class CIterable(Iterable[T]):
             raise EmptyIterableError from None
 
     def last(self: CIterable[T]) -> T:  # dead: disable
-        return self.reduce(help_last)
+        return self.reduce(helper_last)
 
     def one(self: CIterable[T]) -> T:
         head: CList[T] = self.islice(2).list()
@@ -855,6 +859,9 @@ class CList(List[T]):
 
     # extra public
 
+    def expand_as_dict(self: CList[T]) -> CDict[T, T]:
+        return self.iter().expand_as_dict()
+
     def one(self: CList[T]) -> T:
         return self.iter().one()
 
@@ -1164,6 +1171,9 @@ class CTuple(tuple, Generic[T]):
         return cls(CIterable.iterdir(path))
 
     # extra public
+
+    def expand_as_dict(self: CTuple[T]) -> CDict[T, T]:
+        return self.iter().expand_as_dict()
 
     def one(self: CTuple[T]) -> T:
         return self.iter().one()
@@ -1527,6 +1537,9 @@ class CSet(Set[T]):
 
     # extra public
 
+    def expand_as_dict(self: CSet[T]) -> CDict[T, T]:
+        return self.iter().expand_as_dict()
+
     def one(self: CSet[T]) -> T:
         return self.iter().one()
 
@@ -1856,6 +1869,9 @@ class CFrozenSet(FrozenSet[T]):
 
     # extra public
 
+    def expand_as_dict(self: CFrozenSet[T]) -> CDict[T, T]:
+        return self.iter().expand_as_dict()
+
     def one(self: CFrozenSet[T]) -> T:
         return self.iter().one()
 
@@ -1884,15 +1900,15 @@ class CDict(Dict[T, U]):
     # built-ins
 
     def filter_keys(self: CDict[T, U], func: Callable[[T], bool]) -> CDict[T, U]:  # dead: disable
-        return self.items().filter(partial(help_filter_keys, func=func)).dict()
+        return self.items().filter(partial(helper_filter_keys, func=func)).dict()
 
     def filter_values(self: CDict[T, U], func: Callable[[U], bool]) -> CDict[T, U]:  # dead: disable
-        return self.items().filter(partial(help_filter_values, func=func)).dict()
+        return self.items().filter(partial(helper_filter_values, func=func)).dict()
 
     def filter_items(  # dead: disable
         self: CDict[T, U], func: Callable[[T, U], bool],
     ) -> CDict[T, U]:
-        return self.items().filter(partial(help_filter_items, func=func)).dict()
+        return self.items().filter(partial(helper_filter_items, func=func)).dict()
 
     def map_keys(  # dead: disable
         self: CDict[T, U],
@@ -1905,7 +1921,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(help_map_keys, func=func), parallel=parallel, processes=processes)
+            .map(partial(helper_map_keys, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1920,7 +1936,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(help_map_values, func=func), parallel=parallel, processes=processes)
+            .map(partial(helper_map_values, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1935,7 +1951,7 @@ class CDict(Dict[T, U]):
 
         return (
             self.items()
-            .map(partial(help_map_items, func=func), parallel=parallel, processes=processes)
+            .map(partial(helper_map_items, func=func), parallel=parallel, processes=processes)
             .dict()
         )
 
@@ -1943,6 +1959,6 @@ class CDict(Dict[T, U]):
 # helpers
 
 
-def _help_groupby(pair: Tuple[T, Iterable[T]]) -> Tuple[T, CTuple[T]]:
+def _helper_groupby(pair: Tuple[T, Iterable[T]]) -> Tuple[T, CTuple[T]]:
     key, group = pair
     return key, CTuple(group)

@@ -39,36 +39,40 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # helper functions
 
 
-def help_filter_keys(item: Tuple[T, Any], *, func: Callable[[T], bool]) -> bool:
+def helper_expand_as_dict(x: T) -> Tuple[T, T]:
+    return x, x
+
+
+def helper_filter_keys(item: Tuple[T, Any], *, func: Callable[[T], bool]) -> bool:
     key, _ = item
     return func(key)
 
 
-def help_filter_values(item: Tuple[Any, U], *, func: Callable[[U], bool]) -> bool:
+def helper_filter_values(item: Tuple[Any, U], *, func: Callable[[U], bool]) -> bool:
     _, value = item
     return func(value)
 
 
-def help_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> bool:
+def helper_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> bool:
     key, value = item
     return func(key, value)
 
 
-def help_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
+def helper_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
     return y
 
 
-def help_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
+def helper_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
     key, value = item
     return func(key), value
 
 
-def help_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
+def helper_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
     key, value = item
     return key, func(value)
 
 
-def help_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
+def helper_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
     key, value = item
     return func(key, value)
 
