@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import auto
 from enum import Enum
 from sys import version_info
+from typing import Any
 from typing import Type
 from warnings import warn
 
@@ -20,6 +21,13 @@ class Sentinel:
 
 
 sentinel = Sentinel()
+
+
+def drop_sentinel(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
+    return (
+        tuple(x for x in args if x is not sentinel),
+        {k: v for k, v in kwargs.items() if v is not sentinel},
+    )
 
 
 # version

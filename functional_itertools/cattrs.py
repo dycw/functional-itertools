@@ -56,7 +56,7 @@ class CAttrs(Generic[T]):
                 )
                 if recurse:
                     kwargs = mapping.map_values(
-                        lambda x: self._map_values(func, *x, recurse=recurse),
+                        lambda x: self._apply_to_value(func, *x, recurse=recurse),
                     )
                 else:
                     kwargs = mapping.map_values(lambda x: func(*x))
