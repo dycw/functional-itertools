@@ -28,16 +28,17 @@ from functional_itertools import EmptyIterableError
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from tests.strategies import CLASSES
+from tests.strategies import Case
+from tests.strategies import CASES
 from tests.strategies import real_iterables
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), initial=integers() | just(sentinel))
-def test_reduce(cls: Type, x: Iterable[int], initial: Union[int, Sentinel]) -> None:
+def test_reduce(case: Case, x: Iterable[int], initial: Union[int, Sentinel]) -> None:
     args, _ = drop_sentinel(initial)
     try:
-        y = cls(x).reduce(add, *args)
+        y = case.cls(x).reduce(add, *args)
     except EmptyIterableError:
         with raises(
             TypeError, match=escape("reduce() of empty sequence with no initial value"),
@@ -45,7 +46,8 @@ def test_reduce(cls: Type, x: Iterable[int], initial: Union[int, Sentinel]) -> N
             reduce(add, x, *args)
     else:
         assert isinstance(y, int)
-        assert y == reduce(add, x, *args)
+        if case.ordered:
+            assert y == reduce(add, x, *args)
 
 
 @given(x=tuples(integers(), integers()))

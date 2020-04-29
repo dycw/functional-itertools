@@ -38,6 +38,8 @@ from pytest import mark
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CTuple
+from tests.strategies import Case
+from tests.strategies import CASES
 from tests.strategies import CLASSES
 from tests.strategies import islice_ints
 from tests.strategies import ORDERED_CLASSES
@@ -54,13 +56,14 @@ def test_all_equal(cls: Type, x: Iterable[int]) -> None:
     assert y == all_equal(x)
 
 
+@mark.parametrize("case", CASES)
 @given(x=real_iterables(integers()), n=none() | integers(0, maxsize))
-def test_consume(x: Iterable[int], n: Optional[int]) -> None:
-    y = CIterable(x).consume(n=n)
-    assert isinstance(y, CIterable)
+def test_consume(case: Case, x: Iterable[int], n: Optional[int]) -> None:
+    y = case.cls(x).consume(n=n)
+    assert isinstance(y, case.cls)
     iter_x = iter(x)
     consume(iter_x, n=n)
-    assert list(y) == list(iter_x)
+    assert case.cast(y) == case.cast(iter_x)
 
 
 @mark.parametrize("cls", CLASSES)

@@ -12,6 +12,7 @@ from typing import Type
 from typing import Union
 
 from hypothesis import given
+from hypothesis import settings
 from hypothesis.strategies import booleans
 from hypothesis.strategies import fixed_dictionaries
 from hypothesis.strategies import integers
@@ -27,6 +28,7 @@ from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import CSet
 from functional_itertools import CTuple
+from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
@@ -35,7 +37,6 @@ from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import CLASSES
-from tests.strategies import get_cast
 from tests.strategies import range_args
 from tests.strategies import real_iterables
 from tests.test_utilities import is_even
@@ -103,7 +104,7 @@ def test_iter(case: Case, x: Iterable[int]) -> None:
 @given(x=real_iterables(integers()))
 def test_len(cls: Type, x: Iterable[int]) -> None:
     if cls is CIterable:
-        with raises(AttributeError, match="rst"):
+        with raises(AttributeError, match="'CIterable' object has no attribute 'len'"):
             cls(x).len()
     else:
         y = cls(x).len()
@@ -122,6 +123,7 @@ def test_list(case: Case, x: Iterable[int]) -> None:
 @mark.parametrize("case", CASES)
 @mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=real_iterables(integers()))
+@settings(max_examples=100)
 def test_map(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
     y = case.cls(x).map(neg, **kwargs)
     assert isinstance(y, case.cls)
@@ -159,16 +161,14 @@ def test_max_and_min(
         assert y == func(x, **key, **default)
 
 
-@mark.parametrize("cls", CLASSES)
+@mark.parametrize("case", CASES)
 @given(args=range_args)
-def test_range(cls: Type, args: Tuple[int, Optional[int], Optional[int]]) -> None:
+def test_range(case: Case, args: Tuple[int, Optional[int], Optional[int]]) -> None:
     start, stop, step = args
-    x = cls.range(start, stop, step)
-    assert isinstance(x, cls)
-    cast = get_cast(cls)
-    assert cast(x) == cast(
-        range(start, *(() if stop is None else (stop,)), *(() if step is None else (step,))),
-    )
+    x = case.cls.range(start, stop, step)
+    assert isinstance(x, case.cls)
+    (start, *new_args), _ = drop_none(*args)
+    assert case.cast(x) == case.cast(range(start, *new_args))
 
 
 @mark.parametrize("cls", CLASSES)

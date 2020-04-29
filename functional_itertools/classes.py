@@ -357,6 +357,14 @@ class CIterable(Iterable[T]):
 
     # itertools-recipes
 
+    def all_equal(self: CIterable) -> bool:
+        return all_equal(self)
+
+    def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
+        iterator = iter(self)
+        consume(iterator, n=n)
+        return CIterable(iterator)
+
     def take(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(take(n, self))
 
@@ -370,16 +378,8 @@ class CIterable(Iterable[T]):
     def tail(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(tail(n, self))
 
-    def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
-        iterator = iter(self)
-        consume(iterator, n=n)
-        return CIterable(iterator)
-
     def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
         return nth(self, n, default=default)
-
-    def all_equal(self: CIterable) -> bool:
-        return all_equal(self)
 
     def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
         return quantify(self, pred=pred)
@@ -720,6 +720,12 @@ class CList(List[T]):
 
     # itertools-recipes
 
+    def all_equal(self: CList[Any]) -> bool:
+        return self.iter().all_equal()
+
+    def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
+        return self.iter().consume(n=n).list()
+
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
 
@@ -729,14 +735,8 @@ class CList(List[T]):
     def tail(self: CList[T], n: int) -> CList[T]:
         return self.iter().tail(n).list()
 
-    def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
-        return self.iter().consume(n=n).list()
-
     def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
-
-    def all_equal(self: CList[Any]) -> bool:
-        return self.iter().all_equal()
 
     def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
@@ -1038,6 +1038,12 @@ class CTuple(tuple, Generic[T]):
 
     # itertools-recipes
 
+    def all_equal(self: CTuple[Any]) -> bool:
+        return self.iter().all_equal()
+
+    def consume(self: CTuple[T], n: Optional[int] = None) -> CTuple[T]:
+        return self.iter().consume(n=n).tuple()
+
     def take(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().take(n).list()
 
@@ -1047,14 +1053,8 @@ class CTuple(tuple, Generic[T]):
     def tail(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().tail(n).list()
 
-    def consume(self: CTuple[T], n: Optional[int] = None) -> CTuple[T]:
-        return self.iter().consume(n=n).list()
-
     def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
-
-    def all_equal(self: CTuple[Any]) -> bool:
-        return self.iter().all_equal()
 
     def quantify(self: CTuple[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
@@ -1395,6 +1395,12 @@ class CSet(Set[T]):
 
     # itertools - recipes
 
+    def all_equal(self: CSet[Any]) -> bool:
+        return self.iter().all_equal()
+
+    def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
+        return self.iter().consume(n=n).set()
+
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
 
@@ -1404,14 +1410,8 @@ class CSet(Set[T]):
     def tail(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().tail(n).set()
 
-    def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
-        return self.iter().consume(n=n).set()
-
     def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
-
-    def all_equal(self: CSet[Any]) -> bool:
-        return self.iter().all_equal()
 
     def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
@@ -1666,6 +1666,11 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().zip_longest(*iterables, fillvalue=fillvalue).frozenset()
 
     # itertools - recipes
+    def all_equal(self: CFrozenSet[Any]) -> bool:
+        return self.iter().all_equal()
+
+    def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
+        return self.iter().consume(n=n).frozenset()
 
     def take(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().take(n).frozenset()
@@ -1676,14 +1681,8 @@ class CFrozenSet(FrozenSet[T]):
     def tail(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().tail(n).frozenset()
 
-    def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
-        return self.iter().consume(n=n).frozenset()
-
     def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
-
-    def all_equal(self: CFrozenSet[Any]) -> bool:
-        return self.iter().all_equal()
 
     def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
