@@ -27,6 +27,7 @@ from more_itertools import ncycles
 from more_itertools import nth
 from more_itertools import padnone
 from more_itertools import pairwise
+from more_itertools import partition
 from more_itertools import prepend
 from more_itertools import quantify
 from more_itertools import repeatfunc
@@ -142,6 +143,18 @@ def test_pairwise(case: Case, x: Iterable[int]) -> None:
         assert isinstance(zi1, int)
     if case.ordered:
         assert z == case.cast(pairwise(x))
+
+
+@mark.parametrize("case", CASES)
+@given(x=real_iterables(integers()))
+def test_partition(case: Case, x: Iterable[int]) -> None:
+    y = case.cls(x).partition(is_even)
+    assert isinstance(y, CTuple)
+    assert len(y) == 2
+    for yi in y:
+        assert isinstance(yi, case.cls)
+    for yi, zi in zip(y, partition(is_even, x)):
+        assert case.cast(yi) == case.cast(zi)
 
 
 @mark.parametrize("case", CASES)

@@ -388,6 +388,9 @@ class CIterable(Iterable[T]):
     def pairwise(self: CIterable[T]) -> CIterable[CTuple[T]]:
         return CIterable(pairwise(self)).map(CTuple)
 
+    def partition(self: CIterable[T], func: Callable[[T], bool]) -> CTuple[CIterable[T]]:
+        return CIterable(partition(func, self)).map(CIterable).tuple()
+
     def prepend(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
         return CIterable(prepend(value, self))
 
@@ -410,10 +413,7 @@ class CIterable(Iterable[T]):
     def take(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(take(n, self))
 
-    def partition(
-        self: CIterable[T], func: Callable[[T], bool],
-    ) -> Tuple[CIterable[T], CIterable[T]]:
-        return CIterable(partition(func, self)).map(CIterable).tuple()
+    # zzz untested
 
     def powerset(self: CIterable[T]) -> CIterable[Tuple[T, ...]]:
         return CIterable(powerset(self))
@@ -749,6 +749,9 @@ class CList(List[T]):
     def pairwise(self: CList[T]) -> CList[CTuple[T]]:
         return self.iter().pairwise().list()
 
+    def partition(self: CList[T], func: Callable[[T], bool]) -> CTuple[CList[T]]:
+        return self.iter().partition(func).map(CList)
+
     def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
         return self.iter().prepend(value).list()
 
@@ -766,9 +769,6 @@ class CList(List[T]):
 
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
-
-    def partition(self: CList[T], func: Callable[[T], bool]) -> Tuple[CList[T], CList[T]]:
-        return self.iter().partition(func).map(CList).tuple()
 
     def powerset(self: CList[T]) -> CList[Tuple[T, ...]]:
         return self.iter().powerset().list()
@@ -1064,6 +1064,9 @@ class CTuple(tuple, Generic[T]):
     def pairwise(self: CTuple[T]) -> CTuple[CTuple[T]]:
         return self.iter().pairwise().tuple()
 
+    def partition(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().partition(func).map(CTuple)
+
     def prepend(self: CTuple[T], value: U) -> CTuple[Union[T, U]]:
         return self.iter().prepend(value).tuple()
 
@@ -1081,9 +1084,6 @@ class CTuple(tuple, Generic[T]):
 
     def take(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().take(n).tuple()
-
-    def partition(self: CTuple[T], func: Callable[[T], bool]) -> Tuple[CTuple[T], CTuple[T]]:
-        return self.iter().partition(func).map(CTuple).tuple()
 
     def powerset(self: CTuple[T]) -> CTuple[Tuple[T, ...]]:
         return self.iter().powerset().tuple()
@@ -1423,6 +1423,9 @@ class CSet(Set[T]):
     def pairwise(self: CSet[T]) -> CSet[CTuple[T]]:
         return self.iter().pairwise().set()
 
+    def partition(self: CSet[T], func: Callable[[T], bool]) -> CTuple[CSet[T]]:
+        return self.iter().partition(func).map(CSet)
+
     def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
         return self.iter().prepend(value).set()
 
@@ -1701,6 +1704,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def pairwise(self: CFrozenSet[T]) -> CFrozenSet[CTuple[T]]:
         return self.iter().pairwise().frozenset()
+
+    def partition(self: CFrozenSet[T], func: Callable[[T], bool]) -> CTuple[CFrozenSet[T]]:
+        return self.iter().partition(func).map(CFrozenSet)
 
     def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
         return self.iter().prepend(value).frozenset()
