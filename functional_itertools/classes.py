@@ -168,7 +168,7 @@ class CIterable(Iterable[T]):
 
     def map(  # noqa: A003
         self: CIterable[T],
-        func: Callable[..., V],
+        func: Callable[..., U],
         *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
