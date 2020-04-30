@@ -44,7 +44,6 @@ from attr import asdict
 from attr import astuple
 from attr import Attribute
 from attr import evolve
-from attr import has
 from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
@@ -83,6 +82,7 @@ from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
+from functional_itertools.utilities import helper_cattrs_map_1
 from functional_itertools.utilities import helper_filter_items
 from functional_itertools.utilities import helper_filter_keys
 from functional_itertools.utilities import helper_filter_values
@@ -2077,8 +2077,8 @@ def _helper_cattrs_map(
         not_attr_items, is_attr_items = (
             x.dict(recurse=False, filter=filter)
             .items()
-            .partition(lambda x: has(x[1]))
-            .map(lambda x: x.dict())
+            .partition(helper_cattrs_map_1)
+            .map(_helper_cattrs_map_2)
         )
         if recurse:
             extra = is_attr_items.map_values(
@@ -2096,6 +2096,10 @@ def _helper_cattrs_map(
         return evolve(x, **not_attr_items.map_values(func), **extra)
     else:
         return func(x)
+
+
+def _helper_cattrs_map_2(x: CIterable[Tuple[T, U]]) -> CDict[T, U]:
+    return x.dict()
 
 
 def _helper_cattrs_tuple(

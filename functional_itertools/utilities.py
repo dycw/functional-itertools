@@ -15,6 +15,8 @@ from typing import TypeVar
 from typing import Union
 from warnings import warn
 
+from attr import has
+
 from functional_itertools.errors import UnsupportVersionError
 
 
@@ -84,6 +86,11 @@ def helper_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, 
 def helper_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
     key, value = item
     return func(key, value)
+
+
+def helper_cattrs_map_1(item: Tuple[str, Any]) -> bool:
+    _, value = item
+    return has(value)
 
 
 # multiprocessing
