@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from itertools import chain
-from itertools import islice
 from re import escape
 from sys import maxsize
-from typing import Iterable
 from typing import List
 from typing import Union
 
@@ -15,11 +13,10 @@ from hypothesis.strategies import lists
 from pytest import raises
 
 from functional_itertools import CIterable
-from tests.strategies import real_iterables
 
 
-@given(x=integers() | real_iterables(integers()))
-def test_init(x: Union[int, Iterable[int]]) -> None:
+@given(x=integers() | lists(integers()))
+def test_init(x: Union[int, List[int]]) -> None:
     if isinstance(x, int):
         with raises(
             TypeError, match="CIterable expected an iterable, but 'int' object is not iterable",
@@ -29,11 +26,11 @@ def test_init(x: Union[int, Iterable[int]]) -> None:
         assert isinstance(CIterable(iter(x)), CIterable)
 
 
-@given(x=real_iterables(integers()), index=integers())
+@given(x=lists(integers()), index=integers())
 @example(x=[], index=-1)
 @example(x=[], index=maxsize + 1)
 @example(x=[], index=0.0)
-def test_get_item(x: Iterable[int], index: Union[int, float]) -> None:
+def test_get_item(x: List[int], index: Union[int, float]) -> None:
     y = CIterable(x)
     if isinstance(index, int):
         num_ints = len(x)
@@ -45,7 +42,7 @@ def test_get_item(x: Iterable[int], index: Union[int, float]) -> None:
         elif 0 <= index < num_ints:
             z = y[index]
             assert isinstance(z, int)
-            assert z == next(iter(islice(x, index, index + 1)))
+            assert z == x[index]
         elif num_ints <= index <= maxsize:
             with raises(IndexError, match="CIterable index out of range"):
                 y[index]
@@ -61,21 +58,21 @@ def test_get_item(x: Iterable[int], index: Union[int, float]) -> None:
             y[index]
 
 
-@given(x=real_iterables(integers()))
-def test_dunder_iter(x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_dunder_iter(x: List[int]) -> None:
     assert list(CIterable(x)) == list(x)
 
 
 # repr and str
 
 
-@given(x=real_iterables(integers()))
-def test_repr(x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_repr(x: List[int]) -> None:
     assert repr(CIterable(x)) == f"CIterable({x!r})"
 
 
-@given(x=real_iterables(integers()))
-def test_str(x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_str(x: List[int]) -> None:
     assert str(CIterable(x)) == f"CIterable({x})"
 
 
