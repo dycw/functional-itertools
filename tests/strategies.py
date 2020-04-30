@@ -19,15 +19,14 @@ from functional_itertools import CTuple
 class Case:
     cls: Type
     cast: Type
-    ordered: bool
 
 
 CASES = [
-    Case(cls=CIterable, cast=list, ordered=True),
-    Case(cls=CList, cast=list, ordered=True),
-    Case(cls=CTuple, cast=tuple, ordered=True),
-    Case(cls=CSet, cast=frozenset, ordered=False),
-    Case(cls=CFrozenSet, cast=frozenset, ordered=False),
+    Case(cls=CIterable, cast=list),
+    Case(cls=CList, cast=list),
+    Case(cls=CTuple, cast=tuple),
+    Case(cls=CSet, cast=frozenset),
+    Case(cls=CFrozenSet, cast=frozenset),
 ]
 
 
