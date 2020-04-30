@@ -19,6 +19,7 @@ from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
+from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import tuples
 from more_itertools.recipes import all_equal
@@ -58,75 +59,69 @@ from tests.strategies import permutations_x
 from tests.strategies import product_repeat
 from tests.strategies import product_x
 from tests.strategies import product_xs
-from tests.strategies import real_iterables
 from tests.test_utilities import is_even
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()))
-def test_all_equal(case: Case, x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_all_equal(case: Case, x: List[int]) -> None:
     y = case.cls(x).all_equal()
     assert isinstance(y, bool)
     assert y == all_equal(x)
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), n=none() | integers(0, maxsize))
-def test_consume(case: Case, x: Iterable[int], n: Optional[int]) -> None:
+@given(x=lists(integers()), n=none() | integers(0, maxsize))
+def test_consume(case: Case, x: List[int], n: Optional[int]) -> None:
     y = case.cls(x).consume(n=n)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        iter_x = iter(x)
-        consume(iter_x, n=n)
-        assert case.cast(y) == case.cast(iter_x)
+    iter_x = iter(case.cast(x))
+    consume(iter_x, n=n)
+    assert case.cast(y) == case.cast(iter_x)
 
 
 @mark.parametrize("case", CASES)
-@given(pairs=real_iterables(tuples(integers(), integers()), min_size=1))
+@given(pairs=lists(tuples(integers(), integers()), min_size=1))
 def test_dotproduct(case: Case, pairs: Iterable[Tuple[int, int]]) -> None:
     x, y = zip(*pairs)
     z = case.cls(x).dotproduct(y)
     assert isinstance(z, int)
-    if case.ordered:
-        assert z == dotproduct(x, y)
+    assert z == dotproduct(case.cast(x), y)
 
 
 @mark.parametrize("case", CASES)
 @given(
-    x=real_iterables(integers()), default=integers(), pred=none() | just(is_even),
+    x=lists(integers()), default=integers(), pred=none() | just(is_even),
 )
 def test_first_true(
-    case: Case, x: Iterable[int], default: int, pred: Optional[Callable[[int], bool]],
+    case: Case, x: List[int], default: int, pred: Optional[Callable[[int], bool]],
 ) -> None:
     y = case.cls(x).first_true(default=default, pred=pred)
     assert isinstance(y, int)
-    if case.ordered:
-        assert y == first_true(x, default=default, pred=pred)
+    assert y == first_true(case.cast(x), default=default, pred=pred)
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(real_iterables(integers())))
-def test_flatten(case: Case, x: Iterable[Iterable[int]]) -> None:
+@given(x=lists(lists(integers()).map(tuple)))
+def test_flatten(case: Case, x: List[Tuple[int, ...]]) -> None:
     y = case.cls(x).flatten()
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(flatten(x))
+    assert case.cast(y) == case.cast(flatten(case.cast(x)))
 
 
 @mark.parametrize("case", CASES)
 @given(
-    x=real_iterables(integers()), n=integers(0, 1000), fillvalue=none() | integers(),
+    x=lists(integers()), n=integers(0, 1000), fillvalue=none() | integers(),
 )
-def test_grouper(case: Case, x: Iterable[int], n: int, fillvalue: Optional[int]) -> None:
+def test_grouper(case: Case, x: List[int], n: int, fillvalue: Optional[int]) -> None:
     y = case.cls(x).grouper(n, fillvalue=fillvalue)
     assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if case.ordered:
-        assert case.cast(map(case.cast, z)) == case.cast(
-            map(case.cast, grouper(x, n, fillvalue=fillvalue)),
-        )
+    assert case.cast(map(case.cast, z)) == case.cast(
+        map(case.cast, grouper(case.cast(x), n, fillvalue=fillvalue)),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -150,28 +145,26 @@ def test_iter_except(case: Case) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers(), max_size=10), n=integers(0, 5))
-def test_ncycles(case: Case, x: Iterable[int], n: int) -> None:
+@given(x=lists(integers(), max_size=10), n=integers(0, 5))
+def test_ncycles(case: Case, x: List[int], n: int) -> None:
     y = case.cls(x).ncycles(n)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(ncycles(x, n))
+    assert case.cast(y) == case.cast(ncycles(x, n))
 
 
 @mark.parametrize("case", CASES)
 @given(
-    x=real_iterables(integers()), n=integers(0, maxsize), default=none() | integers(),
+    x=lists(integers()), n=integers(0, maxsize), default=none() | integers(),
 )
-def test_nth(case: Case, x: Iterable[int], n: int, default: Optional[int]) -> None:
+def test_nth(case: Case, x: List[int], n: int, default: Optional[int]) -> None:
     y = case.cls(x).nth(n, default=default)
     assert isinstance(y, int) or (y is None)
-    if case.ordered:
-        assert y == nth(x, n, default=default)
+    assert y == nth(case.cast(x), n, default=default)
 
 
 @mark.parametrize("case", CASES)
-@given(data=data(), x=real_iterables(integers(), min_size=2))
-def test_nth_combination(case: Case, data: DataObject, x: Iterable[int]) -> None:
+@given(data=data(), x=lists(integers(), min_size=2))
+def test_nth_combination(case: Case, data: DataObject, x: List[int]) -> None:
     y = case.cls(x)
     if case.cls is CIterable:
         length = len(x)
@@ -189,22 +182,20 @@ def test_nth_combination(case: Case, data: DataObject, x: Iterable[int]) -> None
     index = data.draw(integers(0, ncr(length, r) - 1))
     z = y.nth_combination(r, index)
     assert isinstance(z, CTuple)
-    if case.ordered:
-        assert z == nth_combination(x, r, index)
+    assert z == nth_combination(case.cast(x), r, index)
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), n=islice_ints)
+@given(x=lists(integers()), n=islice_ints)
 def test_padnone(case: Case, x: List[int], n: int) -> None:
     y = case.cls(x).padnone()
     assert isinstance(y, CIterable)
-    if case.ordered:
-        assert case.cast(y[:n]) == case.cast(islice(padnone(x), n))
+    assert case.cast(y[:n]) == case.cast(islice(padnone(case.cast(x)), n))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()))
-def test_pairwise(case: Case, x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_pairwise(case: Case, x: List[int]) -> None:
     y = case.cls(x).pairwise()
     assert isinstance(y, case.cls)
     z = case.cast(y)
@@ -213,13 +204,12 @@ def test_pairwise(case: Case, x: Iterable[int]) -> None:
         zi0, zi1 = zi
         assert isinstance(zi0, int)
         assert isinstance(zi1, int)
-    if case.ordered:
-        assert z == case.cast(pairwise(x))
+    assert z == case.cast(pairwise(case.cast(x)))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()))
-def test_partition(case: Case, x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_partition(case: Case, x: List[int]) -> None:
     y = case.cls(x).partition(is_even)
     assert isinstance(y, CTuple)
     assert len(y) == 2
@@ -230,38 +220,35 @@ def test_partition(case: Case, x: Iterable[int]) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers(), max_size=5))
-def test_powerset(case: Case, x: Iterable[int]) -> None:
+@given(x=lists(integers(), max_size=5))
+def test_powerset(case: Case, x: List[int]) -> None:
     y = case.cls(x).powerset()
     assert isinstance(y, case.cls)
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    if case.ordered:
-        assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, powerset(x)))
+    assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, powerset(x)))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), value=integers())
-def test_prepend(case: Case, x: Iterable[int], value: int) -> None:
+@given(x=lists(integers()), value=integers())
+def test_prepend(case: Case, x: List[int], value: int) -> None:
     y = case.cls(x).prepend(value)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(prepend(value, x))
+    assert case.cast(y) == case.cast(prepend(value, x))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()))
-def test_quantify(case: Case, x: Iterable[int]) -> None:
+@given(x=lists(integers()))
+def test_quantify(case: Case, x: List[int]) -> None:
     y = case.cls(x).quantify(pred=is_even)
     assert isinstance(y, int)
-    if case.ordered:
-        assert y == quantify(x, pred=is_even)
+    assert y == quantify(case.cast(x), pred=is_even)
 
 
 @mark.parametrize("case", CASES)
 @given(x=combinations_x, r=combinations_r)
-def test_random_combination(case: Case, x: Iterable[int], r: int) -> None:
+def test_random_combination(case: Case, x: List[int], r: int) -> None:
     y = case.cls(x)
     if case.cls is CIterable:
         max_len = len(x)
@@ -273,13 +260,13 @@ def test_random_combination(case: Case, x: Iterable[int], r: int) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=combinations_x, r=combinations_r)
-def test_random_combination_with_replacement(case: Case, x: Iterable[int], r: int) -> None:
+def test_random_combination_with_replacement(case: Case, x: List[int], r: int) -> None:
     assert isinstance(case.cls(x).random_combination_with_replacement(r), CTuple)
 
 
 @mark.parametrize("case", CASES)
 @given(x=permutations_x, r=permutations_r)
-def test_random_permutation(case: Case, x: Iterable[int], r: Optional[int]) -> None:
+def test_random_permutation(case: Case, x: List[int], r: Optional[int]) -> None:
     y = case.cls(x)
     if r is not None:
         if case.cls is CIterable:
@@ -294,9 +281,7 @@ def test_random_permutation(case: Case, x: Iterable[int], r: Optional[int]) -> N
 @given(
     x=product_x, xs=product_xs, repeat=product_repeat,
 )
-def test_random_product(
-    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], repeat: int,
-) -> None:
+def test_random_product(case: Case, x: List[int], xs: List[List[int]], repeat: int) -> None:
     assert isinstance(case.cls(x).random_product(*xs, repeat=repeat), CTuple)
 
 
@@ -318,8 +303,8 @@ def test_repeatfunc(case: Case, data: DataObject, n: int) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
-def test_roundrobin(case: Case, x: Iterable[int], xs: Iterable[Iterable[int]]) -> None:
+@given(x=lists(integers()), xs=lists(lists(integers())))
+def test_roundrobin(case: Case, x: List[int], xs: List[List[int]]) -> None:
     y = case.cls(x).roundrobin(*xs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(roundrobin(x, *xs))
@@ -333,40 +318,32 @@ def test_tabulate(start: int, n: int) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), n=integers(0, maxsize))
-def test_tail(case: Case, x: Iterable[int], n: int) -> None:
+@given(x=lists(integers()), n=integers(0, maxsize))
+def test_tail(case: Case, x: List[int], n: int) -> None:
     y = case.cls(x).tail(n)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(tail(n, x))
+    assert case.cast(y) == case.cast(tail(n, case.cast(x)))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), n=integers(0, maxsize))
-def test_take(case: Case, x: Iterable[int], n: int) -> None:
+@given(x=lists(integers()), n=integers(0, maxsize))
+def test_take(case: Case, x: List[int], n: int) -> None:
     y = case.cls(x).take(n)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(take(n, x))
+    assert case.cast(y) == case.cast(take(n, case.cast(x)))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), key=none() | just(neg))
-def test_unique_everseen(
-    case: Case, x: Iterable[int], key: Optional[Callable[[int], int]],
-) -> None:
+@given(x=lists(integers()), key=none() | just(neg))
+def test_unique_everseen(case: Case, x: List[int], key: Optional[Callable[[int], int]]) -> None:
     y = case.cls(x).unique_everseen(key=key)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(unique_everseen(x, key=key))
+    assert case.cast(y) == case.cast(unique_everseen(x, key=key))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), key=none() | just(neg))
-def test_unique_justseen(
-    case: Case, x: Iterable[int], key: Optional[Callable[[int], int]],
-) -> None:
+@given(x=lists(integers()), key=none() | just(neg))
+def test_unique_justseen(case: Case, x: List[int], key: Optional[Callable[[int], int]]) -> None:
     y = case.cls(x).unique_justseen(key=key)
     assert isinstance(y, case.cls)
-    if case.ordered:
-        assert case.cast(y) == case.cast(unique_justseen(x, key=key))
+    assert case.cast(y) == case.cast(unique_justseen(x, key=key))

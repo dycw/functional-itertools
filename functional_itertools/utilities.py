@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from enum import auto
 from enum import Enum
+from itertools import chain
 from sys import version_info
 from typing import Any
 from typing import Callable
@@ -11,6 +12,7 @@ from typing import Generator
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
+from typing import Union
 from warnings import warn
 
 from functional_itertools.errors import UnsupportVersionError
@@ -39,10 +41,6 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # helper functions
 
 
-def helper_expand_as_dict(x: T) -> Tuple[T, T]:
-    return x, x
-
-
 def helper_filter_keys(item: Tuple[T, Any], *, func: Callable[[T], bool]) -> bool:
     key, _ = item
     return func(key)
@@ -60,6 +58,17 @@ def helper_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> b
 
 def helper_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
     return y
+
+
+def helper_map_dict(
+    x: T, *iterables: U, func: Callable[..., V],
+) -> Union[
+    Tuple[T, V], Tuple[Union[T, U], V],
+]:
+    if iterables:
+        return tuple(chain([x], iterables)), func(x, *iterables)
+    else:
+        return x, func(x)
 
 
 def helper_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
