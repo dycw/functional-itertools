@@ -3,7 +3,6 @@ from __future__ import annotations
 from itertools import permutations
 from typing import Any
 from typing import Dict
-from typing import Iterable
 from typing import List
 from typing import Type
 
@@ -20,7 +19,6 @@ from functional_itertools import EmptyIterableError
 from functional_itertools import MultipleElementsError
 from tests.strategies import Case
 from tests.strategies import CASES
-from tests.strategies import real_iterables
 from tests.test_utilities import sum_varargs
 
 
@@ -37,28 +35,30 @@ def test_first_and_last(x: List[int], method_name: str, index: int) -> None:
 
 @mark.parametrize("case", CASES)
 @mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
-@given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
-def test_map_dict(
-    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], kwargs: Dict[str, Any],
-) -> None:
+@given(x=lists(integers()), xs=lists(lists(integers())))
+def test_map_dict(case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any]) -> None:
     y = case.cls(x).map_dict(sum_varargs, *xs, **kwargs)
     assert isinstance(y, CDict)
-    assert y == dict(zip(x, map(sum_varargs, x, *xs)))
+    z = case.cast(x)
+    if xs:
+        keys = zip(z, *xs)
+    else:
+        keys = z
+    assert y == dict(zip(keys, map(sum_varargs, z, *xs)))
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()))
-def test_one(case: Case, x: Iterable[int]) -> None:
-    length = len(x)
+@given(x=lists(integers()))
+def test_one(case: Case, x: List[int]) -> None:
+    length = len(case.cast(x))
     if length == 0:
         with raises(EmptyIterableError):
             case.cls(x).one()
     elif length == 1:
         assert case.cls(x).one() == next(iter(x))
     else:
-        if case.ordered:
-            with raises(MultipleElementsError, match=r"^-?\d+, -?\d+$"):
-                case.cls(x).one()
+        with raises(MultipleElementsError, match=r"^-?\d+, -?\d+$"):
+            case.cls(x).one()
 
 
 @given(x=lists(integers()))
