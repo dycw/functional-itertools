@@ -78,7 +78,6 @@ from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
-from functional_itertools.utilities import helper_expand_as_dict
 from functional_itertools.utilities import helper_filter_items
 from functional_itertools.utilities import helper_filter_keys
 from functional_itertools.utilities import helper_filter_values
@@ -170,34 +169,28 @@ class CIterable(Iterable[T]):
     def map(  # noqa: A003
         self: CIterable[T],
         func: Callable[..., V],
-        *iterables: Iterable[U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-        dict: bool = False,  # noqa: A002
-    ) -> Union[CIterable[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        wrapped = partial(helper_map, func=func, dict=dict)
-        if parallel:  #########
-            # be careful: int of running with *iterables multiple times
+    ) -> CIterable[U]:
+        if parallel:
+            # note: be careful of running with *iterables multiple times
             if iterables:
                 try:
                     with Pool(processes=processes) as pool:
-                        result = CIterable(pool.starmap(wrapped, zip(self, *iterables)))
+                        return CIterable(pool.starmap(func, zip(self, *iterables)))
                 except AssertionError as error:
                     with suppress_daemonic_processes_with_children(error):
-                        result = self.starmap(wrapped, zip(self, *iterables))
+                        return self.starmap(func, zip(self, *iterables))
             else:
                 try:
                     with Pool(processes=processes) as pool:
-                        result = CIterable(pool.map(wrapped, self))
+                        return CIterable(pool.map(func, self))
                 except AssertionError as error:
                     with suppress_daemonic_processes_with_children(error):
-                        result = self.map(wrapped)
+                        return self.map(func)
         else:
-            result = CIterable(map(wrapped, self, *iterables))
-        if dict:
-            return result.dict()
-        else:
-            return result
+            return CIterable(map(func, self, *iterables))
 
     def max(  # noqa: A003
         self: CIterable[T],
@@ -521,8 +514,15 @@ class CIterable(Iterable[T]):
     def append(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:  # dead: disable
         return self.chain([value])
 
-    def expand_as_dict(self: CIterable[T]) -> CDict[T, T]:
-        return self.map(helper_expand_as_dict).dict()
+    def map_dict(
+        self: CIterable[T],
+        func: Callable[..., V],
+        *iterables: Iterable[U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        wrapped = partial(helper_map, func=func, dict=dict)
+        return self.map(wrapped, *iterables, parallel=parallel, processes=processes).dict()
 
     def first(self: CIterable[T]) -> T:
         try:
@@ -605,15 +605,11 @@ class CList(List[T]):
     def map(  # noqa: A003
         self: CList[T],
         func: Callable[..., U],
-        *iterables: Iterable[U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-        dict: bool = False,  # noqa: A002
-    ) -> Union[CList[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        result = self.iter().map(
-            func, *iterables, parallel=parallel, processes=processes, dict=dict,
-        )
-        return result if dict else result.list()
+    ) -> CList[U]:
+        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).list()
 
     def max(  # noqa: A003
         self: CList[T],
@@ -876,8 +872,14 @@ class CList(List[T]):
 
     # extra public
 
-    def expand_as_dict(self: CList[T]) -> CDict[T, T]:
-        return self.iter().expand_as_dict()
+    def map_dict(
+        self: CList[T],
+        func: Callable[..., V],
+        *iterables: Iterable[U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
 
     def one(self: CList[T]) -> T:
         return self.iter().one()
@@ -933,16 +935,11 @@ class CTuple(tuple, Generic[T]):
     def map(  # noqa: A003
         self: CTuple[T],
         func: Callable[..., U],
-        *iterables: Iterable[U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-        dict: bool = False,  # noqa: A002
-    ) -> Union[CTuple[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        result = self.iter().map(
-            func, *iterables, parallel=parallel, processes=processes, dict=dict,
-        )
-
-        return result if dict else result.tuple()
+    ) -> CTuple[U]:
+        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).tuple()
 
     def max(  # noqa: A003
         self: CTuple[T],
@@ -1194,8 +1191,14 @@ class CTuple(tuple, Generic[T]):
 
     # extra public
 
-    def expand_as_dict(self: CTuple[T]) -> CDict[T, T]:
-        return self.iter().expand_as_dict()
+    def map_dict(
+        self: CTuple[T],
+        func: Callable[..., V],
+        *iterables: Iterable[U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
 
     def one(self: CTuple[T]) -> T:
         return self.iter().one()
@@ -1251,12 +1254,8 @@ class CSet(Set[T]):
         *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-        dict: bool = False,  # noqa: A002
-    ) -> Union[CSet[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        result = self.iter().map(
-            func, *iterables, parallel=parallel, processes=processes, dict=dict,
-        )
-        return result if dict else result.set()
+    ) -> CSet[U]:
+        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).set()
 
     def max(  # noqa: A003
         self: CSet[T],
@@ -1563,8 +1562,14 @@ class CSet(Set[T]):
 
     # extra public
 
-    def expand_as_dict(self: CSet[T]) -> CDict[T, T]:
-        return self.iter().expand_as_dict()
+    def map_dict(
+        self: CSet[T],
+        func: Callable[..., V],
+        *iterables: Iterable[U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
 
     def one(self: CSet[T]) -> T:
         return self.iter().one()
@@ -1611,14 +1616,12 @@ class CFrozenSet(FrozenSet[T]):
 
     def map(  # noqa: A003
         self: CFrozenSet[T],
-        func: Callable[..., V],
-        *iterables: Iterable[U],
+        func: Callable[..., U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-        dict: bool = False,  # noqa: A002
-    ) -> Union[CFrozenSet[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        result = self.iter().map(func, *iterables, parallel=parallel, processes=processes)
-        return result if dict else result.frozenset()
+    ) -> CFrozenSet[U]:
+        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).frozenset()
 
     def max(  # noqa: A003
         self: CFrozenSet[T],
@@ -1897,8 +1900,14 @@ class CFrozenSet(FrozenSet[T]):
 
     # extra public
 
-    def expand_as_dict(self: CFrozenSet[T]) -> CDict[T, T]:
-        return self.iter().expand_as_dict()
+    def map_dict(
+        self: CFrozenSet[T],
+        func: Callable[..., V],
+        *iterables: Iterable[U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
 
     def one(self: CFrozenSet[T]) -> T:
         return self.iter().one()

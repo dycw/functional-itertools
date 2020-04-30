@@ -27,7 +27,6 @@ from typing import Optional
 from typing import Tuple
 
 from hypothesis import given
-from hypothesis import settings
 from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
@@ -224,7 +223,6 @@ def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
 @mark.parametrize("case", CASES)
 @mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=real_iterables(tuples(integers(), integers())))
-@settings(max_examples=100)
 def test_starmap(case: Case, x: Iterable[Tuple[int, int]], kwargs: Dict[str, Any]) -> None:
     y = case.cls(x).starmap(max, **kwargs)
     assert isinstance(y, case.cls)

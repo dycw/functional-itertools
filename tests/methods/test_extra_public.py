@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from itertools import permutations
+from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Type
@@ -11,6 +13,7 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from pytest import mark
 
+from functional_itertools import CDict
 from functional_itertools import CIterable
 from functional_itertools import CList
 from functional_itertools import EmptyIterableError
@@ -18,6 +21,7 @@ from functional_itertools import MultipleElementsError
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import real_iterables
+from tests.test_utilities import sum_varargs
 
 
 @given(x=lists(integers()))
@@ -29,6 +33,17 @@ def test_first_and_last(x: List[int], method_name: str, index: int) -> None:
     else:
         with raises(EmptyIterableError):
             method()
+
+
+@mark.parametrize("case", CASES)
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
+@given(x=real_iterables(integers()), xs=real_iterables(real_iterables(integers())))
+def test_map_dict(
+    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], kwargs: Dict[str, Any],
+) -> None:
+    y = case.cls(x).map_dict(sum_varargs, *xs, **kwargs)
+    assert isinstance(y, CDict)
+    assert y == dict(zip(x, map(sum_varargs, x, *xs)))
 
 
 @mark.parametrize("case", CASES)

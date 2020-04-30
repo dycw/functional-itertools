@@ -41,10 +41,6 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # helper functions
 
 
-def helper_expand_as_dict(x: T) -> Tuple[T, T]:
-    return x, x
-
-
 def helper_filter_keys(item: Tuple[T, Any], *, func: Callable[[T], bool]) -> bool:
     key, _ = item
     return func(key)
