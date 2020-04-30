@@ -5,14 +5,18 @@ from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import Optional
+from typing import Type
 from typing import TypeVar
 
 from attr import asdict
+from attr import astuple
 from attr import Attribute
 from attr import evolve
 from attr import has
 
-from functional_itertools.classes import CDict
+from functional_itertools import CDict
+from functional_itertools import CList
+from functional_itertools import CTuple
 
 
 T = TypeVar("T")
@@ -32,6 +36,14 @@ class CAttrs(Generic[T]):
     ) -> CDict[str, T]:
         return helper_cattrs_dict(self, recurse=recurse, filter=filter)
 
+    def list(  # noqa: A003
+        self: CAttrs[T],
+        *,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CList[T]:
+        return helper_cattrs_tuple(self, recurse=recurse, filter=filter, tuple_factory=CList)
+
     def map(  # noqa: A003
         self: CAttrs[T],
         func: Callable[..., U],
@@ -43,6 +55,14 @@ class CAttrs(Generic[T]):
         return helper_cattrs_map(
             self, func=func, parallel=parallel, processes=processes, recurse=recurse, filter=filter,
         )
+
+    def tuple(  # noqa: A003
+        self: CAttrs[T],
+        *,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CTuple[T]:
+        return helper_cattrs_tuple(self, recurse=recurse, filter=filter)
 
 
 def helper_cattrs_dict(
@@ -93,3 +113,27 @@ def helper_cattrs_map(
         return evolve(x, **not_attr_items.map_values(func), **extra)
     else:
         return func(x)
+
+
+def helper_cattrs_tuple(
+    x: Any,
+    *,
+    recurse: bool = True,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    tuple_factory: Type = CTuple,
+) -> Any:
+    if isinstance(x, CAttrs):
+        res: CTuple[T] = astuple(x, recurse=False, filter=filter, tuple_factory=tuple_factory)
+        if recurse:
+            return res.map(
+                partial(
+                    helper_cattrs_tuple,
+                    recurse=recurse,
+                    filter=filter,
+                    tuple_factory=tuple_factory,
+                ),
+            )
+        else:
+            return res
+    else:
+        return x

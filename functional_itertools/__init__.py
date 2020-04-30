@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functional_itertools.cattrs import CAttrs
+from functional_itertools.classes import CAttrs
 from functional_itertools.classes import CDict
 from functional_itertools.classes import CFrozenSet
 from functional_itertools.classes import CIterable

@@ -40,6 +40,11 @@ from typing import TypeVar
 from typing import Union
 from warnings import warn
 
+from attr import asdict
+from attr import astuple
+from attr import Attribute
+from attr import evolve
+from attr import has
 from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
@@ -1993,9 +1998,125 @@ class CDict(Dict[T, U]):
         )
 
 
+class CAttrs(Generic[T]):
+    """A base class for the attrs package."""
+
+    # built-in
+
+    def dict(  # noqa: A003
+        self: CAttrs[T],
+        *,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CDict[str, T]:
+        return _helper_cattrs_dict(self, recurse=recurse, filter=filter)
+
+    def list(  # noqa: A003
+        self: CAttrs[T],
+        *,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CList[T]:
+        return _helper_cattrs_tuple(self, recurse=recurse, filter=filter, tuple_factory=CList)
+
+    def map(  # noqa: A003
+        self: CAttrs[T],
+        func: Callable[..., U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CAttrs[U]:
+        return _helper_cattrs_map(
+            self, func=func, parallel=parallel, processes=processes, recurse=recurse, filter=filter,
+        )
+
+    def tuple(  # noqa: A003
+        self: CAttrs[T],
+        *,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CTuple[T]:
+        return _helper_cattrs_tuple(self, recurse=recurse, filter=filter)
+
+
 # helpers
 
 
 def _helper_groupby(pair: Tuple[T, Iterable[T]]) -> Tuple[T, CTuple[T]]:
     key, group = pair
     return key, CTuple(group)
+
+
+def _helper_cattrs_dict(
+    x: Any,
+    *,
+    recurse: bool = True,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+) -> Any:
+    if isinstance(x, CAttrs):
+        res: CDict[T] = asdict(x, recurse=False, filter=filter, dict_factory=CDict)
+        if recurse:
+            return res.map_values(partial(_helper_cattrs_dict, recurse=recurse, filter=filter))
+        else:
+            return res
+    else:
+        return x
+
+
+def _helper_cattrs_map(
+    x: Any,
+    *,
+    func: Callable[..., U],
+    parallel: bool = False,
+    processes: Optional[int] = None,
+    recurse: bool = True,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+) -> Any:
+    if isinstance(x, CAttrs):
+        not_attr_items, is_attr_items = (
+            x.dict(recurse=False, filter=filter)
+            .items()
+            .partition(lambda x: has(x[1]))
+            .map(lambda x: x.dict())
+        )
+        if recurse:
+            extra = is_attr_items.map_values(
+                partial(
+                    _helper_cattrs_map,
+                    func=func,
+                    parallel=parallel,
+                    processes=processes,
+                    recurse=recurse,
+                    filter=filter,
+                ),
+            )
+        else:
+            extra = is_attr_items
+        return evolve(x, **not_attr_items.map_values(func), **extra)
+    else:
+        return func(x)
+
+
+def _helper_cattrs_tuple(
+    x: Any,
+    *,
+    recurse: bool = True,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    tuple_factory: Type = CTuple,
+) -> Any:
+    if isinstance(x, CAttrs):
+        res: CTuple[T] = astuple(x, recurse=False, filter=filter, tuple_factory=tuple_factory)
+        if recurse:
+            return res.map(
+                partial(
+                    _helper_cattrs_tuple,
+                    recurse=recurse,
+                    filter=filter,
+                    tuple_factory=tuple_factory,
+                ),
+            )
+        else:
+            return res
+    else:
+        return x
