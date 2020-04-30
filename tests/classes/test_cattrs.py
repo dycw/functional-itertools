@@ -12,6 +12,7 @@ from pytest import mark
 
 from functional_itertools import CAttrs
 from functional_itertools import CDict
+from functional_itertools import CTuple
 
 
 T = TypeVar("T")
@@ -102,4 +103,55 @@ def test_map_simple() -> None:
 def test_map_nested(recurse: bool, expected: Any) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).map(neg, recurse=recurse)
     assert isinstance(x, Foo)
+    assert x == expected
+
+
+def test_tuple_simple() -> None:
+    x = Foo(a=1, b=2, c=3).tuple()
+    assert isinstance(x, CTuple)
+    assert x == (1, 2, 3)
+
+
+@mark.parametrize(
+    "recurse, expected", [(True, (1, 2, (3, 4, 5))), (False, (1, 2, Bar(d=3, e=4, f=5)))],
+)
+def test_tuple_nested_recurse(recurse: bool, expected: tuple[str, Any]) -> None:
+    x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).tuple(recurse=recurse)
+    assert isinstance(x, CTuple)
+    assert x == expected
+
+
+@mark.parametrize(
+    "filter, expected",
+    [
+        (lambda k, v: k.name == "a", (1,)),
+        (lambda k, v: v >= 2, (2, 3)),
+        (lambda k, v: k.name == "a" or v == 3, (1, 3)),
+    ],
+)
+def test_tuple_simple_filter(
+    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],  # noqa: A002
+) -> None:
+    x = Foo(a=1, b=2, c=3).tuple(filter=filter)
+    assert isinstance(x, CTuple)
+    assert x == expected
+
+
+@mark.parametrize(
+    "filter, expected",
+    [
+        (lambda k, v: k.name == "a", (1,)),
+        (lambda k, v: k.name == "c", ((),)),
+        (lambda k, v: isinstance(v, int) and (v >= 2), (2,)),
+        (
+            lambda k, v: (isinstance(v, int) and ((v <= 1) or (v >= 5))) or isinstance(v, Bar),
+            (1, (5,)),
+        ),
+    ],
+)
+def test_tuple_nested_filter(
+    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],  # noqa: A002
+) -> None:
+    x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).tuple(filter=filter)
+    assert isinstance(x, CTuple)
     assert x == expected
