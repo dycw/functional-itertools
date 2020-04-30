@@ -83,6 +83,7 @@ from functional_itertools.utilities import helper_filter_items
 from functional_itertools.utilities import helper_filter_keys
 from functional_itertools.utilities import helper_filter_values
 from functional_itertools.utilities import helper_last
+from functional_itertools.utilities import helper_map
 from functional_itertools.utilities import helper_map_items
 from functional_itertools.utilities import helper_map_keys
 from functional_itertools.utilities import helper_map_values
@@ -172,19 +173,25 @@ class CIterable(Iterable[T]):
         *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CIterable[U]:
+        dict: bool = False,  # noqa: A002
+    ) -> Union[CIterable[U], CDict[T, U]]:
+        wrapped = partial(helper_map, func=func, dict=dict)
         if parallel:
             if iterables:
                 raise ValueError("Additional iterables cannot be used with 'parallel'")
             else:
                 try:
                     with Pool(processes=processes) as pool:
-                        return CIterable(pool.map(func, self))
+                        result = CIterable(pool.map(wrapped, self))
                 except AssertionError as error:
                     with suppress_daemonic_processes_with_children(error):
-                        return self.map(func)
+                        result = self.map(wrapped)
         else:
-            return CIterable(map(func, self, *iterables))
+            result = CIterable(map(wrapped, self, *iterables))
+        if dict:
+            return result.dict()
+        else:
+            return result
 
     def max(  # noqa: A003
         self: CIterable[T],

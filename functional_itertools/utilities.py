@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from enum import auto
 from enum import Enum
+from itertools import chain
 from sys import version_info
 from typing import Any
 from typing import Callable
@@ -11,6 +12,7 @@ from typing import Generator
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
+from typing import Union
 from warnings import warn
 
 from functional_itertools.errors import UnsupportVersionError
@@ -60,6 +62,22 @@ def helper_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> b
 
 def helper_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
     return y
+
+
+def helper_map(
+    x: T, *iterables: U, func: Callable[..., V], dict: bool = False,  # noqa: A002
+) -> Union[
+    V, Tuple[T, V], Tuple[Union[T, U], V],
+]:
+    if dict:
+        if iterables:
+            key = tuple(chain([x], iterables))
+            return key, func(*key)
+        else:
+            key = x
+            return key, func(x)
+    else:
+        return func(x, *iterables)
 
 
 def helper_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
