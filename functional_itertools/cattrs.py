@@ -1,65 +1,73 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import Any
 from typing import Callable
 from typing import Generic
+from typing import Optional
 from typing import TypeVar
-from typing import Union
 
 from attr import asdict
+from attr import Attribute
 from attr import evolve
-from attr.exceptions import NotAnAttrsClassError
+from attr import has
 
 from functional_itertools.classes import CDict
-from functional_itertools.classes import CIterable
-from functional_itertools.classes import CList
-from functional_itertools.utilities import helper_map_values
+
 
 T = TypeVar("T")
 U = TypeVar("U")
 
 
 class CAttrs(Generic[T]):
-    def dict(self: CAttrs[T], *, recurse: bool = True) -> CDict[str, T]:  # noqa: A003
-        mapping: CDict[str, T] = asdict(
-            self, recurse=False, dict_factory=CDict,
+    """A base class for the attrs package."""
+
+    # built-in
+
+    def dict(  # noqa: A003
+        self: CAttrs[T],
+        *,
+        recurse: bool = True,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
+    ) -> CDict[str, T]:
+        return asdict(self, recurse=recurse, filter=filter, dict_factory=CDict)
+
+    def map(  # noqa: A003
+        self: CAttrs[T],
+        func: Callable[..., U],
+        parallel: bool = False,
+        processes: Optional[int] = None,
+        recurse: bool = True,
+    ) -> CAttrs[U]:
+        return helper_cattrs_map(
+            self, func, parallel=parallel, processes=processes, recurse=recurse,
+        )
+
+
+def helper_cattrs_map(
+    value: Any,
+    func: Callable[..., U],
+    *,
+    parallel: bool = False,
+    processes: Optional[int] = None,
+    recurse: bool = True,
+) -> Any:
+    if isinstance(value, CAttrs):
+        not_attr_items, is_attr_items = (
+            value.dict(recurse=False).items().partition(lambda x: has(x[1])).map(lambda x: x.dict())
         )
         if recurse:
-            for key, value in mapping.items():
-                try:
-                    v_dict = value.dict()
-                except AttributeError:
-                    pass
-                else:
-                    mapping[key] = v_dict()
-        return mapping
-
-    def map_values(
-        self: CAttrs[T], func: Callable[..., U], *attrs: CAttrs[U], recurse: bool = True,
-    ) -> CAttrs[Union[T, U]]:
-        return self._map_values(func, self, *attrs, recurse=recurse)
-
-    def _map_values(
-        self: Any, func: Callable[..., U], value: Any, *values: Any, recurse: bool,
-    ) -> Any:
-        try:
-            asdict(value)
-        except NotAnAttrsClassError:
-            return func(value, *values)
+            extra = is_attr_items.map_values(
+                partial(
+                    helper_cattrs_map,
+                    func=func,
+                    parallel=parallel,
+                    processes=processes,
+                    recurse=recurse,
+                ),
+            )
         else:
-            if CIterable(values).map(lambda x: isinstance(x, type(self))).all():
-                mappings = CList([value]).chain(*values).map(lambda x: asdict(x, recurse=True))
-                mapping = (
-                    mappings.unique_everseen()
-                    .map(lambda x: (x, mappings.map(lambda y: y[x])))
-                    .dict()
-                )
-                if recurse:
-                    kwargs = mapping.map_values(
-                        lambda x: helper_map_values(func, *x, recurse=recurse),
-                    )
-                else:
-                    kwargs = mapping.map_values(lambda x: func(*x))
-                return evolve(value, **kwargs)
-            else:
-                return func(value, *values)
+            extra = is_attr_items
+        return evolve(value, **not_attr_items.map_values(func), **extra)
+    else:
+        return func(value)
