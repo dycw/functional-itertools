@@ -60,18 +60,15 @@ def helper_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
     return y
 
 
-def helper_map(
-    x: T, *iterables: U, func: Callable[..., V], dict: bool = False,  # noqa: A002
+def helper_map_dict(
+    x: T, *iterables: U, func: Callable[..., V],
 ) -> Union[
-    V, Tuple[T, V], Tuple[Union[T, U], V],
+    Tuple[T, V], Tuple[Union[T, U], V],
 ]:
-    if dict:
-        if iterables:
-            return tuple(chain([x], iterables)), func(x, *iterables)
-        else:
-            return x, func(x)
+    if iterables:
+        return tuple(chain([x], iterables)), func(x, *iterables)
     else:
-        return func(x, *iterables)
+        return x, func(x)
 
 
 def helper_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:

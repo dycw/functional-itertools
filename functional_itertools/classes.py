@@ -82,7 +82,7 @@ from functional_itertools.utilities import helper_filter_items
 from functional_itertools.utilities import helper_filter_keys
 from functional_itertools.utilities import helper_filter_values
 from functional_itertools.utilities import helper_last
-from functional_itertools.utilities import helper_map
+from functional_itertools.utilities import helper_map_dict
 from functional_itertools.utilities import helper_map_items
 from functional_itertools.utilities import helper_map_keys
 from functional_itertools.utilities import helper_map_values
@@ -521,7 +521,7 @@ class CIterable(Iterable[T]):
         parallel: bool = False,
         processes: Optional[int] = None,
     ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        wrapped = partial(helper_map, func=func, dict=dict)
+        wrapped = partial(helper_map_dict, func=func)
         return self.map(wrapped, *iterables, parallel=parallel, processes=processes).dict()
 
     def first(self: CIterable[T]) -> T:
