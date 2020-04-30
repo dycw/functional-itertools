@@ -37,7 +37,7 @@ CASES = [
     Case(cls=CIterable, cast=list, ordered=True),
     Case(cls=CList, cast=list, ordered=True),
     Case(cls=CTuple, cast=tuple, ordered=True),
-    Case(cls=CSet, cast=set, ordered=False),
+    Case(cls=CSet, cast=frozenset, ordered=False),
     Case(cls=CFrozenSet, cast=frozenset, ordered=False),
 ]
 

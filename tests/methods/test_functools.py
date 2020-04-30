@@ -6,7 +6,7 @@ from operator import or_
 from re import escape
 from typing import Any
 from typing import Callable
-from typing import Iterable
+from typing import List
 from typing import NoReturn
 from typing import Tuple
 from typing import Type
@@ -15,6 +15,7 @@ from typing import Union
 from hypothesis import given
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
+from hypothesis.strategies import lists
 from hypothesis.strategies import tuples
 from pytest import mark
 from pytest import raises
@@ -30,12 +31,11 @@ from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from tests.strategies import Case
 from tests.strategies import CASES
-from tests.strategies import real_iterables
 
 
 @mark.parametrize("case", CASES)
-@given(x=real_iterables(integers()), initial=integers() | just(sentinel))
-def test_reduce(case: Case, x: Iterable[int], initial: Union[int, Sentinel]) -> None:
+@given(x=lists(integers()), initial=integers() | just(sentinel))
+def test_reduce(case: Case, x: List[int], initial: Union[int, Sentinel]) -> None:
     args, _ = drop_sentinel(initial)
     try:
         y = case.cls(x).reduce(add, *args)
@@ -46,8 +46,7 @@ def test_reduce(case: Case, x: Iterable[int], initial: Union[int, Sentinel]) -> 
             reduce(add, x, *args)
     else:
         assert isinstance(y, int)
-        if case.ordered:
-            assert y == reduce(add, x, *args)
+        assert y == reduce(add, case.cast(x), *args)
 
 
 @given(x=tuples(integers(), integers()))
@@ -63,8 +62,8 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
     "cls, cls_base, func",
     [(CList, list, add), (CTuple, tuple, add), (CSet, set, or_), (CFrozenSet, frozenset, or_)],
 )
-@given(x=real_iterables(real_iterables(integers(), min_size=1), min_size=1))
+@given(x=lists(lists(integers(), min_size=1), min_size=1))
 def test_reduce_returning_c_classes(
-    cls: Type, x: Iterable[int], cls_base: Type, func: Callable[[Any, Any], Any],
+    cls: Type, x: List[List[int]], cls_base: Type, func: Callable[[Any, Any], Any],
 ) -> None:
     assert isinstance(CIterable(x).map(cls_base).reduce(func), cls)
