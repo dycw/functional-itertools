@@ -16,9 +16,9 @@ def is_even(x: int) -> bool:
     return mod(x, 2) == 0
 
 
-def sum_varargs(x: int, *xs: int) -> int:
-    return sum(chain([x], xs))
-
-
 def neg_key_and_value(key: int, value: int) -> Tuple[int, int]:
     return neg(key), neg(value)
+
+
+def sum_varargs(x: int, *xs: int) -> int:
+    return sum(chain([x], xs))
