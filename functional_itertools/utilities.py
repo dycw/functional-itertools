@@ -71,11 +71,9 @@ def helper_map(
 ]:
     if dict:
         if iterables:
-            key = tuple(chain([x], iterables))
-            return key, func(*key)
+            return tuple(chain([x], iterables)), func(x, *iterables)
         else:
-            key = x
-            return key, func(x)
+            return x, func(x)
     else:
         return func(x, *iterables)
 

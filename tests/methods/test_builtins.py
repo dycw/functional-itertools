@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import chain
 from operator import neg
 from re import escape
 from typing import Any
@@ -123,11 +124,39 @@ def test_list(case: Case, x: Iterable[int]) -> None:
 @mark.parametrize("case", CASES)
 @mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=real_iterables(integers()))
-@settings(max_examples=100)
-def test_map(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
+@settings(max_examples=10)
+def test_map_unary_with_dict_false(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
     y = case.cls(x).map(neg, **kwargs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(map(neg, x))
+
+
+@mark.parametrize("case", CASES)
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
+@given(
+    x=real_iterables(integers()), xs=real_iterables(real_iterables(integers()), min_size=1),
+)
+@settings(max_examples=10)
+def test_map_binary_with_dict_false(
+    case: Case, x: Iterable[int], xs: Iterable[Iterable[int]], kwargs: Dict[str, Any],
+) -> None:
+    y = case.cls(x).map(___sum, *xs, **kwargs)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(map(___sum, x, *xs))
+
+
+def ___sum(x: int, *xs: int) -> int:
+    return sum(chain([x], xs))
+
+
+@mark.parametrize("case", CASES)
+@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
+@given(x=real_iterables(integers()))
+@settings(max_examples=10)
+def test_map_unary_with_dict_true(case: Case, x: Iterable[int], kwargs: Dict[str, Any]) -> None:
+    y = case.cls(x).map(neg, **kwargs, dict=True)
+    assert isinstance(y, CDict)
+    # assert case.cast(y) == case.cast(map(neg, x))
 
 
 @mark.parametrize("case", CASES)

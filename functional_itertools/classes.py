@@ -169,16 +169,22 @@ class CIterable(Iterable[T]):
 
     def map(  # noqa: A003
         self: CIterable[T],
-        func: Callable[..., U],
-        *iterables: Iterable,
+        func: Callable[..., V],
+        *iterables: Iterable[U],
         parallel: bool = False,
         processes: Optional[int] = None,
         dict: bool = False,  # noqa: A002
-    ) -> Union[CIterable[U], CDict[T, U]]:
+    ) -> Union[CIterable[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
         wrapped = partial(helper_map, func=func, dict=dict)
-        if parallel:
+        if parallel:  #########
+            # be careful: int of running with *iterables multiple times
             if iterables:
-                raise ValueError("Additional iterables cannot be used with 'parallel'")
+                try:
+                    with Pool(processes=processes) as pool:
+                        result = CIterable(pool.starmap(wrapped, zip(self, *iterables)))
+                except AssertionError as error:
+                    with suppress_daemonic_processes_with_children(error):
+                        result = self.starmap(wrapped, zip(self, *iterables))
             else:
                 try:
                     with Pool(processes=processes) as pool:
@@ -599,11 +605,15 @@ class CList(List[T]):
     def map(  # noqa: A003
         self: CList[T],
         func: Callable[..., U],
-        *iterables: Iterable,
+        *iterables: Iterable[U],
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CList[U]:
-        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).list()
+        dict: bool = False,  # noqa: A002
+    ) -> Union[CList[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        result = self.iter().map(
+            func, *iterables, parallel=parallel, processes=processes, dict=dict,
+        )
+        return result if dict else result.list()
 
     def max(  # noqa: A003
         self: CList[T],
@@ -923,11 +933,16 @@ class CTuple(tuple, Generic[T]):
     def map(  # noqa: A003
         self: CTuple[T],
         func: Callable[..., U],
-        *iterables: Iterable,
+        *iterables: Iterable[U],
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CTuple[U]:
-        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).tuple()
+        dict: bool = False,  # noqa: A002
+    ) -> Union[CTuple[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        result = self.iter().map(
+            func, *iterables, parallel=parallel, processes=processes, dict=dict,
+        )
+
+        return result if dict else result.tuple()
 
     def max(  # noqa: A003
         self: CTuple[T],
@@ -1236,8 +1251,12 @@ class CSet(Set[T]):
         *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CSet[U]:
-        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).set()
+        dict: bool = False,  # noqa: A002
+    ) -> Union[CSet[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        result = self.iter().map(
+            func, *iterables, parallel=parallel, processes=processes, dict=dict,
+        )
+        return result if dict else result.set()
 
     def max(  # noqa: A003
         self: CSet[T],
@@ -1592,12 +1611,14 @@ class CFrozenSet(FrozenSet[T]):
 
     def map(  # noqa: A003
         self: CFrozenSet[T],
-        func: Callable[..., U],
-        *iterables: Iterable,
+        func: Callable[..., V],
+        *iterables: Iterable[U],
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> CFrozenSet[U]:
-        return self.iter().map(func, *iterables, parallel=parallel, processes=processes).frozenset()
+        dict: bool = False,  # noqa: A002
+    ) -> Union[CFrozenSet[V], CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+        result = self.iter().map(func, *iterables, parallel=parallel, processes=processes)
+        return result if dict else result.frozenset()
 
     def max(  # noqa: A003
         self: CFrozenSet[T],
