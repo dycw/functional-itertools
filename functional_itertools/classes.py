@@ -23,6 +23,7 @@ from itertools import zip_longest
 from multiprocessing import Pool
 from operator import add
 from pathlib import Path
+from re import search
 from sys import maxsize
 from typing import Any
 from typing import Callable
@@ -47,6 +48,10 @@ from attr import evolve
 from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
+from more_itertools import first
+from more_itertools import last
+from more_itertools import one
+from more_itertools import only
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -86,7 +91,6 @@ from functional_itertools.utilities import helper_cattrs_map_1
 from functional_itertools.utilities import helper_filter_items
 from functional_itertools.utilities import helper_filter_keys
 from functional_itertools.utilities import helper_filter_values
-from functional_itertools.utilities import helper_last
 from functional_itertools.utilities import helper_map_dict
 from functional_itertools.utilities import helper_map_items
 from functional_itertools.utilities import helper_map_keys
@@ -483,6 +487,41 @@ class CIterable(Iterable[T]):
     def divide(self: CIterable[T], n: int) -> CIterable[CTuple[T]]:
         return CIterable(divide(n, list(self))).map(CTuple)
 
+    def first(self: CIterable[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        _, kwargs = drop_sentinel(default=default)
+        try:
+            return first(self, **kwargs)
+        except ValueError:
+            raise EmptyIterableError from None
+
+    def last(self: CIterable[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        _, kwargs = drop_sentinel(default=default)
+        try:
+            return last(self._iterable, **kwargs)  # cannot use self
+        except ValueError:
+            raise EmptyIterableError from None
+
+    def one(self: CIterable[T]) -> T:
+        try:
+            return one(self)
+        except ValueError as error:
+            (msg,) = error.args
+            if msg == "too few items in iterable (expected 1)":
+                raise EmptyIterableError(msg) from None
+            elif search(
+                "^Expected exactly one item in iterable, but got .*, .*, and perhaps more.$", msg,
+            ):
+                raise MultipleElementsError(msg) from None
+            else:
+                raise error
+
+    def only(self: CIterable[T], default: Optional[U] = None) -> Union[T, U]:
+        try:
+            return only(self, default=default)
+        except ValueError as error:
+            (msg,) = error.args
+            raise MultipleElementsError(msg) from None
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -528,28 +567,6 @@ class CIterable(Iterable[T]):
     ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
         wrapped = partial(helper_map_dict, func=func)
         return self.map(wrapped, *iterables, parallel=parallel, processes=processes).dict()
-
-    def first(self: CIterable[T]) -> T:
-        try:
-            return next(iter(self))
-        except StopIteration:
-            raise EmptyIterableError from None
-
-    def last(self: CIterable[T]) -> T:  # dead: disable
-        return self.reduce(helper_last)
-
-    def one(self: CIterable[T]) -> T:
-        head: CList[T] = self.islice(2).list()
-        if head:
-            try:
-                (x,) = head
-            except ValueError:
-                x, y = head
-                raise MultipleElementsError(f"{x}, {y}")
-            else:
-                return x
-        else:
-            raise EmptyIterableError
 
     def pipe(
         self: CIterable[T],
@@ -844,6 +861,18 @@ class CList(List[T]):
     def divide(self: CList[T], n: int) -> CList[CTuple[T]]:
         return self.iter().divide(n).list()
 
+    def first(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().first(default=default)
+
+    def last(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().last(default=default)
+
+    def one(self: CList[T]) -> T:
+        return self.iter().one()
+
+    def only(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().only(default=default)
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -885,9 +914,6 @@ class CList(List[T]):
         processes: Optional[int] = None,
     ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
         return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
-
-    def one(self: CList[T]) -> T:
-        return self.iter().one()
 
     def pipe(
         self: CList[T], func: Callable[..., Iterable[U]], *args: Any, index: int = 0, **kwargs: Any,
@@ -1168,6 +1194,18 @@ class CTuple(tuple, Generic[T]):
     def divide(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
         return self.iter().divide(n).tuple()
 
+    def first(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().first(default=default)
+
+    def last(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().last(default=default)
+
+    def one(self: CTuple[T]) -> T:
+        return self.iter().one()
+
+    def only(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().only(default=default)
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -1204,9 +1242,6 @@ class CTuple(tuple, Generic[T]):
         processes: Optional[int] = None,
     ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
         return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
-
-    def one(self: CTuple[T]) -> T:
-        return self.iter().one()
 
     def pipe(
         self: CTuple[T],
@@ -1534,6 +1569,18 @@ class CSet(Set[T]):
     def divide(self: CSet[T], n: int) -> CSet[CTuple[T]]:
         return self.iter().divide(n).set()
 
+    def first(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().first(default=default)
+
+    def last(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().last(default=default)
+
+    def one(self: CSet[T]) -> T:
+        return self.iter().one()
+
+    def only(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().only(default=default)
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -1575,9 +1622,6 @@ class CSet(Set[T]):
         processes: Optional[int] = None,
     ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
         return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
-
-    def one(self: CSet[T]) -> T:
-        return self.iter().one()
 
     def pipe(
         self: CSet[T], func: Callable[..., Iterable[U]], *args: Any, index: int = 0, **kwargs: Any,
@@ -1872,6 +1916,18 @@ class CFrozenSet(FrozenSet[T]):
     def divide(self: CFrozenSet[T], n: int) -> CFrozenSet[CTuple[T]]:
         return self.iter().divide(n).frozenset()
 
+    def first(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().first(default=default)
+
+    def last(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().last(default=default)
+
+    def one(self: CFrozenSet[T]) -> T:
+        return self.iter().one()
+
+    def only(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+        return self.iter().only(default=default)
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -1913,9 +1969,6 @@ class CFrozenSet(FrozenSet[T]):
         processes: Optional[int] = None,
     ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
         return self.iter().map_dict(func, *iterables, parallel=parallel, processes=processes)
-
-    def one(self: CFrozenSet[T]) -> T:
-        return self.iter().one()
 
     def pipe(
         self: CFrozenSet[T],
