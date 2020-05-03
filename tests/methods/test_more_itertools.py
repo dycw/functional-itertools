@@ -95,7 +95,7 @@ def test_first_and_last(
 def test_iterate(start: int, n: int) -> None:
     y = CIterable.iterate(neg, start)
     assert isinstance(y, CIterable)
-    assert list(y[:n]) == list(islice(iterate(neg, start)))
+    assert list(y[:n]) == list(islice(iterate(neg, start), n))
 
 
 @mark.parametrize("case", CASES)
