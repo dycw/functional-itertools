@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from itertools import islice
+from operator import neg
 from re import escape
 from typing import Callable
 from typing import Dict
@@ -16,17 +18,20 @@ from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
 from more_itertools import first
+from more_itertools import iterate
 from more_itertools import last
 from more_itertools import one
 from more_itertools import only
 from pytest import mark
 from pytest import raises
 
+from functional_itertools import CIterable
 from functional_itertools import CTuple
 from functional_itertools import EmptyIterableError
 from functional_itertools import MultipleElementsError
 from tests.strategies import Case
 from tests.strategies import CASES
+from tests.strategies import islice_ints
 
 
 @mark.parametrize("case", CASES)
@@ -84,6 +89,13 @@ def test_first_and_last(
     else:
         assert isinstance(y, int)
         assert y == func(case.cast(x), **default)
+
+
+@given(start=integers(), n=islice_ints)
+def test_iterate(start: int, n: int) -> None:
+    y = CIterable.iterate(neg, start)
+    assert isinstance(y, CIterable)
+    assert list(y[:n]) == list(islice(iterate(neg, start), n))
 
 
 @mark.parametrize("case", CASES)
