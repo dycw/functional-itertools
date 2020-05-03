@@ -6,7 +6,6 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from _pytest.python_api import raises
 from hypothesis import given
 from hypothesis.strategies import fixed_dictionaries
 from hypothesis.strategies import integers
@@ -21,6 +20,7 @@ from more_itertools import last
 from more_itertools import one
 from more_itertools import only
 from pytest import mark
+from pytest import raises
 
 from functional_itertools import CTuple
 from functional_itertools import EmptyIterableError
