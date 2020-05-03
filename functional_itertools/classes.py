@@ -49,6 +49,7 @@ from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
 from more_itertools import first
+from more_itertools import iterate
 from more_itertools import last
 from more_itertools import one
 from more_itertools import only
@@ -493,6 +494,10 @@ class CIterable(Iterable[T]):
             return first(self, **kwargs)
         except ValueError:
             raise EmptyIterableError from None
+
+    @classmethod
+    def iterate(cls: Type[CIterable], func: Callable[[T], T], start: T) -> CIterable[T]:
+        return cls(iterate(func, start))
 
     def last(self: CIterable[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         _, kwargs = drop_sentinel(default=default)
