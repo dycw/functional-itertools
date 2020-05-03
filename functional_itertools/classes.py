@@ -515,7 +515,7 @@ class CIterable(Iterable[T]):
             else:
                 raise error
 
-    def only(self: CIterable[T], default: Optional[U] = None) -> Union[T, U]:
+    def only(self: CIterable[T], default: U = None) -> Union[T, U]:
         try:
             return only(self, default=default)
         except ValueError as error:
@@ -870,7 +870,7 @@ class CList(List[T]):
     def one(self: CList[T]) -> T:
         return self.iter().one()
 
-    def only(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def only(self: CList[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     # multiprocessing
@@ -1203,7 +1203,7 @@ class CTuple(tuple, Generic[T]):
     def one(self: CTuple[T]) -> T:
         return self.iter().one()
 
-    def only(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def only(self: CTuple[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     # multiprocessing
@@ -1578,7 +1578,7 @@ class CSet(Set[T]):
     def one(self: CSet[T]) -> T:
         return self.iter().one()
 
-    def only(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def only(self: CSet[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     # multiprocessing
@@ -1925,7 +1925,7 @@ class CFrozenSet(FrozenSet[T]):
     def one(self: CFrozenSet[T]) -> T:
         return self.iter().one()
 
-    def only(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def only(self: CFrozenSet[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     # multiprocessing
