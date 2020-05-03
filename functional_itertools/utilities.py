@@ -58,10 +58,6 @@ def helper_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> b
     return func(key, value)
 
 
-def helper_last(_: Any, y: T) -> T:  # dead: disable # noqa: U101
-    return y
-
-
 def helper_map_dict(
     x: T, *iterables: U, func: Callable[..., V],
 ) -> Union[

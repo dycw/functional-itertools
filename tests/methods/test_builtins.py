@@ -147,11 +147,12 @@ def test_max_and_min(
     key: Dict[str, int],
     default: Dict[str, int],
 ) -> None:
+    name = func.__name__
     try:
-        y = getattr(case.cls(x), func.__name__)(**key, **default)
+        y = getattr(case.cls(x), name)(**key, **default)
     except ValueError:
         with raises(
-            ValueError, match=escape(f"{func.__name__}() arg is an empty sequence"),
+            ValueError, match=escape(f"{name}() arg is an empty sequence"),
         ):
             func(x, **key, **default)
     else:
