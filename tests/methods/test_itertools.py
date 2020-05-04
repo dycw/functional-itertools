@@ -180,7 +180,7 @@ def test_islice(
     if step is not sentinel:
         assume(stop is not sentinel)
     y = case.cls(x).islice(start, stop=stop, step=step)
-    assert isinstance(y, CIterable)
+    assert isinstance(y, case.cls)
     args, _ = drop_sentinel(stop, step)
     assert case.cast(y) == case.cast(islice(case.cast(x), start, *args))
 

@@ -737,9 +737,12 @@ class CList(List[T]):
         return self.iter().groupby(key=key).list()
 
     def islice(
-        self: CList[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CList[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CList[T]:
+        return self.iter().islice(start, stop=stop, step=step).list()
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[CTuple[T]]:
         return self.iter().permutations(r=r).list()
@@ -1075,9 +1078,12 @@ class CTuple(tuple, Generic[T]):
         return self.iter().groupby(key=key).tuple()
 
     def islice(
-        self: CTuple[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CTuple[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CTuple[T]:
+        return self.iter().islice(start, stop=stop, step=step).tuple()
 
     def permutations(self: CTuple[T], r: Optional[int] = None) -> CTuple[CTuple[T]]:
         return self.iter().permutations(r=r).tuple()
@@ -1457,9 +1463,12 @@ class CSet(Set[T]):
         return self.iter().groupby(key=key).set()
 
     def islice(
-        self: CSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CSet[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).set()
 
     def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[CTuple[T]]:
         return self.iter().permutations(r=r).set()
@@ -1804,9 +1813,12 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().groupby(key=key).frozenset()
 
     def islice(
-        self: CFrozenSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CFrozenSet[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CFrozenSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).frozenset()
 
     def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[CTuple[T]]:
         return self.iter().permutations(r=r).frozenset()
