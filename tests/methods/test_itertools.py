@@ -22,7 +22,6 @@ from operator import neg
 from typing import Any
 from typing import Callable
 from typing import Dict
-from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -107,7 +106,7 @@ def test_combinations_with_replacement(case: Case, x: List[int], r: int) -> None
 
 @mark.parametrize("case", CASES)
 @given(pairs=lists(tuples(integers(), booleans()), min_size=1))
-def test_compress(case: Case, pairs: Iterable[Tuple[int, bool]]) -> None:
+def test_compress(case: Case, pairs: List[Tuple[int, bool]]) -> None:
     x, selectors = zip(*pairs)
     y = case.cls(x).compress(selectors)
     assert isinstance(y, case.cls)
@@ -213,7 +212,7 @@ def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
 @mark.parametrize("case", CASES)
 @mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=lists(tuples(integers(), integers())))
-def test_starmap(case: Case, x: Iterable[Tuple[int, int]], kwargs: Dict[str, Any]) -> None:
+def test_starmap(case: Case, x: List[Tuple[int, int]], kwargs: Dict[str, Any]) -> None:
     y = case.cls(x).starmap(max, **kwargs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(starmap(max, x))
