@@ -53,11 +53,6 @@ def helper_filter_values(item: Tuple[Any, U], *, func: Callable[[U], bool]) -> b
     return func(value)
 
 
-def helper_filter_items(item: Tuple[T, U], *, func: Callable[[T, U], bool]) -> bool:
-    key, value = item
-    return func(key, value)
-
-
 def helper_map_dict(
     x: T, *iterables: U, func: Callable[..., V],
 ) -> Union[

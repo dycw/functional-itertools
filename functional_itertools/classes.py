@@ -89,7 +89,6 @@ from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import helper_cattrs_map_1
-from functional_itertools.utilities import helper_filter_items
 from functional_itertools.utilities import helper_filter_keys
 from functional_itertools.utilities import helper_filter_values
 from functional_itertools.utilities import helper_map_dict
@@ -2034,7 +2033,7 @@ class CDict(Dict[T, U]):
     def filter_items(  # dead: disable
         self: CDict[T, U], func: Callable[[T, U], bool],
     ) -> CDict[T, U]:
-        return self.items().filter(partial(helper_filter_items, func=func)).dict()
+        return self.items().starfilter(func).dict()
 
     def map_keys(  # dead: disable
         self: CDict[T, U],
