@@ -46,9 +46,12 @@ def test_pipe(x: List[int]) -> None:
 @mark.parametrize("case", CASES)
 @given(x=lists(tuples(integers(), integers())))
 def test_starfilter(case: Case, x: List[Tuple[int, int]]) -> None:
-    y = case.cls(x).starfilter(lambda x, y: is_even(x) and is_even(y))
+    def func(key: int, value: int) -> bool:
+        return is_even(key) and is_even(value)
+
+    y = case.cls(x).starfilter(func)
     assert isinstance(y, case.cls)
-    assert case.cast(y) == case.cast((i, j) for (i, j) in x if is_even(i) and is_even(j))
+    assert case.cast(y) == case.cast((i, j) for (i, j) in x if func(i, j))
 
 
 @mark.parametrize("cls", [CIterable, CList])
