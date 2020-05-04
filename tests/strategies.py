@@ -6,7 +6,6 @@ from attr import attrs
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
-from hypothesis.strategies import tuples
 
 from functional_itertools import CFrozenSet
 from functional_itertools import CIterable
@@ -32,11 +31,6 @@ CASES = [
 
 MAX_SIZE = 1000
 islice_ints = integers(0, MAX_SIZE)
-range_args = (
-    tuples(integers(0, MAX_SIZE), none(), none())
-    | tuples(integers(0, MAX_SIZE), integers(0, MAX_SIZE), none())
-    | tuples(integers(0, MAX_SIZE), integers(0, MAX_SIZE), integers(1, 10))
-)
 combinations_x = lists(integers(), min_size=1, max_size=10)
 combinations_r = integers(0, 3)
 permutations_x = lists(integers(), max_size=5)
