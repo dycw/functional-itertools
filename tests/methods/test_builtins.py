@@ -10,6 +10,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from hypothesis import assume
 from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import fixed_dictionaries
@@ -35,7 +36,7 @@ from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
-from tests.strategies import range_args
+from tests.strategies import MAX_SIZE
 from tests.test_utilities import is_even
 from tests.test_utilities import sum_varargs
 
@@ -161,13 +162,16 @@ def test_max_and_min(
 
 
 @mark.parametrize("case", CASES)
-@given(args=range_args)
-def test_range(case: Case, args: Tuple[int, Optional[int], Optional[int]]) -> None:
-    start, stop, step = args
+@given(
+    start=integers(0, MAX_SIZE), stop=none() | integers(0, MAX_SIZE), step=none() | integers(1, 10),
+)
+def test_range(case: Case, start: int, stop: Optional[int], step: Optional[int]) -> None:
+    if step is not None:
+        assume(stop is not None)
     x = case.cls.range(start, stop, step)
     assert isinstance(x, case.cls)
-    (start, *new_args), _ = drop_none(*args)
-    assert case.cast(x) == case.cast(range(start, *new_args))
+    args, _ = drop_none(stop, step)
+    assert case.cast(x) == case.cast(range(start, *args))
 
 
 @mark.parametrize("case", CASES)
