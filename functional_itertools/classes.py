@@ -96,6 +96,7 @@ from functional_itertools.utilities import helper_map_dict
 from functional_itertools.utilities import helper_map_items
 from functional_itertools.utilities import helper_map_keys
 from functional_itertools.utilities import helper_map_values
+from functional_itertools.utilities import helper_starfilter
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import suppress_daemonic_processes_with_children
@@ -583,6 +584,11 @@ class CIterable(Iterable[T]):
         new_args = chain(islice(args, index), [self], islice(args, index, None))
         return CIterable(func(*new_args, **kwargs))
 
+    def starfilter(
+        self: CIterable[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
+    ) -> CIterable[Tuple[T, ...]]:
+        return self.filter(partial(helper_starfilter, func=func))
+
     def unzip(self: CIterable[Tuple[T, ...]]) -> Tuple[CIterable[T], ...]:
         return CIterable(zip(*self)).map(CIterable).tuple()
 
@@ -925,6 +931,11 @@ class CList(List[T]):
     ) -> CList[U]:
         return self.iter().pipe(func, *args, index=index, **kwargs).list()
 
+    def starfilter(
+        self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
+    ) -> CList[Tuple[T, ...]]:
+        return self.iter().starfilter(func).list()
+
     def unzip(self: CList[Tuple[T, ...]]) -> Tuple[CList[T], ...]:
         return CList(self.iter().unzip()).map(CList)
 
@@ -1255,7 +1266,12 @@ class CTuple(tuple, Generic[T]):
         index: int = 0,
         **kwargs: Any,
     ) -> CTuple[U]:
-        return self.iter().pipe(func, *args, index=index, **kwargs).list()
+        return self.iter().pipe(func, *args, index=index, **kwargs).tuple()
+
+    def starfilter(
+        self: CTuple[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
+    ) -> CTuple[Tuple[T, ...]]:
+        return self.iter().starfilter(func).tuple()
 
     def unzip(self: CTuple[Tuple[T, ...]]) -> Tuple[CTuple[T], ...]:
         return CTuple(self.iter().unzip()).map(CTuple)
@@ -1633,6 +1649,11 @@ class CSet(Set[T]):
     ) -> CSet[U]:
         return self.iter().pipe(func, *args, index=index, **kwargs).set()
 
+    def starfilter(
+        self: CSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
+    ) -> CSet[Tuple[T, ...]]:
+        return self.iter().starfilter(func).set()
+
 
 class CFrozenSet(FrozenSet[T]):
     """A frozenset with chainable methods."""
@@ -1983,6 +2004,11 @@ class CFrozenSet(FrozenSet[T]):
         **kwargs: Any,
     ) -> CFrozenSet[U]:
         return self.iter().pipe(func, *args, index=index, **kwargs).frozenset()
+
+    def starfilter(
+        self: CFrozenSet[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
+    ) -> CFrozenSet[Tuple[T, ...]]:
+        return self.iter().starfilter(func).frozenset()
 
 
 class CDict(Dict[T, U]):

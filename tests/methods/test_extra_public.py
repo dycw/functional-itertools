@@ -4,11 +4,13 @@ from itertools import permutations
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Tuple
 from typing import Type
 
 from hypothesis import given
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
+from hypothesis.strategies import tuples
 from pytest import mark
 
 from functional_itertools import CDict
@@ -16,6 +18,7 @@ from functional_itertools import CIterable
 from functional_itertools import CList
 from tests.strategies import Case
 from tests.strategies import CASES
+from tests.test_utilities import is_even
 from tests.test_utilities import sum_varargs
 
 
@@ -38,6 +41,14 @@ def test_pipe(x: List[int]) -> None:
     y = CIterable(x).pipe(permutations, r=2)
     assert isinstance(y, CIterable)
     assert list(y) == list(permutations(x, r=2))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(tuples(integers(), integers())))
+def test_starfilter(case: Case, x: List[Tuple[int, int]]) -> None:
+    y = case.cls(x).starfilter(lambda x, y: is_even(x) and is_even(y))
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast((i, j) for (i, j) in x if is_even(i) and is_even(j))
 
 
 @mark.parametrize("cls", [CIterable, CList])

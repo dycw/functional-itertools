@@ -69,6 +69,10 @@ def helper_map_dict(
         return x, func(x)
 
 
+def helper_starfilter(x: Tuple[T, ...], *, func: Callable[[Tuple[T, ...]], bool]) -> bool:
+    return func(*x)
+
+
 def helper_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
     key, value = item
     return func(key), value
