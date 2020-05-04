@@ -24,7 +24,6 @@ from multiprocessing import Pool
 from operator import add
 from pathlib import Path
 from re import search
-from sys import maxsize
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -85,6 +84,7 @@ from functional_itertools.compat import MAX_MIN_KEY_ANNOTATION
 from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
+from functional_itertools.errors import StopArgumentMissing
 from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
@@ -123,17 +123,19 @@ class CIterable(Iterable[T]):
             self._iterable = iterable
 
     def __getitem__(self: CIterable[T], item: Union[int, slice]) -> Union[T, CIterable[T]]:
+        name = type(self).__name__
         if isinstance(item, int):
-            if item < 0:
-                raise IndexError(f"Expected a non-negative index; got {item}")
-            elif item > maxsize:
-                raise IndexError(f"Expected an index at most {maxsize}; got {item}")
+            try:
+                result = self.nth(item, default=sentinel)
+            except ValueError:
+                raise ValueError(
+                    f"Indices for {name}.__getitem__ must be an integer: 0 <= x <= sys.maxsize.",
+                ) from None
             else:
-                slice_ = islice(self._iterable, item, item + 1)
-                try:
-                    return next(slice_)
-                except StopIteration:
-                    raise IndexError(f"{type(self).__name__} index out of range")
+                if result is sentinel:
+                    raise IndexError(f"{name} index out of range")
+                else:
+                    return result
         elif isinstance(item, slice):
             return self.islice(item.start, item.stop, item.step)
         else:
@@ -225,7 +227,7 @@ class CIterable(Iterable[T]):
         cls: Type[CIterable], start: int, stop: Optional[int] = None, step: Optional[int] = None,
     ) -> CIterable[int]:
         if (stop is None) and (step is not None):
-            raise ValueError("'stop' cannot be None if 'step' is provided")
+            raise StopArgumentMissing(f"Passing step = {step} requires the stop argument")
         else:
             args, _ = drop_none(stop, step)
             return cls(range(start, *args))
@@ -328,10 +330,16 @@ class CIterable(Iterable[T]):
         return CIterable(groupby(self, key=key)).map(_helper_groupby)
 
     def islice(
-        self: CIterable[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
+        self: CIterable[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
     ) -> CIterable[T]:
-        args, _ = drop_none(stop, step)
-        return CIterable(islice(self, start, *args))
+        if (stop is sentinel) and (step is not sentinel):
+            raise StopArgumentMissing(f"Passing step = {step} requires the stop argument")
+        else:
+            args, _ = drop_sentinel(stop, step)
+            return CIterable(islice(self, start, *args))
 
     def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[CTuple[T]]:
         return CIterable(permutations(self, r=r)).map(CTuple)
@@ -729,9 +737,12 @@ class CList(List[T]):
         return self.iter().groupby(key=key).list()
 
     def islice(
-        self: CList[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CList[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CList[T]:
+        return self.iter().islice(start, stop=stop, step=step).list()
 
     def permutations(self: CList[T], r: Optional[int] = None) -> CList[CTuple[T]]:
         return self.iter().permutations(r=r).list()
@@ -1067,9 +1078,12 @@ class CTuple(tuple, Generic[T]):
         return self.iter().groupby(key=key).tuple()
 
     def islice(
-        self: CTuple[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CTuple[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CTuple[T]:
+        return self.iter().islice(start, stop=stop, step=step).tuple()
 
     def permutations(self: CTuple[T], r: Optional[int] = None) -> CTuple[CTuple[T]]:
         return self.iter().permutations(r=r).tuple()
@@ -1449,9 +1463,12 @@ class CSet(Set[T]):
         return self.iter().groupby(key=key).set()
 
     def islice(
-        self: CSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CSet[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).set()
 
     def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[CTuple[T]]:
         return self.iter().permutations(r=r).set()
@@ -1796,9 +1813,12 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().groupby(key=key).frozenset()
 
     def islice(
-        self: CFrozenSet[T], start: int, stop: Optional[int] = None, step: Optional[int] = None,
-    ) -> CIterable[T]:
-        return self.iter().islice(start, stop=stop, step=step)
+        self: CFrozenSet[T],
+        start: int,
+        stop: Union[Optional[int], Sentinel] = sentinel,
+        step: Union[Optional[int], Sentinel] = sentinel,
+    ) -> CFrozenSet[T]:
+        return self.iter().islice(start, stop=stop, step=step).frozenset()
 
     def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[CTuple[T]]:
         return self.iter().permutations(r=r).frozenset()
