@@ -12,6 +12,7 @@
       <excludePattern pattern=".pytest_cache" />
       <excludePattern pattern="dist" />
       <excludePattern pattern="*.egg-info" />
+      <excludePattern pattern="Untitled.ipynb" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7 (functional-itertools)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
