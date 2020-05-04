@@ -25,7 +25,9 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
+from hypothesis import assume
 from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import data
@@ -42,6 +44,8 @@ from functional_itertools import CIterable
 from functional_itertools import CTuple
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
+from functional_itertools.utilities import Sentinel
+from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import VERSION
 from functional_itertools.utilities import Version
 from tests.strategies import Case
@@ -49,12 +53,12 @@ from tests.strategies import CASES
 from tests.strategies import combinations_r
 from tests.strategies import combinations_x
 from tests.strategies import islice_ints
+from tests.strategies import MAX_SIZE
 from tests.strategies import permutations_r
 from tests.strategies import permutations_x
 from tests.strategies import product_repeat
 from tests.strategies import product_x
 from tests.strategies import product_xs
-from tests.strategies import range_args
 from tests.test_utilities import is_even
 
 
@@ -160,12 +164,38 @@ def test_groupby(case: Case, x: List[int], key: Optional[Callable[[int], int]]) 
 
 
 @mark.parametrize("case", CASES)
-@given(x=lists(integers()), args=range_args)
-def test_islice(case: Case, x: List[int], args: Tuple[int, Optional[int], Optional[int]]) -> None:
-    y = case.cls(x).islice(*args)
+@given(
+    x=lists(integers()),
+    start=integers(0, MAX_SIZE),
+    stop=none() | integers(0, MAX_SIZE) | just(sentinel),
+    step=none() | integers(1, 10) | just(sentinel),
+)
+def test_islice(
+    case: Case,
+    x: List[int],
+    start: int,
+    stop: Union[Optional[int], Sentinel],
+    step: Union[Optional[int], Sentinel],
+) -> None:
+    if step is not sentinel:
+        assume(stop is not sentinel)
+    y = case.cls(x).islice(start, stop=stop, step=step)
     assert isinstance(y, CIterable)
-    (start, *new_args), _ = drop_none(*args)
-    assert case.cast(y) == case.cast(islice(case.cast(x), start, *new_args))
+    args, _ = drop_sentinel(stop, step)
+    assert case.cast(y) == case.cast(islice(case.cast(x), start, *args))
+
+
+@mark.parametrize(
+    "args, expected",
+    [
+        ((2,), ["A", "B"]),
+        ((2, 4), ["C", "D"]),
+        ((2, None), ["C", "D", "E", "F", "G"]),
+        ((0, None, 2), ["A", "C", "E", "G"]),
+    ],
+)
+def test_islice_deterministic(args: Tuple[Optional[int], ...], expected: List[str]) -> None:
+    assert CIterable("ABCDEFG").islice(*args).list() == expected
 
 
 @mark.parametrize("case", CASES)

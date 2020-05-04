@@ -30,16 +30,11 @@ def test_init(x: Union[int, List[int]]) -> None:
 @example(x=[], index=-1)
 @example(x=[], index=maxsize + 1)
 @example(x=[], index=0.0)
-def test_get_item(x: List[int], index: Union[int, float]) -> None:
+def test_getitem(x: List[int], index: Union[int, float]) -> None:
     y = CIterable(x)
     if isinstance(index, int):
         num_ints = len(x)
-        if index < 0:
-            with raises(
-                IndexError, match=f"Expected a non-negative index; got {index}",
-            ):
-                y[index]
-        elif 0 <= index < num_ints:
+        if 0 <= index < num_ints:
             z = y[index]
             assert isinstance(z, int)
             assert z == x[index]
@@ -48,7 +43,8 @@ def test_get_item(x: List[int], index: Union[int, float]) -> None:
                 y[index]
         else:
             with raises(
-                IndexError, match=f"Expected an index at most {maxsize}; got {index}",
+                ValueError,
+                match="Indices for CIterable.__getitem__ must be an integer: 0 <= x <= sys.maxsize",
             ):
                 y[index]
     else:
