@@ -53,6 +53,7 @@ from more_itertools import last
 from more_itertools import map_except
 from more_itertools import one
 from more_itertools import only
+from more_itertools import split_at
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -541,6 +542,9 @@ class CIterable(Iterable[T]):
             (msg,) = error.args
             raise MultipleElementsError(msg) from None
 
+    def split_at(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
+        return CIterable(split_at(self, pred)).map(CTuple)
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -903,6 +907,9 @@ class CList(List[T]):
     def only(self: CList[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
+    def split_at(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
+        return self.iter().split_at(pred).list()
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -1246,6 +1253,9 @@ class CTuple(tuple, Generic[T]):
 
     def only(self: CTuple[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
+
+    def split_at(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().split_at(pred).tuple()
 
     # multiprocessing
 
@@ -1633,6 +1643,9 @@ class CSet(Set[T]):
     def only(self: CSet[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
+    def split_at(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
+        return self.iter().split_at(pred).set()
+
     # multiprocessing
 
     def pmap(  # dead: disable
@@ -1992,6 +2005,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def only(self: CFrozenSet[T], default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
+
+    def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_at(pred).frozenset()
 
     # multiprocessing
 
