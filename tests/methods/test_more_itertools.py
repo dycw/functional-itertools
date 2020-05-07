@@ -23,6 +23,7 @@ from more_itertools import last
 from more_itertools import map_except
 from more_itertools import one
 from more_itertools import only
+from more_itertools import split_at
 from pytest import mark
 from pytest import raises
 
@@ -151,3 +152,14 @@ def test_only(case: Case, x: List[int], default: Optional[int]) -> None:
     else:
         assert isinstance(y, int) or (y is None)
         assert y == only(case.cast(x), default=default)
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_split_at(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_at(neg)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_at(x, neg)))

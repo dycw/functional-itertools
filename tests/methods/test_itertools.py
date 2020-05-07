@@ -158,9 +158,7 @@ def test_groupby(case: Case, x: List[int], key: Optional[Callable[[int], int]]) 
         k, v = zi
         assert isinstance(k, int)
         assert isinstance(v, CTuple)
-    assert case.cast((k, case.cast(v)) for k, v in z) == case.cast(
-        (k, case.cast(v)) for k, v in groupby(case.cast(x), key=key)
-    )
+    assert case.cast(z) == case.cast((k, CTuple(v)) for k, v in groupby(case.cast(x), key=key))
 
 
 @mark.parametrize("case", CASES)
