@@ -50,11 +50,14 @@ from more_itertools import filter_except
 from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
+from more_itertools import lstrip
 from more_itertools import map_except
 from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
+from more_itertools import rstrip
 from more_itertools import split_at
+from more_itertools import strip
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -525,6 +528,9 @@ class CIterable(Iterable[T]):
         except ValueError:
             raise EmptyIterableError from None
 
+    def lstrip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
+        return CIterable(lstrip(self, pred))
+
     def map_except(
         self: CIterable[T], func: Callable[..., U], *exceptions: Exception,
     ) -> CIterable[U]:
@@ -557,8 +563,14 @@ class CIterable(Iterable[T]):
             (msg,) = error.args
             raise MultipleElementsError(msg) from None
 
+    def rstrip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
+        return CIterable(rstrip(self, pred))
+
     def split_at(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
         return CIterable(split_at(self, pred)).map(CTuple)
+
+    def strip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
+        return CIterable(strip(self, pred))
 
     # pathlib
 
@@ -894,6 +906,9 @@ class CList(List[T]):
     def last(self: CList[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
+    def lstrip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
+        return self.iter().lstrip(pred).list()
+
     def map_except(self: CList[T], func: Callable[..., U], *exceptions: Exception) -> CList[U]:
         return self.iter().map_except(func, *exceptions).list()
 
@@ -908,8 +923,14 @@ class CList(List[T]):
     def only(self: CList[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
+    def rstrip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
+        return self.iter().rstrip(pred).list()
+
     def split_at(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
         return self.iter().split_at(pred).list()
+
+    def strip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
+        return self.iter().strip(pred).list()
 
     # pathlib
 
@@ -1227,6 +1248,9 @@ class CTuple(tuple, Generic[T]):
     def last(self: CTuple[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
+    def lstrip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
+        return self.iter().lstrip(pred).tuple()
+
     def map_except(self: CTuple[T], func: Callable[..., U], *exceptions: Exception) -> CTuple[U]:
         return self.iter().map_except(func, *exceptions).tuple()
 
@@ -1241,8 +1265,14 @@ class CTuple(tuple, Generic[T]):
     def only(self: CTuple[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
+    def rstrip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
+        return self.iter().rstrip(pred).tuple()
+
     def split_at(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
         return self.iter().split_at(pred).tuple()
+
+    def strip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
+        return self.iter().strip(pred).tuple()
 
     # pathlib
 
@@ -1609,6 +1639,9 @@ class CSet(Set[T]):
     def last(self: CSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
+    def lstrip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
+        return self.iter().lstrip(pred).set()
+
     def map_except(self: CSet[T], func: Callable[..., U], *exceptions: Exception) -> CSet[U]:
         return self.iter().map_except(func, *exceptions).set()
 
@@ -1623,8 +1656,14 @@ class CSet(Set[T]):
     def only(self: CSet[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
+    def rstrip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
+        return self.iter().rstrip(pred).set()
+
     def split_at(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
         return self.iter().split_at(pred).set()
+
+    def strip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
+        return self.iter().strip(pred).set()
 
     # pathlib
 
@@ -1958,6 +1997,9 @@ class CFrozenSet(FrozenSet[T]):
     def last(self: CFrozenSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
+    def lstrip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
+        return self.iter().lstrip(pred).frozenset()
+
     def map_except(
         self: CFrozenSet[T], func: Callable[..., U], *exceptions: Exception,
     ) -> CFrozenSet[U]:
@@ -1974,8 +2016,14 @@ class CFrozenSet(FrozenSet[T]):
     def only(self: CFrozenSet[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
+    def rstrip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
+        return self.iter().rstrip(pred).frozenset()
+
     def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
         return self.iter().split_at(pred).frozenset()
+
+    def strip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
+        return self.iter().strip(pred).frozenset()
 
     # pathlib
 
