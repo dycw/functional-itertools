@@ -3,10 +3,12 @@ from __future__ import annotations
 from itertools import islice
 from operator import neg
 from re import escape
+from sys import maxsize
 from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Union
 
 from hypothesis import given
 from hypothesis.strategies import fixed_dictionaries
@@ -22,6 +24,7 @@ from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
 from more_itertools import map_except
+from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
 from more_itertools import split_at
@@ -32,6 +35,9 @@ from functional_itertools import CIterable
 from functional_itertools import CTuple
 from functional_itertools import EmptyIterableError
 from functional_itertools import MultipleElementsError
+from functional_itertools.utilities import drop_sentinel
+from functional_itertools.utilities import Sentinel
+from functional_itertools.utilities import sentinel
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import islice_ints
@@ -128,6 +134,25 @@ def test_map_except(case: Case, x: List[int]) -> None:
     y = case.cls(x).map_except(func, ValueError)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(map_except(func, x, ValueError))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()), n=integers(0, maxsize), default=integers() | just(sentinel))
+def test_nth_or_last(case: Case, x: List[int], n: int, default: Union[int, Sentinel]) -> None:
+    _, kwargs = drop_sentinel(default=default)
+    try:
+        y = case.cls(x).nth_or_last(n, default=default)
+    except ValueError:
+        with raises(
+            ValueError,
+            match=escape(
+                "last() was called on an empty iterable, and no default value was provided.",
+            ),
+        ):
+            nth_or_last(x, n, **kwargs)
+    else:
+        assert isinstance(y, int)
+        assert y == nth_or_last(case.cast(x), n, default=default)
 
 
 @mark.parametrize("case", CASES)

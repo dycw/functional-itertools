@@ -52,6 +52,7 @@ from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
 from more_itertools import map_except
+from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
 from more_itertools import split_at
@@ -527,6 +528,12 @@ class CIterable(Iterable[T]):
     ) -> CIterable[U]:
         return CIterable(map_except(func, self, *exceptions))
 
+    def nth_or_last(
+        self: CIterable[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+    ) -> Union[T, U]:
+        _, kwargs = drop_sentinel(default=default)
+        return nth_or_last(self, n, **kwargs)
+
     def one(self: CIterable[T]) -> T:
         try:
             return one(self)
@@ -912,6 +919,11 @@ class CList(List[T]):
     def map_except(self: CList[T], func: Callable[..., U], *exceptions: Exception) -> CList[U]:
         return self.iter().map_except(func, *exceptions).list()
 
+    def nth_or_last(
+        self: CList[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+    ) -> Union[T, U]:
+        return self.iter().nth_or_last(n, default=default)
+
     def one(self: CList[T]) -> T:
         return self.iter().one()
 
@@ -1263,6 +1275,11 @@ class CTuple(tuple, Generic[T]):
 
     def map_except(self: CTuple[T], func: Callable[..., U], *exceptions: Exception) -> CTuple[U]:
         return self.iter().map_except(func, *exceptions).tuple()
+
+    def nth_or_last(
+        self: CTuple[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+    ) -> Union[T, U]:
+        return self.iter().nth_or_last(n, default=default)
 
     def one(self: CTuple[T]) -> T:
         return self.iter().one()
@@ -1658,6 +1675,11 @@ class CSet(Set[T]):
     def map_except(self: CSet[T], func: Callable[..., U], *exceptions: Exception) -> CSet[U]:
         return self.iter().map_except(func, *exceptions).set()
 
+    def nth_or_last(
+        self: CSet[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+    ) -> Union[T, U]:
+        return self.iter().nth_or_last(n, default=default)
+
     def one(self: CSet[T]) -> T:
         return self.iter().one()
 
@@ -2025,6 +2047,11 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T], func: Callable[..., U], *exceptions: Exception,
     ) -> CFrozenSet[U]:
         return self.iter().map_except(func, *exceptions).frozenset()
+
+    def nth_or_last(
+        self: CFrozenSet[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+    ) -> Union[T, U]:
+        return self.iter().nth_or_last(n, default=default)
 
     def one(self: CFrozenSet[T]) -> T:
         return self.iter().one()
