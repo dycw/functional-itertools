@@ -293,7 +293,7 @@ def test_repeatfunc(case: Case, data: DataObject, n: int) -> None:
         times = data.draw(none() | integers(0, 10))
     else:
         times = data.draw(integers(0, 10))
-    y = case.cls.repeatfunc(add1, times, 0)
+    y = case.cls.repeatfunc(add1, 0, times=times)
     assert isinstance(y, case.cls)
     z = repeatfunc(add1, times, 0)
     if (case.cls is CIterable) and (times is None):

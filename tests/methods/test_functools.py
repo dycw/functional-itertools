@@ -38,7 +38,7 @@ from tests.strategies import CASES
 def test_reduce(case: Case, x: List[int], initial: Union[int, Sentinel]) -> None:
     args, _ = drop_sentinel(initial)
     try:
-        y = case.cls(x).reduce(add, *args)
+        y = case.cls(x).reduce(add, initial=initial)
     except EmptyIterableError:
         with raises(
             TypeError, match=escape("reduce() of empty sequence with no initial value"),
