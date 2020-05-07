@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import islice
+from operator import le
 from operator import neg
 from re import escape
 from sys import maxsize
@@ -8,6 +9,7 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 from hypothesis import given
@@ -29,8 +31,13 @@ from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
 from more_itertools import rstrip
+from more_itertools import split_after
 from more_itertools import split_at
+from more_itertools import split_before
+from more_itertools import split_into
+from more_itertools import split_when
 from more_itertools import strip
+from more_itertools import unzip
 from pytest import mark
 from pytest import raises
 
@@ -216,6 +223,17 @@ def test_rstrip(case: Case, x: List[int]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()))
+def test_split_after(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_after(neg)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_after(case.cast(x), neg)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
 def test_split_at(case: Case, x: List[int]) -> None:
     y = case.cls(x).split_at(neg)
     assert isinstance(y, case.cls)
@@ -227,7 +245,55 @@ def test_split_at(case: Case, x: List[int]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()))
+def test_split_before(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_before(neg)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_before(case.cast(x), neg)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()), sizes=lists(integers(0, maxsize)))
+def test_split_into(case: Case, x: List[int], sizes: List[int]) -> None:
+    y = case.cls(x).split_into(sizes)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_into(case.cast(x), sizes)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_split_when(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_when(le)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_when(case.cast(x), le)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
 def test_strip(case: Case, x: List[int]) -> None:
     y = case.cls(x).strip(is_even)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(strip(case.cast(x), is_even))
+
+
+@mark.parametrize("case", CASES)
+@given(
+    x=integers(0, 10).flatmap(
+        lambda x: lists(lists(integers(), min_size=x, max_size=x).map(tuple)),
+    ),
+)
+def test_unzip(case: Case, x: List[Tuple[int, ...]]) -> None:
+    y = case.cls(x).unzip()
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, unzip(case.cast(x))))
