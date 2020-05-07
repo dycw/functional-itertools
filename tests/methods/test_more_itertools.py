@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import islice
+from operator import le
 from operator import neg
 from re import escape
 from sys import maxsize
@@ -33,6 +34,7 @@ from more_itertools import split_after
 from more_itertools import split_at
 from more_itertools import split_before
 from more_itertools import split_into
+from more_itertools import split_when
 from more_itertools import strip
 from pytest import mark
 from pytest import raises
@@ -259,6 +261,17 @@ def test_split_into(case: Case, x: List[int], sizes: List[int]) -> None:
     for zi in z:
         assert isinstance(zi, CTuple)
     assert case.cast(z) == case.cast(map(CTuple, split_into(case.cast(x), sizes)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_split_when(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_when(le)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_when(case.cast(x), le)))
 
 
 @mark.parametrize("case", CASES)
