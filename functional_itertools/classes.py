@@ -50,6 +50,7 @@ from more_itertools import divide
 from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
+from more_itertools import map_except
 from more_itertools import one
 from more_itertools import only
 from more_itertools.recipes import all_equal
@@ -514,6 +515,11 @@ class CIterable(Iterable[T]):
         except ValueError:
             raise EmptyIterableError from None
 
+    def map_except(
+        self: CIterable[T], func: Callable[..., U], *exceptions: Exception,
+    ) -> CIterable[U]:
+        return CIterable(map_except(func, self, *exceptions))
+
     def one(self: CIterable[T]) -> T:
         try:
             return one(self)
@@ -888,6 +894,9 @@ class CList(List[T]):
     def last(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
+    def map_except(self: CList[T], func: Callable[..., U], *exceptions: Exception) -> CList[U]:
+        return self.iter().map_except(func, *exceptions).list()
+
     def one(self: CList[T]) -> T:
         return self.iter().one()
 
@@ -1228,6 +1237,9 @@ class CTuple(tuple, Generic[T]):
 
     def last(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
+
+    def map_except(self: CTuple[T], func: Callable[..., U], *exceptions: Exception) -> CTuple[U]:
+        return self.iter().map_except(func, *exceptions).tuple()
 
     def one(self: CTuple[T]) -> T:
         return self.iter().one()
@@ -1612,6 +1624,9 @@ class CSet(Set[T]):
     def last(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
+    def map_except(self: CSet[T], func: Callable[..., U], *exceptions: Exception) -> CSet[U]:
+        return self.iter().map_except(func, *exceptions).set()
+
     def one(self: CSet[T]) -> T:
         return self.iter().one()
 
@@ -1966,6 +1981,11 @@ class CFrozenSet(FrozenSet[T]):
 
     def last(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
+
+    def map_except(
+        self: CFrozenSet[T], func: Callable[..., U], *exceptions: Exception,
+    ) -> CFrozenSet[U]:
+        return self.iter().map_except(func, *exceptions).frozenset()
 
     def one(self: CFrozenSet[T]) -> T:
         return self.iter().one()

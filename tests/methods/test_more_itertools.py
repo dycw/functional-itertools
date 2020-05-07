@@ -20,6 +20,7 @@ from more_itertools import divide
 from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
+from more_itertools import map_except
 from more_itertools import one
 from more_itertools import only
 from pytest import mark
@@ -96,6 +97,20 @@ def test_iterate(start: int, n: int) -> None:
     y = CIterable.iterate(neg, start)
     assert isinstance(y, CIterable)
     assert list(y[:n]) == list(islice(iterate(neg, start), n))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_map_except(case: Case, x: List[int]) -> None:
+    def func(n: int) -> int:
+        if n % 2 == 0:
+            return neg(n)
+        else:
+            raise ValueError("'n' must be even")
+
+    y = case.cls(x).map_except(func, ValueError)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(map_except(func, x, ValueError))
 
 
 @mark.parametrize("case", CASES)
