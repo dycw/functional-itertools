@@ -162,4 +162,4 @@ def test_split_at(case: Case, x: List[int]) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(z) == case.cast(map(CTuple, split_at(x, neg)))
+    assert case.cast(z) == case.cast(map(CTuple, split_at(case.cast(x), neg)))
