@@ -62,6 +62,7 @@ from more_itertools import split_before
 from more_itertools import split_into
 from more_itertools import split_when
 from more_itertools import strip
+from more_itertools import unzip
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -588,6 +589,9 @@ class CIterable(Iterable[T]):
     def strip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(strip(self, pred))
 
+    def unzip(self: CIterable[Tuple[T, ...]]) -> CIterable[CTuple[T]]:
+        return CIterable(unzip(self)).map(CTuple)
+
     # pathlib
 
     @classmethod
@@ -623,9 +627,6 @@ class CIterable(Iterable[T]):
         self: CIterable[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CIterable[Tuple[T, ...]]:
         return self.filter(partial(helper_starfilter, func=func))
-
-    def unzip(self: CIterable[Tuple[T, ...]]) -> Tuple[CIterable[T], ...]:
-        return CIterable(zip(*self)).map(CIterable).tuple()
 
 
 class CList(List[T]):
@@ -960,6 +961,9 @@ class CList(List[T]):
     def strip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
         return self.iter().strip(pred).list()
 
+    def unzip(self: CList[Tuple[T, ...]]) -> CList[CTuple[T]]:
+        return self.iter().unzip().list()
+
     # pathlib
 
     @classmethod
@@ -986,9 +990,6 @@ class CList(List[T]):
         self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CList[Tuple[T, ...]]:
         return self.iter().starfilter(func).list()
-
-    def unzip(self: CList[Tuple[T, ...]]) -> Tuple[CList[T], ...]:
-        return CList(self.iter().unzip()).map(CList)
 
 
 class CTuple(tuple, Generic[T]):
@@ -1314,6 +1315,9 @@ class CTuple(tuple, Generic[T]):
     def strip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().strip(pred).tuple()
 
+    def unzip(self: CTuple[Tuple[T, ...]]) -> CTuple[CTuple[T]]:
+        return self.iter().unzip().tuple()
+
     # pathlib
 
     @classmethod
@@ -1344,9 +1348,6 @@ class CTuple(tuple, Generic[T]):
         self: CTuple[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CTuple[Tuple[T, ...]]:
         return self.iter().starfilter(func).tuple()
-
-    def unzip(self: CTuple[Tuple[T, ...]]) -> Tuple[CTuple[T], ...]:
-        return CTuple(self.iter().unzip()).map(CTuple)
 
 
 class CSet(Set[T]):
@@ -1716,6 +1717,9 @@ class CSet(Set[T]):
 
     def strip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
         return self.iter().strip(pred).set()
+
+    def unzip(self: CSet[Tuple[T, ...]]) -> CSet[CTuple[T]]:
+        return self.iter().unzip().set()
 
     # pathlib
 
@@ -2088,6 +2092,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def strip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().strip(pred).frozenset()
+
+    def unzip(self: CFrozenSet[Tuple[T, ...]]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().unzip().frozenset()
 
     # pathlib
 
