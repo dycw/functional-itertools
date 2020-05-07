@@ -250,8 +250,7 @@ def test_split_before(case: Case, x: List[int]) -> None:
     assert case.cast(z) == case.cast(map(CTuple, split_before(case.cast(x), neg)))
 
 
-@mark.parametrize("case", CASES[:1])
-# @mark.parametrize("case", CASES)
+@mark.parametrize("case", CASES)
 @given(x=lists(integers()), sizes=lists(integers(0, maxsize)))
 def test_split_into(case: Case, x: List[int], sizes: List[int]) -> None:
     y = case.cls(x).split_into(sizes)
