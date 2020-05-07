@@ -29,7 +29,9 @@ from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
 from more_itertools import rstrip
+from more_itertools import split_after
 from more_itertools import split_at
+from more_itertools import split_before
 from more_itertools import strip
 from pytest import mark
 from pytest import raises
@@ -216,6 +218,17 @@ def test_rstrip(case: Case, x: List[int]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()))
+def test_split_after(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_after(neg)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_after(case.cast(x), neg)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
 def test_split_at(case: Case, x: List[int]) -> None:
     y = case.cls(x).split_at(neg)
     assert isinstance(y, case.cls)
@@ -223,6 +236,17 @@ def test_split_at(case: Case, x: List[int]) -> None:
     for zi in z:
         assert isinstance(zi, CTuple)
     assert case.cast(z) == case.cast(map(CTuple, split_at(case.cast(x), neg)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_split_before(case: Case, x: List[int]) -> None:
+    y = case.cls(x).split_before(neg)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_before(case.cast(x), neg)))
 
 
 @mark.parametrize("case", CASES)

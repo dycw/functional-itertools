@@ -56,7 +56,9 @@ from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
 from more_itertools import rstrip
+from more_itertools import split_after
 from more_itertools import split_at
+from more_itertools import split_before
 from more_itertools import strip
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
@@ -566,8 +568,14 @@ class CIterable(Iterable[T]):
     def rstrip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(rstrip(self, pred))
 
+    def split_after(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
+        return CIterable(split_after(self, pred)).map(CTuple)
+
     def split_at(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
         return CIterable(split_at(self, pred)).map(CTuple)
+
+    def split_before(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
+        return CIterable(split_before(self, pred)).map(CTuple)
 
     def strip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(strip(self, pred))
@@ -926,8 +934,14 @@ class CList(List[T]):
     def rstrip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
         return self.iter().rstrip(pred).list()
 
+    def split_after(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
+        return self.iter().split_after(pred).list()
+
     def split_at(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
         return self.iter().split_at(pred).list()
+
+    def split_before(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
+        return self.iter().split_before(pred).list()
 
     def strip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
         return self.iter().strip(pred).list()
@@ -1268,8 +1282,14 @@ class CTuple(tuple, Generic[T]):
     def rstrip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().rstrip(pred).tuple()
 
+    def split_after(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().split_after(pred).tuple()
+
     def split_at(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
         return self.iter().split_at(pred).tuple()
+
+    def split_before(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().split_before(pred).tuple()
 
     def strip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().strip(pred).tuple()
@@ -1659,8 +1679,14 @@ class CSet(Set[T]):
     def rstrip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
         return self.iter().rstrip(pred).set()
 
+    def split_after(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
+        return self.iter().split_after(pred).set()
+
     def split_at(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
         return self.iter().split_at(pred).set()
+
+    def split_before(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
+        return self.iter().split_before(pred).set()
 
     def strip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
         return self.iter().strip(pred).set()
@@ -2018,6 +2044,12 @@ class CFrozenSet(FrozenSet[T]):
 
     def rstrip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().rstrip(pred).frozenset()
+
+    def split_after(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_after(pred).frozenset()
+
+    def split_before(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_before(pred).frozenset()
 
     def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
         return self.iter().split_at(pred).frozenset()
