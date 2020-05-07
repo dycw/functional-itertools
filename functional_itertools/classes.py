@@ -464,7 +464,7 @@ class CIterable(Iterable[T]):
 
     @classmethod
     def repeatfunc(
-        cls: Type[CIterable], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+        cls: Type[CIterable], func: Callable[..., T], *args: Any, times: Optional[int] = None,
     ) -> CIterable[T]:
         return cls(repeatfunc(func, times, *args))
 
@@ -472,7 +472,7 @@ class CIterable(Iterable[T]):
         return CIterable(roundrobin(self, *iterables))
 
     @classmethod
-    def tabulate(cls: Type[CIterable], func: Callable[[int], T], start: int = 0) -> CIterable[T]:
+    def tabulate(cls: Type[CIterable], func: Callable[[int], T], *, start: int = 0) -> CIterable[T]:
         return cls(tabulate(func, start=start))
 
     def tail(self: CIterable[T], n: int) -> CIterable[T]:
@@ -507,7 +507,7 @@ class CIterable(Iterable[T]):
     ) -> CIterable[T]:
         return CIterable(filter_except(func, self, *exceptions))
 
-    def first(self: CIterable[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def first(self: CIterable[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         _, kwargs = drop_sentinel(default=default)
         try:
             return first(self, **kwargs)
@@ -518,7 +518,7 @@ class CIterable(Iterable[T]):
     def iterate(cls: Type[CIterable], func: Callable[[T], T], start: T) -> CIterable[T]:
         return cls(iterate(func, start))
 
-    def last(self: CIterable[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def last(self: CIterable[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         _, kwargs = drop_sentinel(default=default)
         try:
             return last(self._iterable, **kwargs)  # cannot use self
@@ -550,7 +550,7 @@ class CIterable(Iterable[T]):
             else:
                 raise error
 
-    def only(self: CIterable[T], default: U = None) -> Union[T, U]:
+    def only(self: CIterable[T], *, default: U = None) -> Union[T, U]:
         try:
             return only(self, default=default)
         except ValueError as error:
@@ -853,9 +853,9 @@ class CList(List[T]):
 
     @classmethod
     def repeatfunc(
-        cls: Type[CList], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+        cls: Type[CList], func: Callable[..., T], *args: Any, times: Optional[int] = None,
     ) -> CList[T]:
-        return CIterable.repeatfunc(func, times, *args).list()
+        return CIterable.repeatfunc(func, *args, times=times).list()
 
     def roundrobin(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
         return self.iter().roundrobin(*iterables).list()
@@ -888,10 +888,10 @@ class CList(List[T]):
     ) -> CList[T]:
         return self.iter().filter_except(func, *exceptions).list()
 
-    def first(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def first(self: CList[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
-    def last(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def last(self: CList[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
     def map_except(self: CList[T], func: Callable[..., U], *exceptions: Exception) -> CList[U]:
@@ -905,7 +905,7 @@ class CList(List[T]):
     def one(self: CList[T]) -> T:
         return self.iter().one()
 
-    def only(self: CList[T], default: U = None) -> Union[T, U]:
+    def only(self: CList[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     def split_at(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
@@ -1186,9 +1186,9 @@ class CTuple(tuple, Generic[T]):
 
     @classmethod
     def repeatfunc(
-        cls: Type[CTuple], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+        cls: Type[CTuple], func: Callable[..., T], *args: Any, times: Optional[int] = None,
     ) -> CTuple[T]:
-        return CIterable.repeatfunc(func, times, *args).tuple()
+        return CIterable.repeatfunc(func, *args, times=times).tuple()
 
     def roundrobin(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
         return self.iter().roundrobin(*iterables).tuple()
@@ -1221,10 +1221,10 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[T]:
         return self.iter().filter_except(func, *exceptions).tuple()
 
-    def first(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def first(self: CTuple[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
-    def last(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def last(self: CTuple[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
     def map_except(self: CTuple[T], func: Callable[..., U], *exceptions: Exception) -> CTuple[U]:
@@ -1238,7 +1238,7 @@ class CTuple(tuple, Generic[T]):
     def one(self: CTuple[T]) -> T:
         return self.iter().one()
 
-    def only(self: CTuple[T], default: U = None) -> Union[T, U]:
+    def only(self: CTuple[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     def split_at(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
@@ -1568,9 +1568,9 @@ class CSet(Set[T]):
 
     @classmethod
     def repeatfunc(
-        cls: Type[CSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+        cls: Type[CSet], func: Callable[..., T], *args: Any, times: Optional[int] = None,
     ) -> CSet[T]:
-        return CIterable.repeatfunc(func, times, *args).set()
+        return CIterable.repeatfunc(func, *args, times=times).set()
 
     def roundrobin(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
         return self.iter().roundrobin(*iterables).set()
@@ -1603,10 +1603,10 @@ class CSet(Set[T]):
     ) -> CSet[T]:
         return self.iter().filter_except(func, *exceptions).set()
 
-    def first(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def first(self: CSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
-    def last(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def last(self: CSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
     def map_except(self: CSet[T], func: Callable[..., U], *exceptions: Exception) -> CSet[U]:
@@ -1620,7 +1620,7 @@ class CSet(Set[T]):
     def one(self: CSet[T]) -> T:
         return self.iter().one()
 
-    def only(self: CSet[T], default: U = None) -> Union[T, U]:
+    def only(self: CSet[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     def split_at(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
@@ -1913,9 +1913,9 @@ class CFrozenSet(FrozenSet[T]):
 
     @classmethod
     def repeatfunc(
-        cls: Type[CFrozenSet], func: Callable[..., T], times: Optional[int] = None, *args: Any,
+        cls: Type[CFrozenSet], func: Callable[..., T], *args: Any, times: Optional[int] = None,
     ) -> CFrozenSet[T]:
-        return CIterable.repeatfunc(func, times, *args).frozenset()
+        return CIterable.repeatfunc(func, *args, times=times).frozenset()
 
     def roundrobin(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
         return self.iter().roundrobin(*iterables).frozenset()
@@ -1952,10 +1952,10 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[T]:
         return self.iter().filter_except(func, *exceptions).frozenset()
 
-    def first(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def first(self: CFrozenSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
-    def last(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
+    def last(self: CFrozenSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
     def map_except(
@@ -1971,7 +1971,7 @@ class CFrozenSet(FrozenSet[T]):
     def one(self: CFrozenSet[T]) -> T:
         return self.iter().one()
 
-    def only(self: CFrozenSet[T], default: U = None) -> Union[T, U]:
+    def only(self: CFrozenSet[T], *, default: U = None) -> Union[T, U]:
         return self.iter().only(default=default)
 
     def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
