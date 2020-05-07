@@ -59,6 +59,7 @@ from more_itertools import rstrip
 from more_itertools import split_after
 from more_itertools import split_at
 from more_itertools import split_before
+from more_itertools import split_into
 from more_itertools import strip
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
@@ -577,6 +578,9 @@ class CIterable(Iterable[T]):
     def split_before(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
         return CIterable(split_before(self, pred)).map(CTuple)
 
+    def split_into(self: CIterable[T], sizes: List[int]) -> CIterable[CTuple[T]]:
+        return CIterable(split_into(self, sizes)).map(CTuple)
+
     def strip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(strip(self, pred))
 
@@ -943,6 +947,9 @@ class CList(List[T]):
     def split_before(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
         return self.iter().split_before(pred).list()
 
+    def split_into(self: CList[T], sizes: List[int]) -> CList[CTuple[T]]:
+        return self.iter().split_into(sizes).list()
+
     def strip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
         return self.iter().strip(pred).list()
 
@@ -1290,6 +1297,9 @@ class CTuple(tuple, Generic[T]):
 
     def split_before(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
         return self.iter().split_before(pred).tuple()
+
+    def split_into(self: CTuple[T], sizes: List[int]) -> CTuple[CTuple[T]]:
+        return self.iter().split_into(sizes).tuple()
 
     def strip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().strip(pred).tuple()
@@ -1688,6 +1698,9 @@ class CSet(Set[T]):
     def split_before(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
         return self.iter().split_before(pred).set()
 
+    def split_into(self: CSet[T], sizes: List[int]) -> CSet[CTuple[T]]:
+        return self.iter().split_into(sizes).set()
+
     def strip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
         return self.iter().strip(pred).set()
 
@@ -2048,11 +2061,14 @@ class CFrozenSet(FrozenSet[T]):
     def split_after(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
         return self.iter().split_after(pred).frozenset()
 
+    def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_at(pred).frozenset()
+
     def split_before(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
         return self.iter().split_before(pred).frozenset()
 
-    def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
-        return self.iter().split_at(pred).frozenset()
+    def split_into(self: CFrozenSet[T], sizes: List[int]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_into(sizes).frozenset()
 
     def strip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().strip(pred).frozenset()

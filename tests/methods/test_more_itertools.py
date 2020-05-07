@@ -32,6 +32,7 @@ from more_itertools import rstrip
 from more_itertools import split_after
 from more_itertools import split_at
 from more_itertools import split_before
+from more_itertools import split_into
 from more_itertools import strip
 from pytest import mark
 from pytest import raises
@@ -247,6 +248,18 @@ def test_split_before(case: Case, x: List[int]) -> None:
     for zi in z:
         assert isinstance(zi, CTuple)
     assert case.cast(z) == case.cast(map(CTuple, split_before(case.cast(x), neg)))
+
+
+@mark.parametrize("case", CASES[:1])
+# @mark.parametrize("case", CASES)
+@given(x=lists(integers()), sizes=lists(integers(0, maxsize)))
+def test_split_into(case: Case, x: List[int], sizes: List[int]) -> None:
+    y = case.cls(x).split_into(sizes)
+    assert isinstance(y, case.cls)
+    z = list(y)
+    for zi in z:
+        assert isinstance(zi, CTuple)
+    assert case.cast(z) == case.cast(map(CTuple, split_into(case.cast(x), sizes)))
 
 
 @mark.parametrize("case", CASES)
