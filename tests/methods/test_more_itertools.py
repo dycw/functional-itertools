@@ -23,11 +23,14 @@ from more_itertools import filter_except
 from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
+from more_itertools import lstrip
 from more_itertools import map_except
 from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
+from more_itertools import rstrip
 from more_itertools import split_at
+from more_itertools import strip
 from pytest import mark
 from pytest import raises
 
@@ -124,6 +127,14 @@ def test_iterate(start: int, n: int) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()))
+def test_lstrip(case: Case, x: List[int]) -> None:
+    y = case.cls(x).lstrip(is_even)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(lstrip(case.cast(x), is_even))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
 def test_map_except(case: Case, x: List[int]) -> None:
     def func(n: int) -> int:
         if n % 2 == 0:
@@ -197,6 +208,14 @@ def test_only(case: Case, x: List[int], default: Optional[int]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()))
+def test_rstrip(case: Case, x: List[int]) -> None:
+    y = case.cls(x).rstrip(is_even)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(rstrip(case.cast(x), is_even))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
 def test_split_at(case: Case, x: List[int]) -> None:
     y = case.cls(x).split_at(neg)
     assert isinstance(y, case.cls)
@@ -204,3 +223,11 @@ def test_split_at(case: Case, x: List[int]) -> None:
     for zi in z:
         assert isinstance(zi, CTuple)
     assert case.cast(z) == case.cast(map(CTuple, split_at(case.cast(x), neg)))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_strip(case: Case, x: List[int]) -> None:
+    y = case.cls(x).strip(is_even)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(strip(case.cast(x), is_even))
