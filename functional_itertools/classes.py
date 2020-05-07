@@ -38,7 +38,6 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
-from warnings import warn
 
 from attr import asdict
 from attr import astuple
@@ -417,6 +416,7 @@ class CIterable(Iterable[T]):
         cls: Type[CIterable],
         func: Callable[..., T],
         exception: Type[Exception],
+        *,
         first: Optional[Callable[..., U]] = None,
     ) -> CIterable[Union[T, U]]:
         return cls(iter_except(func, exception, first=first))
@@ -424,7 +424,7 @@ class CIterable(Iterable[T]):
     def ncycles(self: CIterable[T], n: int) -> CIterable[T]:
         return CIterable(ncycles(self, n))
 
-    def nth(self: CIterable[T], n: int, default: U = None) -> Union[T, U]:
+    def nth(self: CIterable[T], n: int, *, default: U = None) -> Union[T, U]:
         return nth(self, n, default=default)
 
     def nth_combination(self: CIterable[T], r: int, index: int) -> CTuple[T]:
@@ -559,31 +559,6 @@ class CIterable(Iterable[T]):
 
     def split_at(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
         return CIterable(split_at(self, pred)).map(CTuple)
-
-    # multiprocessing
-
-    def pmap(  # dead: disable
-        self: CIterable[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CIterable[U]:
-        warn(
-            "'pmap' is going to be deprecated; use 'map(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.map(func, parallel=True, processes=processes)
-
-    def pstarmap(  # dead: disable
-        self: CIterable[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CIterable[U]:
-        warn(
-            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -830,6 +805,7 @@ class CList(List[T]):
         cls: Type[CList],
         func: Callable[..., T],
         exception: Type[Exception],
+        *,
         first: Optional[Callable[..., U]] = None,
     ) -> CList[Union[T, U]]:
         return cls(CIterable.iter_except(func, exception, first=first))
@@ -837,7 +813,7 @@ class CList(List[T]):
     def ncycles(self: CList[T], n: int) -> CList[T]:
         return self.iter().ncycles(n).list()
 
-    def nth(self: CList[T], n: int, default: U = None) -> Union[T, U]:
+    def nth(self: CList[T], n: int, *, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
     def nth_combination(self: CList[T], r: int, index: int) -> CTuple[T]:
@@ -934,31 +910,6 @@ class CList(List[T]):
 
     def split_at(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
         return self.iter().split_at(pred).list()
-
-    # multiprocessing
-
-    def pmap(  # dead: disable
-        self: CList[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CList[U]:
-        warn(
-            "'pmap' is going to be deprecated; use 'map(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.map(func, parallel=True, processes=processes)
-
-    def pstarmap(  # dead: disable
-        self: CList[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CList[U]:
-        warn(
-            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -1187,6 +1138,7 @@ class CTuple(tuple, Generic[T]):
         cls: Type[CTuple],
         func: Callable[..., T],
         exception: Type[Exception],
+        *,
         first: Optional[Callable[..., U]] = None,
     ) -> CTuple[Union[T, U]]:
         return cls(CIterable.iter_except(func, exception, first=first))
@@ -1194,7 +1146,7 @@ class CTuple(tuple, Generic[T]):
     def ncycles(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().ncycles(n).tuple()
 
-    def nth(self: CTuple[T], n: int, default: U = None) -> Union[T, U]:
+    def nth(self: CTuple[T], n: int, *, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
     def nth_combination(self: CTuple[T], r: int, index: int) -> CTuple[T]:
@@ -1291,26 +1243,6 @@ class CTuple(tuple, Generic[T]):
 
     def split_at(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
         return self.iter().split_at(pred).tuple()
-
-    # multiprocessing
-
-    def pmap(  # dead: disable
-        self: CTuple[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CTuple[U]:
-        warn(
-            "'pmap' is going to be deprecated; use 'map(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.map(func, parallel=True, processes=processes)
-
-    def pstarmap(  # dead: disable
-        self: CTuple[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CTuple[U]:
-        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -1588,6 +1520,7 @@ class CSet(Set[T]):
         cls: Type[CSet],
         func: Callable[..., T],
         exception: Type[Exception],
+        *,
         first: Optional[Callable[..., U]] = None,
     ) -> CSet[Union[T, U]]:
         return cls(CIterable.iter_except(func, exception, first=first))
@@ -1595,7 +1528,7 @@ class CSet(Set[T]):
     def ncycles(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().ncycles(n).set()
 
-    def nth(self: CSet[T], n: int, default: U = None) -> Union[T, U]:
+    def nth(self: CSet[T], n: int, *, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
     def nth_combination(self: CSet[T], r: int, index: int) -> CTuple[T]:
@@ -1692,31 +1625,6 @@ class CSet(Set[T]):
 
     def split_at(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
         return self.iter().split_at(pred).set()
-
-    # multiprocessing
-
-    def pmap(  # dead: disable
-        self: CSet[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CSet[U]:
-        warn(
-            "'pmap' is going to be deprecated; use 'map(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.map(func, parallel=True, processes=processes)
-
-    def pstarmap(  # dead: disable
-        self: CSet[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CSet[U]:
-        warn(
-            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
@@ -1957,6 +1865,7 @@ class CFrozenSet(FrozenSet[T]):
         cls: Type[CFrozenSet],
         func: Callable[..., T],
         exception: Type[Exception],
+        *,
         first: Optional[Callable[..., U]] = None,
     ) -> CFrozenSet[Union[T, U]]:
         return cls(CIterable.iter_except(func, exception, first=first))
@@ -1964,7 +1873,7 @@ class CFrozenSet(FrozenSet[T]):
     def ncycles(self: CFrozenSet[T], n: int) -> CFrozenSet[T]:
         return self.iter().ncycles(n).frozenset()
 
-    def nth(self: CFrozenSet[T], n: int, default: U = None) -> Union[T, U]:
+    def nth(self: CFrozenSet[T], n: int, *, default: U = None) -> Union[T, U]:
         return self.iter().nth(n, default=default)
 
     def nth_combination(self: CFrozenSet[T], r: int, index: int) -> CTuple[T]:
@@ -2067,31 +1976,6 @@ class CFrozenSet(FrozenSet[T]):
 
     def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
         return self.iter().split_at(pred).frozenset()
-
-    # multiprocessing
-
-    def pmap(  # dead: disable
-        self: CFrozenSet[T], func: Callable[[T], U], *, processes: Optional[int] = None,
-    ) -> CFrozenSet[U]:
-        warn(
-            "'pmap' is going to be deprecated; use 'map(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.map(func, parallel=True, processes=processes)
-
-    def pstarmap(  # dead: disable
-        self: CFrozenSet[Tuple[T, ...]],
-        func: Callable[[Tuple[T, ...]], U],
-        *,
-        processes: Optional[int] = None,
-    ) -> CFrozenSet[U]:
-        warn(
-            "'pstarmap' is going to be deprecated; use 'starmap(..., parallel=True)' instead",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.starmap(func, parallel=True, processes=processes)
 
     # pathlib
 
