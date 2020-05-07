@@ -17,6 +17,7 @@ from hypothesis.strategies import none
 from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
+from more_itertools import filter_except
 from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
@@ -34,6 +35,7 @@ from functional_itertools import MultipleElementsError
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import islice_ints
+from tests.test_utilities import is_even
 
 
 @mark.parametrize("case", CASES)
@@ -67,6 +69,20 @@ def test_divide(case: Case, x: List[int], n: int) -> None:
     for zi in z:
         assert isinstance(zi, CTuple)
     assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, divide(n, case.cast(x))))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()))
+def test_filter_except(case: Case, x: List[int]) -> None:
+    def func(n: int) -> int:
+        if is_even(n):
+            return True
+        else:
+            raise ValueError("'n' must be even")
+
+    y = case.cls(x).filter_except(func, ValueError)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(filter_except(func, x, ValueError))
 
 
 @mark.parametrize("case", CASES)

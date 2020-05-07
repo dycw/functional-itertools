@@ -47,6 +47,7 @@ from attr import evolve
 from more_itertools import chunked
 from more_itertools import distribute
 from more_itertools import divide
+from more_itertools import filter_except
 from more_itertools import first
 from more_itertools import iterate
 from more_itertools import last
@@ -498,6 +499,11 @@ class CIterable(Iterable[T]):
     def divide(self: CIterable[T], n: int) -> CIterable[CTuple[T]]:
         return CIterable(divide(n, list(self))).map(CTuple)
 
+    def filter_except(
+        self: CIterable[T], func: Optional[Callable[[T], bool]], *exceptions: Exception,
+    ) -> CIterable[T]:
+        return CIterable(filter_except(func, self, *exceptions))
+
     def first(self: CIterable[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         _, kwargs = drop_sentinel(default=default)
         try:
@@ -892,6 +898,11 @@ class CList(List[T]):
     def divide(self: CList[T], n: int) -> CList[CTuple[T]]:
         return self.iter().divide(n).list()
 
+    def filter_except(
+        self: CList[T], func: Optional[Callable[[T], bool]], *exceptions: Exception,
+    ) -> CList[T]:
+        return self.iter().filter_except(func, *exceptions).list()
+
     def first(self: CList[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
@@ -1238,6 +1249,11 @@ class CTuple(tuple, Generic[T]):
 
     def divide(self: CTuple[T], n: int) -> CTuple[CTuple[T]]:
         return self.iter().divide(n).tuple()
+
+    def filter_except(
+        self: CTuple[T], func: Optional[Callable[[T], bool]], *exceptions: Exception,
+    ) -> CTuple[T]:
+        return self.iter().filter_except(func, *exceptions).tuple()
 
     def first(self: CTuple[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
@@ -1628,6 +1644,11 @@ class CSet(Set[T]):
     def divide(self: CSet[T], n: int) -> CSet[CTuple[T]]:
         return self.iter().divide(n).set()
 
+    def filter_except(
+        self: CSet[T], func: Optional[Callable[[T], bool]], *exceptions: Exception,
+    ) -> CSet[T]:
+        return self.iter().filter_except(func, *exceptions).set()
+
     def first(self: CSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
@@ -1988,6 +2009,11 @@ class CFrozenSet(FrozenSet[T]):
 
     def divide(self: CFrozenSet[T], n: int) -> CFrozenSet[CTuple[T]]:
         return self.iter().divide(n).frozenset()
+
+    def filter_except(
+        self: CFrozenSet[T], func: Optional[Callable[[T], bool]], *exceptions: Exception,
+    ) -> CFrozenSet[T]:
+        return self.iter().filter_except(func, *exceptions).frozenset()
 
     def first(self: CFrozenSet[T], default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
