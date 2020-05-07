@@ -165,7 +165,7 @@ class CIterable(Iterable[T]):
     def dict(self: CIterable[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return CDict(dict(self))
 
-    def enumerate(self: CIterable[T], start: int = 0) -> CIterable[Tuple[int, T]]:  # noqa: A003
+    def enumerate(self: CIterable[T], *, start: int = 0) -> CIterable[Tuple[int, T]]:  # noqa: A003
         return CIterable(enumerate(self, start=start))
 
     def filter(  # noqa: A003
@@ -244,7 +244,7 @@ class CIterable(Iterable[T]):
     ) -> CList[T]:
         return CList(sorted(self, key=key, reverse=reverse))
 
-    def sum(self: CIterable[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
+    def sum(self: CIterable[T], *, start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         args, _ = drop_sentinel(start)
         return sum(self, *args)
 
@@ -259,7 +259,7 @@ class CIterable(Iterable[T]):
     # functools
 
     def reduce(
-        self: CIterable[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
+        self: CIterable[T], func: Callable[[T, T], T], *, initial: Union[U, Sentinel] = sentinel,
     ) -> Any:
         args, _ = drop_sentinel(initial)
         try:
@@ -316,7 +316,7 @@ class CIterable(Iterable[T]):
         return CIterable(compress(self, selectors))
 
     @classmethod
-    def count(cls: Type[CIterable], start: int = 0, step: int = 1) -> CIterable[int]:
+    def count(cls: Type[CIterable], *, start: int = 0, step: int = 1) -> CIterable[int]:
         return cls(count(start=start, step=step))
 
     def cycle(self: CIterable[T]) -> CIterable[T]:
@@ -345,7 +345,7 @@ class CIterable(Iterable[T]):
             args, _ = drop_sentinel(stop, step)
             return CIterable(islice(self, start, *args))
 
-    def permutations(self: CIterable[T], r: Optional[int] = None) -> CIterable[CTuple[T]]:
+    def permutations(self: CIterable[T], *, r: Optional[int] = None) -> CIterable[CTuple[T]]:
         return CIterable(permutations(self, r=r)).map(CTuple)
 
     def product(
@@ -354,7 +354,7 @@ class CIterable(Iterable[T]):
         return CIterable(product(self, *iterables, repeat=repeat)).map(CTuple)
 
     @classmethod
-    def repeat(cls: Type[CIterable], x: T, times: Optional[int] = None) -> CIterable[T]:
+    def repeat(cls: Type[CIterable], x: T, *, times: Optional[int] = None) -> CIterable[T]:
         args, _ = drop_none(times)
         return cls(repeat(x, *args))
 
@@ -378,7 +378,7 @@ class CIterable(Iterable[T]):
     def takewhile(self: CIterable[T], func: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(takewhile(func, self))
 
-    def tee(self: CIterable[T], n: int = 2) -> CIterable[CIterable[T]]:
+    def tee(self: CIterable[T], *, n: int = 2) -> CIterable[CIterable[T]]:
         return CIterable(tee(self, n)).map(CIterable)
 
     def zip_longest(
@@ -391,7 +391,7 @@ class CIterable(Iterable[T]):
     def all_equal(self: CIterable) -> bool:
         return all_equal(self)
 
-    def consume(self: CIterable[T], n: Optional[int] = None) -> CIterable[T]:
+    def consume(self: CIterable[T], *, n: Optional[int] = None) -> CIterable[T]:
         iterator = iter(self)
         consume(iterator, n=n)
         return CIterable(iterator)
@@ -400,14 +400,16 @@ class CIterable(Iterable[T]):
         return dotproduct(self, iterable)
 
     def first_true(
-        self: CIterable[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+        self: CIterable[T], *, default: U = False, pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return first_true(self, default=default, pred=pred)
 
     def flatten(self: CIterable[Iterable[T]]) -> CIterable[T]:
         return CIterable(flatten(self))
 
-    def grouper(self: CIterable[T], n: int, fillvalue: U = None) -> CIterable[CTuple[Union[T, U]]]:
+    def grouper(
+        self: CIterable[T], n: int, *, fillvalue: U = None,
+    ) -> CIterable[CTuple[Union[T, U]]]:
         return CIterable(grouper(self, n, fillvalue=fillvalue)).map(CTuple)
 
     @classmethod
@@ -452,7 +454,7 @@ class CIterable(Iterable[T]):
     def random_combination_with_replacement(self: CIterable[T], r: int) -> CTuple[T]:
         return CTuple(random_combination_with_replacement(self, r))
 
-    def random_permutation(self: CIterable[T], r: Optional[int] = None) -> CTuple[T]:
+    def random_permutation(self: CIterable[T], *, r: Optional[int] = None) -> CTuple[T]:
         return CTuple(random_permutation(self, r=r))
 
     def random_product(
@@ -647,7 +649,7 @@ class CList(List[T]):
     def dict(self: CList[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CList[T], start: int = 0) -> CList[Tuple[int, T]]:  # noqa: A003
+    def enumerate(self: CList[T], *, start: int = 0) -> CList[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).list()
 
     def filter(self: CList[T], func: Optional[Callable[[T], bool]]) -> CList[T]:  # noqa: A003
@@ -713,7 +715,7 @@ class CList(List[T]):
     ) -> CList[T]:
         return self.iter().sorted(key=key, reverse=reverse)
 
-    def sum(self: CList[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
+    def sum(self: CList[T], *, start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
 
     def tuple(self: CList[T]) -> CTuple[T]:  # noqa: A003
@@ -725,7 +727,7 @@ class CList(List[T]):
     # functools
 
     def reduce(
-        self: CList[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
+        self: CList[T], func: Callable[[T, T], T], *, initial: Union[U, Sentinel] = sentinel,
     ) -> Any:
         return self.iter().reduce(func, initial=initial)
 
@@ -767,7 +769,7 @@ class CList(List[T]):
     ) -> CList[T]:
         return self.iter().islice(start, stop=stop, step=step).list()
 
-    def permutations(self: CList[T], r: Optional[int] = None) -> CList[CTuple[T]]:
+    def permutations(self: CList[T], *, r: Optional[int] = None) -> CList[CTuple[T]]:
         return self.iter().permutations(r=r).list()
 
     def product(
@@ -776,7 +778,7 @@ class CList(List[T]):
         return self.iter().product(*iterables, repeat=repeat).list()
 
     @classmethod
-    def repeat(cls: Type[CList], x: T, times: int) -> CList[T]:
+    def repeat(cls: Type[CList], x: T, *, times: int) -> CList[T]:
         return cls(CIterable.repeat(x, times=times))
 
     def starmap(
@@ -791,7 +793,7 @@ class CList(List[T]):
     def takewhile(self: CList[T], func: Callable[[T], bool]) -> CList[T]:
         return self.iter().takewhile(func).list()
 
-    def tee(self: CList[T], n: int = 2) -> CIterable[CIterable[T]]:
+    def tee(self: CList[T], *, n: int = 2) -> CIterable[CIterable[T]]:
         return self.iter().tee(n=n)
 
     def zip_longest(
@@ -804,14 +806,14 @@ class CList(List[T]):
     def all_equal(self: CList[Any]) -> bool:
         return self.iter().all_equal()
 
-    def consume(self: CList[T], n: Optional[int] = None) -> CList[T]:
+    def consume(self: CList[T], *, n: Optional[int] = None) -> CList[T]:
         return self.iter().consume(n=n).list()
 
     def dotproduct(self: CList[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def first_true(
-        self: CList[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+        self: CList[T], *, default: U = False, pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
@@ -819,7 +821,7 @@ class CList(List[T]):
         return self.iter().flatten().list()
 
     def grouper(
-        self: CList[T], n: int, fillvalue: Optional[T] = None,
+        self: CList[T], n: int, *, fillvalue: Optional[T] = None,
     ) -> CList[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).list()
 
@@ -865,7 +867,7 @@ class CList(List[T]):
     def random_combination_with_replacement(self: CList[T], r: int) -> CTuple[T]:
         return self.iter().random_combination_with_replacement(r)
 
-    def random_permutation(self: CList[T], r: Optional[int] = None) -> CTuple[T]:
+    def random_permutation(self: CList[T], *, r: Optional[int] = None) -> CTuple[T]:
         return self.iter().random_permutation(r=r)
 
     def random_product(
@@ -1010,7 +1012,7 @@ class CTuple(tuple, Generic[T]):
     def dict(self: CTuple[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CTuple[T], start: int = 0) -> CTuple[Tuple[int, T]]:  # noqa: A003
+    def enumerate(self: CTuple[T], *, start: int = 0) -> CTuple[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).tuple()
 
     def filter(self: CTuple[T], func: Optional[Callable[[T], bool]]) -> CTuple[T]:  # noqa: A003
@@ -1070,7 +1072,7 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[T]:
         return self.iter().sorted(key=key, reverse=reverse).tuple()
 
-    def sum(self: CTuple[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
+    def sum(self: CTuple[T], *, start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
 
     def tuple(self: CTuple[T]) -> CTuple[T]:  # noqa: A003
@@ -1082,7 +1084,7 @@ class CTuple(tuple, Generic[T]):
     # functools
 
     def reduce(
-        self: CTuple[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
+        self: CTuple[T], func: Callable[[T, T], T], *, initial: Union[U, Sentinel] = sentinel,
     ) -> Any:
         return self.iter().reduce(func, initial=initial)
 
@@ -1124,7 +1126,7 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[T]:
         return self.iter().islice(start, stop=stop, step=step).tuple()
 
-    def permutations(self: CTuple[T], r: Optional[int] = None) -> CTuple[CTuple[T]]:
+    def permutations(self: CTuple[T], *, r: Optional[int] = None) -> CTuple[CTuple[T]]:
         return self.iter().permutations(r=r).tuple()
 
     def product(
@@ -1133,7 +1135,7 @@ class CTuple(tuple, Generic[T]):
         return self.iter().product(*iterables, repeat=repeat).tuple()
 
     @classmethod
-    def repeat(cls: Type[CTuple], x: T, times: int) -> CTuple[T]:
+    def repeat(cls: Type[CTuple], x: T, *, times: int) -> CTuple[T]:
         return cls(CIterable.repeat(x, times=times))
 
     def starmap(
@@ -1148,7 +1150,7 @@ class CTuple(tuple, Generic[T]):
     def takewhile(self: CTuple[T], func: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().takewhile(func).tuple()
 
-    def tee(self: CTuple[T], n: int = 2) -> CIterable[CIterable[T]]:
+    def tee(self: CTuple[T], *, n: int = 2) -> CIterable[CIterable[T]]:
         return self.iter().tee(n=n)
 
     def zip_longest(
@@ -1161,14 +1163,14 @@ class CTuple(tuple, Generic[T]):
     def all_equal(self: CTuple[Any]) -> bool:
         return self.iter().all_equal()
 
-    def consume(self: CTuple[T], n: Optional[int] = None) -> CTuple[T]:
+    def consume(self: CTuple[T], *, n: Optional[int] = None) -> CTuple[T]:
         return self.iter().consume(n=n).tuple()
 
     def dotproduct(self: CTuple[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def first_true(
-        self: CTuple[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+        self: CTuple[T], *, default: U = False, pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
@@ -1176,7 +1178,7 @@ class CTuple(tuple, Generic[T]):
         return self.iter().flatten().tuple()
 
     def grouper(
-        self: CTuple[T], n: int, fillvalue: Optional[T] = None,
+        self: CTuple[T], n: int, *, fillvalue: Optional[T] = None,
     ) -> CTuple[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).map(CTuple).tuple()
 
@@ -1222,7 +1224,7 @@ class CTuple(tuple, Generic[T]):
     def random_combination_with_replacement(self: CTuple[T], r: int) -> CTuple[T]:
         return self.iter().random_combination_with_replacement(r)
 
-    def random_permutation(self: CTuple[T], r: Optional[int] = None) -> CTuple[T]:
+    def random_permutation(self: CTuple[T], *, r: Optional[int] = None) -> CTuple[T]:
         return self.iter().random_permutation(r=r)
 
     def random_product(
@@ -1359,7 +1361,7 @@ class CSet(Set[T]):
     def dict(self: CSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CSet[T], start: int = 0) -> CSet[Tuple[int, T]]:  # noqa: A003
+    def enumerate(self: CSet[T], *, start: int = 0) -> CSet[Tuple[int, T]]:  # noqa: A003
         return self.iter().enumerate(start=start).set()
 
     def filter(self: CSet[T], func: Optional[Callable[[T], bool]]) -> CSet[T]:  # noqa: A003
@@ -1416,7 +1418,7 @@ class CSet(Set[T]):
     ) -> CList[T]:
         return self.iter().sorted(key=key, reverse=reverse)
 
-    def sum(self: CSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
+    def sum(self: CSet[T], *, start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
 
     def tuple(self: CSet[T]) -> CTuple[T]:  # noqa: A003
@@ -1483,7 +1485,7 @@ class CSet(Set[T]):
     # functools
 
     def reduce(
-        self: CSet[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
+        self: CSet[T], func: Callable[[T, T], T], *, initial: Union[U, Sentinel] = sentinel,
     ) -> Any:
         return self.iter().reduce(func, initial=initial)
 
@@ -1525,7 +1527,7 @@ class CSet(Set[T]):
     ) -> CSet[T]:
         return self.iter().islice(start, stop=stop, step=step).set()
 
-    def permutations(self: CSet[T], r: Optional[int] = None) -> CSet[CTuple[T]]:
+    def permutations(self: CSet[T], *, r: Optional[int] = None) -> CSet[CTuple[T]]:
         return self.iter().permutations(r=r).set()
 
     def product(
@@ -1534,7 +1536,7 @@ class CSet(Set[T]):
         return self.iter().product(*iterables, repeat=repeat).set()
 
     @classmethod
-    def repeat(cls: Type[CSet], x: T, times: int) -> CSet[T]:
+    def repeat(cls: Type[CSet], x: T, *, times: int) -> CSet[T]:
         return cls(CIterable.repeat(x, times=times))
 
     def starmap(
@@ -1549,7 +1551,7 @@ class CSet(Set[T]):
     def takewhile(self: CSet[T], func: Callable[[T], bool]) -> CSet[T]:
         return self.iter().takewhile(func).set()
 
-    def tee(self: CSet[T], n: int = 2) -> CIterable[CIterable[T]]:
+    def tee(self: CSet[T], *, n: int = 2) -> CIterable[CIterable[T]]:
         return self.iter().tee(n=n)
 
     def zip_longest(
@@ -1562,21 +1564,23 @@ class CSet(Set[T]):
     def all_equal(self: CSet[Any]) -> bool:
         return self.iter().all_equal()
 
-    def consume(self: CSet[T], n: Optional[int] = None) -> CSet[T]:
+    def consume(self: CSet[T], *, n: Optional[int] = None) -> CSet[T]:
         return self.iter().consume(n=n).set()
 
     def dotproduct(self: CSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def first_true(
-        self: CSet[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+        self: CSet[T], *, default: U = False, pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
         return self.iter().flatten().set()
 
-    def grouper(self: CSet[T], n: int, fillvalue: Optional[T] = None) -> CSet[CTuple[Union[T, U]]]:
+    def grouper(
+        self: CSet[T], n: int, *, fillvalue: Optional[T] = None,
+    ) -> CSet[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).set()
 
     @classmethod
@@ -1621,7 +1625,7 @@ class CSet(Set[T]):
     def random_combination_with_replacement(self: CSet[T], r: int) -> CTuple[T]:
         return self.iter().random_combination_with_replacement(r)
 
-    def random_permutation(self: CSet[T], r: Optional[int] = None) -> CTuple[T]:
+    def random_permutation(self: CSet[T], *, r: Optional[int] = None) -> CTuple[T]:
         return self.iter().random_permutation(r=r)
 
     def random_product(
@@ -1756,7 +1760,9 @@ class CFrozenSet(FrozenSet[T]):
     def dict(self: CFrozenSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CFrozenSet[T], start: int = 0) -> CFrozenSet[Tuple[int, T]]:  # noqa: A003
+    def enumerate(  # noqa: A003
+        self: CFrozenSet[T], *, start: int = 0,
+    ) -> CFrozenSet[Tuple[int, T]]:
         return self.iter().enumerate(start=start).frozenset()
 
     def filter(  # noqa: A003
@@ -1815,7 +1821,7 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CList[T]:
         return self.iter().sorted(key=key, reverse=reverse)
 
-    def sum(self: CFrozenSet[T], start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
+    def sum(self: CFrozenSet[T], *, start: Union[T, int] = 0) -> Union[T, int]:  # noqa: A003
         return self.iter().sum(start=start)
 
     def tuple(self: CFrozenSet[T]) -> CTuple[T]:  # noqa: A003
@@ -1846,7 +1852,7 @@ class CFrozenSet(FrozenSet[T]):
     # functools
 
     def reduce(
-        self: CFrozenSet[T], func: Callable[[T, T], T], initial: Union[U, Sentinel] = sentinel,
+        self: CFrozenSet[T], func: Callable[[T, T], T], *, initial: Union[U, Sentinel] = sentinel,
     ) -> Any:
         return self.iter().reduce(func, initial=initial)
 
@@ -1891,7 +1897,7 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[T]:
         return self.iter().islice(start, stop=stop, step=step).frozenset()
 
-    def permutations(self: CFrozenSet[T], r: Optional[int] = None) -> CFrozenSet[CTuple[T]]:
+    def permutations(self: CFrozenSet[T], *, r: Optional[int] = None) -> CFrozenSet[CTuple[T]]:
         return self.iter().permutations(r=r).frozenset()
 
     def product(
@@ -1900,7 +1906,7 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().product(*iterables, repeat=repeat).frozenset()
 
     @classmethod
-    def repeat(cls: Type[CFrozenSet], x: T, times: int) -> CFrozenSet[T]:
+    def repeat(cls: Type[CFrozenSet], x: T, *, times: int) -> CFrozenSet[T]:
         return cls(CIterable.repeat(x, times=times))
 
     def starmap(
@@ -1915,7 +1921,7 @@ class CFrozenSet(FrozenSet[T]):
     def takewhile(self: CFrozenSet[T], func: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().takewhile(func).frozenset()
 
-    def tee(self: CFrozenSet[T], n: int = 2) -> CIterable[CIterable[T]]:
+    def tee(self: CFrozenSet[T], *, n: int = 2) -> CIterable[CIterable[T]]:
         return self.iter().tee(n=n)
 
     def zip_longest(
@@ -1927,14 +1933,14 @@ class CFrozenSet(FrozenSet[T]):
     def all_equal(self: CFrozenSet[Any]) -> bool:
         return self.iter().all_equal()
 
-    def consume(self: CFrozenSet[T], n: Optional[int] = None) -> CFrozenSet[T]:
+    def consume(self: CFrozenSet[T], *, n: Optional[int] = None) -> CFrozenSet[T]:
         return self.iter().consume(n=n).frozenset()
 
     def dotproduct(self: CFrozenSet[T], iterable: Iterable[T]) -> T:
         return self.iter().dotproduct(iterable)
 
     def first_true(
-        self: CFrozenSet[T], default: U = False, pred: Optional[Callable[[T], Any]] = None,
+        self: CFrozenSet[T], *, default: U = False, pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
@@ -1942,7 +1948,7 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().flatten().frozenset()
 
     def grouper(
-        self: CFrozenSet[T], n: int, fillvalue: Optional[T] = None,
+        self: CFrozenSet[T], n: int, *, fillvalue: Optional[T] = None,
     ) -> CFrozenSet[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).frozenset()
 
@@ -1988,7 +1994,7 @@ class CFrozenSet(FrozenSet[T]):
     def random_combination_with_replacement(self: CFrozenSet[T], r: int) -> CTuple[T]:
         return self.iter().random_combination_with_replacement(r)
 
-    def random_permutation(self: CFrozenSet[T], r: Optional[int] = None) -> CTuple[T]:
+    def random_permutation(self: CFrozenSet[T], *, r: Optional[int] = None) -> CTuple[T]:
         return self.iter().random_permutation(r=r)
 
     def random_product(
