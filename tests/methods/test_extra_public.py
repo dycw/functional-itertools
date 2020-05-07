@@ -5,7 +5,6 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Tuple
-from typing import Type
 
 from hypothesis import given
 from hypothesis.strategies import integers
@@ -15,7 +14,6 @@ from pytest import mark
 
 from functional_itertools import CDict
 from functional_itertools import CIterable
-from functional_itertools import CList
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.test_utilities import is_even
@@ -52,13 +50,3 @@ def test_starfilter(case: Case, x: List[Tuple[int, int]]) -> None:
     y = case.cls(x).starfilter(func)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast((i, j) for (i, j) in x if func(i, j))
-
-
-@mark.parametrize("cls", [CIterable, CList])
-@given(x=lists(integers(), min_size=1))
-def test_unzip(cls: Type, x: List[int]) -> None:
-    indices, ints = cls(x).enumerate().unzip()
-    assert isinstance(indices, cls)
-    assert list(indices) == list(range(len(x)))
-    assert isinstance(ints, cls)
-    assert list(ints) == x

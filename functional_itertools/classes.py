@@ -56,8 +56,13 @@ from more_itertools import nth_or_last
 from more_itertools import one
 from more_itertools import only
 from more_itertools import rstrip
+from more_itertools import split_after
 from more_itertools import split_at
+from more_itertools import split_before
+from more_itertools import split_into
+from more_itertools import split_when
 from more_itertools import strip
+from more_itertools import unzip
 from more_itertools.recipes import all_equal
 from more_itertools.recipes import consume
 from more_itertools.recipes import dotproduct
@@ -566,11 +571,26 @@ class CIterable(Iterable[T]):
     def rstrip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(rstrip(self, pred))
 
+    def split_after(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
+        return CIterable(split_after(self, pred)).map(CTuple)
+
     def split_at(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
         return CIterable(split_at(self, pred)).map(CTuple)
 
+    def split_before(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
+        return CIterable(split_before(self, pred)).map(CTuple)
+
+    def split_into(self: CIterable[T], sizes: List[int]) -> CIterable[CTuple[T]]:
+        return CIterable(split_into(self, sizes)).map(CTuple)
+
+    def split_when(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[CTuple[T]]:
+        return CIterable(split_when(self, pred)).map(CTuple)
+
     def strip(self: CIterable[T], pred: Callable[[T], bool]) -> CIterable[T]:
         return CIterable(strip(self, pred))
+
+    def unzip(self: CIterable[Tuple[T, ...]]) -> CIterable[CTuple[T]]:
+        return CIterable(unzip(self)).map(CTuple)
 
     # pathlib
 
@@ -607,9 +627,6 @@ class CIterable(Iterable[T]):
         self: CIterable[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CIterable[Tuple[T, ...]]:
         return self.filter(partial(helper_starfilter, func=func))
-
-    def unzip(self: CIterable[Tuple[T, ...]]) -> Tuple[CIterable[T], ...]:
-        return CIterable(zip(*self)).map(CIterable).tuple()
 
 
 class CList(List[T]):
@@ -926,11 +943,26 @@ class CList(List[T]):
     def rstrip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
         return self.iter().rstrip(pred).list()
 
+    def split_after(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
+        return self.iter().split_after(pred).list()
+
     def split_at(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
         return self.iter().split_at(pred).list()
 
+    def split_before(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
+        return self.iter().split_before(pred).list()
+
+    def split_into(self: CList[T], sizes: List[int]) -> CList[CTuple[T]]:
+        return self.iter().split_into(sizes).list()
+
+    def split_when(self: CList[T], pred: Callable[[T], bool]) -> CList[CTuple[T]]:
+        return self.iter().split_when(pred).list()
+
     def strip(self: CList[T], pred: Callable[[T], bool]) -> CList[T]:
         return self.iter().strip(pred).list()
+
+    def unzip(self: CList[Tuple[T, ...]]) -> CList[CTuple[T]]:
+        return self.iter().unzip().list()
 
     # pathlib
 
@@ -958,9 +990,6 @@ class CList(List[T]):
         self: CList[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CList[Tuple[T, ...]]:
         return self.iter().starfilter(func).list()
-
-    def unzip(self: CList[Tuple[T, ...]]) -> Tuple[CList[T], ...]:
-        return CList(self.iter().unzip()).map(CList)
 
 
 class CTuple(tuple, Generic[T]):
@@ -1268,11 +1297,26 @@ class CTuple(tuple, Generic[T]):
     def rstrip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().rstrip(pred).tuple()
 
+    def split_after(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().split_after(pred).tuple()
+
     def split_at(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
         return self.iter().split_at(pred).tuple()
 
+    def split_before(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().split_before(pred).tuple()
+
+    def split_into(self: CTuple[T], sizes: List[int]) -> CTuple[CTuple[T]]:
+        return self.iter().split_into(sizes).tuple()
+
+    def split_when(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[CTuple[T]]:
+        return self.iter().split_when(pred).tuple()
+
     def strip(self: CTuple[T], pred: Callable[[T], bool]) -> CTuple[T]:
         return self.iter().strip(pred).tuple()
+
+    def unzip(self: CTuple[Tuple[T, ...]]) -> CTuple[CTuple[T]]:
+        return self.iter().unzip().tuple()
 
     # pathlib
 
@@ -1304,9 +1348,6 @@ class CTuple(tuple, Generic[T]):
         self: CTuple[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CTuple[Tuple[T, ...]]:
         return self.iter().starfilter(func).tuple()
-
-    def unzip(self: CTuple[Tuple[T, ...]]) -> Tuple[CTuple[T], ...]:
-        return CTuple(self.iter().unzip()).map(CTuple)
 
 
 class CSet(Set[T]):
@@ -1659,11 +1700,26 @@ class CSet(Set[T]):
     def rstrip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
         return self.iter().rstrip(pred).set()
 
+    def split_after(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
+        return self.iter().split_after(pred).set()
+
     def split_at(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
         return self.iter().split_at(pred).set()
 
+    def split_before(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
+        return self.iter().split_before(pred).set()
+
+    def split_into(self: CSet[T], sizes: List[int]) -> CSet[CTuple[T]]:
+        return self.iter().split_into(sizes).set()
+
+    def split_when(self: CSet[T], pred: Callable[[T], bool]) -> CSet[CTuple[T]]:
+        return self.iter().split_when(pred).set()
+
     def strip(self: CSet[T], pred: Callable[[T], bool]) -> CSet[T]:
         return self.iter().strip(pred).set()
+
+    def unzip(self: CSet[Tuple[T, ...]]) -> CSet[CTuple[T]]:
+        return self.iter().unzip().set()
 
     # pathlib
 
@@ -2019,11 +2075,26 @@ class CFrozenSet(FrozenSet[T]):
     def rstrip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().rstrip(pred).frozenset()
 
+    def split_after(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_after(pred).frozenset()
+
     def split_at(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
         return self.iter().split_at(pred).frozenset()
 
+    def split_before(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_before(pred).frozenset()
+
+    def split_into(self: CFrozenSet[T], sizes: List[int]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_into(sizes).frozenset()
+
+    def split_when(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().split_when(pred).frozenset()
+
     def strip(self: CFrozenSet[T], pred: Callable[[T], bool]) -> CFrozenSet[T]:
         return self.iter().strip(pred).frozenset()
+
+    def unzip(self: CFrozenSet[Tuple[T, ...]]) -> CFrozenSet[CTuple[T]]:
+        return self.iter().unzip().frozenset()
 
     # pathlib
 
