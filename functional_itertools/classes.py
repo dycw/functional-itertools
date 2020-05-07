@@ -328,7 +328,7 @@ class CIterable(Iterable[T]):
         return CIterable(filterfalse(func, self))
 
     def groupby(
-        self: CIterable[T], key: Optional[Callable[[T], U]] = None,
+        self: CIterable[T], *, key: Optional[Callable[[T], U]] = None,
     ) -> CIterable[Tuple[U, CTuple[T]]]:
         return CIterable(groupby(self, key=key)).map(_helper_groupby)
 
@@ -445,7 +445,7 @@ class CIterable(Iterable[T]):
     def prepend(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
         return CIterable(prepend(value, self))
 
-    def quantify(self: CIterable[T], pred: Callable[[T], bool] = bool) -> int:
+    def quantify(self: CIterable[T], *, pred: Callable[[T], bool] = bool) -> int:
         return quantify(self, pred=pred)
 
     def random_combination(self: CIterable[T], r: int) -> CTuple[T]:
@@ -482,12 +482,12 @@ class CIterable(Iterable[T]):
         return CIterable(take(n, self))
 
     def unique_everseen(
-        self: CIterable[T], key: Optional[Callable[[T], Any]] = None,
+        self: CIterable[T], *, key: Optional[Callable[[T], Any]] = None,
     ) -> CIterable[T]:
         return CIterable(unique_everseen(self, key=key))
 
     def unique_justseen(
-        self: CIterable[T], key: Optional[Callable[[T], Any]] = None,
+        self: CIterable[T], *, key: Optional[Callable[[T], Any]] = None,
     ) -> CIterable[T]:
         return CIterable(unique_justseen(self, key=key))
 
@@ -732,7 +732,7 @@ class CList(List[T]):
         return self.iter().filterfalse(func).list()
 
     def groupby(
-        self: CList[T], key: Optional[Callable[[T], U]] = None,
+        self: CList[T], *, key: Optional[Callable[[T], U]] = None,
     ) -> CList[Tuple[U, CTuple[T]]]:
         return self.iter().groupby(key=key).list()
 
@@ -834,7 +834,7 @@ class CList(List[T]):
     def prepend(self: CList[T], value: U) -> CList[Union[T, U]]:
         return self.iter().prepend(value).list()
 
-    def quantify(self: CList[T], pred: Callable[[T], bool] = bool) -> int:
+    def quantify(self: CList[T], *, pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
     def random_combination(self: CList[T], r: int) -> CTuple[T]:
@@ -866,10 +866,10 @@ class CList(List[T]):
     def take(self: CList[T], n: int) -> CList[T]:
         return self.iter().take(n).list()
 
-    def unique_everseen(self: CList[T], key: Optional[Callable[[T], Any]] = None) -> CList[T]:
+    def unique_everseen(self: CList[T], *, key: Optional[Callable[[T], Any]] = None) -> CList[T]:
         return self.iter().unique_everseen(key=key).list()
 
-    def unique_justseen(self: CList[T], key: Optional[Callable[[T], Any]] = None) -> CList[T]:
+    def unique_justseen(self: CList[T], *, key: Optional[Callable[[T], Any]] = None) -> CList[T]:
         return self.iter().unique_justseen(key=key).list()
 
     # more-itertools
@@ -1065,7 +1065,7 @@ class CTuple(tuple, Generic[T]):
         return self.iter().filterfalse(func).tuple()
 
     def groupby(
-        self: CTuple[T], key: Optional[Callable[[T], U]] = None,
+        self: CTuple[T], *, key: Optional[Callable[[T], U]] = None,
     ) -> CTuple[Tuple[U, CTuple[T]]]:
         return self.iter().groupby(key=key).tuple()
 
@@ -1167,7 +1167,7 @@ class CTuple(tuple, Generic[T]):
     def prepend(self: CTuple[T], value: U) -> CTuple[Union[T, U]]:
         return self.iter().prepend(value).tuple()
 
-    def quantify(self: CTuple[T], pred: Callable[[T], bool] = bool) -> int:
+    def quantify(self: CTuple[T], *, pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
     def random_combination(self: CTuple[T], r: int) -> CTuple[T]:
@@ -1199,10 +1199,10 @@ class CTuple(tuple, Generic[T]):
     def take(self: CTuple[T], n: int) -> CTuple[T]:
         return self.iter().take(n).tuple()
 
-    def unique_everseen(self: CTuple[T], key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
+    def unique_everseen(self: CTuple[T], *, key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
         return self.iter().unique_everseen(key=key).tuple()
 
-    def unique_justseen(self: CTuple[T], key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
+    def unique_justseen(self: CTuple[T], *, key: Optional[Callable[[T], Any]] = None) -> CTuple[T]:
         return self.iter().unique_justseen(key=key).tuple()
 
     # more-itertools
@@ -1447,7 +1447,7 @@ class CSet(Set[T]):
         return self.iter().filterfalse(func).set()
 
     def groupby(
-        self: CSet[T], key: Optional[Callable[[T], U]] = None,
+        self: CSet[T], *, key: Optional[Callable[[T], U]] = None,
     ) -> CSet[Tuple[U, CTuple[T]]]:
         return self.iter().groupby(key=key).set()
 
@@ -1549,7 +1549,7 @@ class CSet(Set[T]):
     def prepend(self: CSet[T], value: U) -> CSet[Union[T, U]]:
         return self.iter().prepend(value).set()
 
-    def quantify(self: CSet[T], pred: Callable[[T], bool] = bool) -> int:
+    def quantify(self: CSet[T], *, pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
     def random_combination(self: CSet[T], r: int) -> CTuple[T]:
@@ -1581,10 +1581,10 @@ class CSet(Set[T]):
     def take(self: CSet[T], n: int) -> CSet[T]:
         return self.iter().take(n).set()
 
-    def unique_everseen(self: CSet[T], key: Optional[Callable[[T], Any]] = None) -> CSet[T]:
+    def unique_everseen(self: CSet[T], *, key: Optional[Callable[[T], Any]] = None) -> CSet[T]:
         return self.iter().unique_everseen(key=key).set()
 
-    def unique_justseen(self: CSet[T], key: Optional[Callable[[T], Any]] = None) -> CSet[T]:
+    def unique_justseen(self: CSet[T], *, key: Optional[Callable[[T], Any]] = None) -> CSet[T]:
         return self.iter().unique_justseen(key=key).set()
 
     # more-itertools
@@ -1793,7 +1793,7 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().filterfalse(func).frozenset()
 
     def groupby(
-        self: CFrozenSet[T], key: Optional[Callable[[T], U]] = None,
+        self: CFrozenSet[T], *, key: Optional[Callable[[T], U]] = None,
     ) -> CFrozenSet[Tuple[U, CTuple[T]]]:
         return self.iter().groupby(key=key).frozenset()
 
@@ -1894,7 +1894,7 @@ class CFrozenSet(FrozenSet[T]):
     def prepend(self: CFrozenSet[T], value: U) -> CFrozenSet[Union[T, U]]:
         return self.iter().prepend(value).frozenset()
 
-    def quantify(self: CFrozenSet[T], pred: Callable[[T], bool] = bool) -> int:
+    def quantify(self: CFrozenSet[T], *, pred: Callable[[T], bool] = bool) -> int:
         return self.iter().quantify(pred=pred)
 
     def random_combination(self: CFrozenSet[T], r: int) -> CTuple[T]:
@@ -1927,12 +1927,12 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().take(n).frozenset()
 
     def unique_everseen(
-        self: CFrozenSet[T], key: Optional[Callable[[T], Any]] = None,
+        self: CFrozenSet[T], *, key: Optional[Callable[[T], Any]] = None,
     ) -> CFrozenSet[T]:
         return self.iter().unique_everseen(key=key).frozenset()
 
     def unique_justseen(
-        self: CFrozenSet[T], key: Optional[Callable[[T], Any]] = None,
+        self: CFrozenSet[T], *, key: Optional[Callable[[T], Any]] = None,
     ) -> CFrozenSet[T]:
         return self.iter().unique_justseen(key=key).frozenset()
 
