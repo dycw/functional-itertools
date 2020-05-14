@@ -48,6 +48,7 @@ from more_itertools import distribute
 from more_itertools import divide
 from more_itertools import filter_except
 from more_itertools import first
+from more_itertools import interleave
 from more_itertools import iterate
 from more_itertools import last
 from more_itertools import lstrip
@@ -522,6 +523,9 @@ class CIterable(Iterable[T]):
         except ValueError:
             raise EmptyIterableError from None
 
+    def interleave(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
+        return CIterable(interleave(self, *iterables))
+
     @classmethod
     def iterate(cls: Type[CIterable], func: Callable[[T], T], start: T) -> CIterable[T]:
         return cls(iterate(func, start))
@@ -920,6 +924,9 @@ class CList(List[T]):
     def first(self: CList[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
+    def interleave(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
+        return self.iter().interleave(*iterables).list()
+
     def last(self: CList[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
@@ -1273,6 +1280,9 @@ class CTuple(tuple, Generic[T]):
 
     def first(self: CTuple[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
+
+    def interleave(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
+        return self.iter().interleave(*iterables).tuple()
 
     def last(self: CTuple[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
@@ -1677,6 +1687,9 @@ class CSet(Set[T]):
     def first(self: CSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
 
+    def interleave(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
+        return self.iter().interleave(*iterables).set()
+
     def last(self: CSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
@@ -2049,6 +2062,9 @@ class CFrozenSet(FrozenSet[T]):
 
     def first(self: CFrozenSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().first(default=default)
+
+    def interleave(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
+        return self.iter().interleave(*iterables).frozenset()
 
     def last(self: CFrozenSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
