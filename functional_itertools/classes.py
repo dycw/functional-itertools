@@ -49,6 +49,8 @@ from more_itertools import divide
 from more_itertools import filter_except
 from more_itertools import first
 from more_itertools import interleave
+from more_itertools import interleave_longest
+from more_itertools import intersperse
 from more_itertools import iterate
 from more_itertools import last
 from more_itertools import lstrip
@@ -526,6 +528,12 @@ class CIterable(Iterable[T]):
     def interleave(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
         return CIterable(interleave(self, *iterables))
 
+    def interleave_longest(self: CIterable[T], *iterables: Iterable[U]) -> CIterable[Union[T, U]]:
+        return CIterable(interleave_longest(self, *iterables))
+
+    def intersperse(self: CIterable[T], e: U, *, n: int = 1) -> CIterable[Union[T, U]]:
+        return CIterable(intersperse(e, self, n=n))
+
     @classmethod
     def iterate(cls: Type[CIterable], func: Callable[[T], T], start: T) -> CIterable[T]:
         return cls(iterate(func, start))
@@ -927,6 +935,12 @@ class CList(List[T]):
     def interleave(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
         return self.iter().interleave(*iterables).list()
 
+    def interleave_longest(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
+        return self.iter().interleave_longest(*iterables).list()
+
+    def intersperse(self: CList[T], e: U, *, n: int = 1) -> CList[Union[T, U]]:
+        return self.iter().intersperse(e, n=n).list()
+
     def last(self: CList[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
@@ -1283,6 +1297,12 @@ class CTuple(tuple, Generic[T]):
 
     def interleave(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
         return self.iter().interleave(*iterables).tuple()
+
+    def interleave_longest(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
+        return self.iter().interleave_longest(*iterables).tuple()
+
+    def intersperse(self: CTuple[T], e: U, *, n: int = 1) -> CTuple[Union[T, U]]:
+        return self.iter().intersperse(e, n=n).tuple()
 
     def last(self: CTuple[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
@@ -1690,6 +1710,12 @@ class CSet(Set[T]):
     def interleave(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
         return self.iter().interleave(*iterables).set()
 
+    def interleave_longest(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
+        return self.iter().interleave_longest(*iterables).set()
+
+    def intersperse(self: CSet[T], e: U, *, n: int = 1) -> CSet[Union[T, U]]:
+        return self.iter().intersperse(e, n=n).set()
+
     def last(self: CSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
 
@@ -2065,6 +2091,12 @@ class CFrozenSet(FrozenSet[T]):
 
     def interleave(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
         return self.iter().interleave(*iterables).frozenset()
+
+    def interleave_longest(self: CFrozenSet[T], *iterables: Iterable[U]) -> CFrozenSet[Union[T, U]]:
+        return self.iter().interleave_longest(*iterables).frozenset()
+
+    def intersperse(self: CFrozenSet[T], e: U, *, n: int = 1) -> CFrozenSet[Union[T, U]]:
+        return self.iter().intersperse(e, n=n).frozenset()
 
     def last(self: CFrozenSet[T], *, default: Union[U, Sentinel] = sentinel) -> Union[T, U]:
         return self.iter().last(default=default)
