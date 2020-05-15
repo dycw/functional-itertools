@@ -24,6 +24,7 @@ from more_itertools import divide
 from more_itertools import filter_except
 from more_itertools import first
 from more_itertools import interleave
+from more_itertools import interleave_longest
 from more_itertools import iterate
 from more_itertools import last
 from more_itertools import lstrip
@@ -132,6 +133,14 @@ def test_interleave(case: Case, x: List[int], xs: List[List[int]]) -> None:
     y = case.cls(x).interleave(*xs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(interleave(case.cast(x), *xs))
+
+
+@mark.parametrize("case", CASES)
+@given(x=lists(integers()), xs=lists(lists(integers())))
+def test_interleave_longest(case: Case, x: List[int], xs: List[List[int]]) -> None:
+    y = case.cls(x).interleave_longest(*xs)
+    assert isinstance(y, case.cls)
+    assert case.cast(y) == case.cast(interleave_longest(case.cast(x), *xs))
 
 
 @given(start=integers(), n=islice_ints)
