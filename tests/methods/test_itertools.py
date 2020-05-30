@@ -32,7 +32,6 @@ from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
-from hypothesis.strategies import fixed_dictionaries
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
@@ -46,8 +45,6 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import combinations_r
@@ -64,16 +61,14 @@ from tests.test_utilities import is_even
 
 @mark.parametrize("case", CASES)
 @given(
-    x=lists(integers()),
-    initial=just({})
-    if VERSION is Version.py37
-    else fixed_dictionaries({"initial": none() | integers()}),
+    x=lists(integers()), initial=none() | integers(),
 )
-def test_accumulate(case: Case, x: List[int], initial: Dict[str, Any]) -> None:
-    y = case.cls(x).accumulate(add, **initial)
+def test_accumulate(case: Case, x: List[int], initial: Optional[int]) -> None:
+    y = case.cls(x).accumulate(add, initial=initial)
     assert isinstance(y, case.cls)
-    _, kwargs = drop_sentinel(**initial)
-    assert case.cast(y) == case.cast(accumulate(case.cast(x), add, **kwargs))
+    assert case.cast(y) == case.cast(
+        accumulate(case.cast(x), add, initial=initial),
+    )
 
 
 @mark.parametrize("case", CASES)

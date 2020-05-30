@@ -13,7 +13,6 @@ from typing import Union
 from hypothesis import assume
 from hypothesis import given
 from hypothesis.strategies import booleans
-from hypothesis.strategies import fixed_dictionaries
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
@@ -32,8 +31,6 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import MAX_SIZE
@@ -137,32 +134,28 @@ def test_map(
 @mark.parametrize("func", [max, min])
 @given(
     x=lists(integers()),
-    key=just({})
-    | (
-        just({"key": neg})
-        if VERSION is Version.py37
-        else fixed_dictionaries({"key": none() | just(neg)})
-    ),
-    default=just({}) | fixed_dictionaries({"default": integers()}),
+    key=none() | just(neg),
+    default=just(sentinel) | integers(),
 )
 def test_max_and_min(
     case: Case,
     func: Callable[..., int],
     x: List[int],
-    key: Dict[str, int],
-    default: Dict[str, int],
+    key: Optional[Callable[[int], int]],
+    default: Union[int, Sentinel],
 ) -> None:
     name = func.__name__
+    _, kwargs = drop_sentinel(default=default)
     try:
-        y = getattr(case.cls(x), name)(**key, **default)
+        y = getattr(case.cls(x), name)(key=key, default=default)
     except ValueError:
         with raises(
             ValueError, match=escape(f"{name}() arg is an empty sequence"),
         ):
-            func(x, **key, **default)
+            func(x, key=key, **kwargs)
     else:
         assert isinstance(y, int)
-        assert y == func(x, **key, **default)
+        assert y == func(x, key=key, **kwargs)
 
 
 @mark.parametrize("case", CASES)
