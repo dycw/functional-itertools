@@ -94,8 +94,6 @@ from more_itertools.recipes import take
 from more_itertools.recipes import unique_everseen
 from more_itertools.recipes import unique_justseen
 
-from functional_itertools.compat import MAX_MIN_KEY_ANNOTATION
-from functional_itertools.compat import MAX_MIN_KEY_DEFAULT
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import StopArgumentMissing
@@ -233,7 +231,7 @@ class CIterable(Iterable[T]):
     def max(
         self: CIterable[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         _, kwargs = drop_sentinel(key=key, default=default)
@@ -242,7 +240,7 @@ class CIterable(Iterable[T]):
     def min(
         self: CIterable[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         _, kwargs = drop_sentinel(key=key, default=default)
@@ -798,7 +796,7 @@ class CList(List[T]):
     def max(
         self: CList[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().max(key=key, default=default)
@@ -806,7 +804,7 @@ class CList(List[T]):
     def min(
         self: CList[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().min(key=key, default=default)
@@ -1242,7 +1240,7 @@ class CTuple(tuple, Generic[T]):
     def max(
         self: CTuple[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().max(key=key, default=default)
@@ -1250,7 +1248,7 @@ class CTuple(tuple, Generic[T]):
     def min(
         self: CTuple[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().min(key=key, default=default)
@@ -1670,7 +1668,7 @@ class CSet(Set[T]):
     def max(
         self: CSet[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().max(key=key, default=default)
@@ -1678,7 +1676,7 @@ class CSet(Set[T]):
     def min(
         self: CSet[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().min(key=key, default=default)
@@ -2142,7 +2140,7 @@ class CFrozenSet(FrozenSet[T]):
     def max(
         self: CFrozenSet[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().max(key=key, default=default)
@@ -2150,7 +2148,7 @@ class CFrozenSet(FrozenSet[T]):
     def min(
         self: CFrozenSet[T],
         *,
-        key: MAX_MIN_KEY_ANNOTATION = MAX_MIN_KEY_DEFAULT,
+        key: Optional[Callable[[T], Any]] = None,
         default: Union[T, Sentinel] = sentinel,
     ) -> T:
         return self.iter().min(key=key, default=default)
