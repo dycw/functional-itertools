@@ -65,7 +65,9 @@ def test_chunked(case: Case, x: List[int], n: int) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, chunked(case.cast(x), n)))
+    assert case.cast(map(case.cast, z)) == case.cast(
+        map(case.cast, chunked(case.cast(x), n)),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -76,7 +78,9 @@ def test_distribute(case: Case, x: List[int], n: int) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, distribute(n, case.cast(x))))
+    assert case.cast(map(case.cast, z)) == case.cast(
+        map(case.cast, distribute(n, case.cast(x))),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -87,7 +91,9 @@ def test_divide(case: Case, x: List[int], n: int) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, divide(n, case.cast(x))))
+    assert case.cast(map(case.cast, z)) == case.cast(
+        map(case.cast, divide(n, case.cast(x))),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -107,7 +113,8 @@ def test_filter_except(case: Case, x: List[int]) -> None:
 @mark.parametrize("case", CASES)
 @mark.parametrize("func", [first, last])
 @given(
-    x=lists(integers()), default=just({}) | fixed_dictionaries({"default": integers()}),
+    x=lists(integers()),
+    default=just({}) | fixed_dictionaries({"default": integers()}),
 )
 def test_first_and_last(
     case: Case, func: Callable[..., int], x: List[int], default: Dict[str, int],
@@ -138,7 +145,9 @@ def test_interleave(case: Case, x: List[int], xs: List[List[int]]) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()), xs=lists(lists(integers())))
-def test_interleave_longest(case: Case, x: List[int], xs: List[List[int]]) -> None:
+def test_interleave_longest(
+    case: Case, x: List[int], xs: List[List[int]],
+) -> None:
     y = case.cls(x).interleave_longest(*xs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(interleave_longest(case.cast(x), *xs))
@@ -182,8 +191,14 @@ def test_map_except(case: Case, x: List[int]) -> None:
 
 
 @mark.parametrize("case", CASES)
-@given(x=lists(integers()), n=integers(0, maxsize), default=integers() | just(sentinel))
-def test_nth_or_last(case: Case, x: List[int], n: int, default: Union[int, Sentinel]) -> None:
+@given(
+    x=lists(integers()),
+    n=integers(0, maxsize),
+    default=integers() | just(sentinel),
+)
+def test_nth_or_last(
+    case: Case, x: List[int], n: int, default: Union[int, Sentinel],
+) -> None:
     _, kwargs = drop_sentinel(default=default)
     try:
         y = case.cls(x).nth_or_last(n, default=default)
@@ -206,7 +221,9 @@ def test_one(case: Case, x: List[int]) -> None:
     try:
         y = case.cls(x).one()
     except EmptyIterableError:
-        with raises(ValueError, match=escape("too few items in iterable (expected 1)")):
+        with raises(
+            ValueError, match=escape("too few items in iterable (expected 1)"),
+        ):
             one(case.cast(x))
     except MultipleElementsError:
         with raises(
@@ -227,7 +244,9 @@ def test_only(case: Case, x: List[int], default: Optional[int]) -> None:
     try:
         y = case.cls(x).only(default=default)
     except EmptyIterableError:
-        with raises(ValueError, match=escape("too few items in iterable (expected 1)")):
+        with raises(
+            ValueError, match=escape("too few items in iterable (expected 1)"),
+        ):
             only(case.cast(x), default=default)
     except MultipleElementsError:
         with raises(
@@ -256,7 +275,9 @@ def test_split_after(case: Case, x: List[int]) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(z) == case.cast(map(CTuple, split_after(case.cast(x), neg)))
+    assert case.cast(z) == case.cast(
+        map(CTuple, split_after(case.cast(x), neg)),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -278,7 +299,9 @@ def test_split_before(case: Case, x: List[int]) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(z) == case.cast(map(CTuple, split_before(case.cast(x), neg)))
+    assert case.cast(z) == case.cast(
+        map(CTuple, split_before(case.cast(x), neg)),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -289,7 +312,9 @@ def test_split_into(case: Case, x: List[int], sizes: List[int]) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(z) == case.cast(map(CTuple, split_into(case.cast(x), sizes)))
+    assert case.cast(z) == case.cast(
+        map(CTuple, split_into(case.cast(x), sizes)),
+    )
 
 
 @mark.parametrize("case", CASES)

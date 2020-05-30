@@ -102,7 +102,9 @@ def test_iter(case: Case, x: List[int]) -> None:
 def test_len(case: Case, x: List[int]) -> None:
     y = case.cls(x)
     if case.cls is CIterable:
-        with raises(AttributeError, match="'CIterable' object has no attribute 'len'"):
+        with raises(
+            AttributeError, match="'CIterable' object has no attribute 'len'",
+        ):
             y.len()
     else:
         z = y.len()
@@ -123,7 +125,9 @@ def test_list(case: Case, x: List[int]) -> None:
 @given(
     x=lists(integers()), xs=lists(lists(integers())),
 )
-def test_map(case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any]) -> None:
+def test_map(
+    case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any],
+) -> None:
     y = case.cls(x).map(sum_varargs, *xs, **kwargs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(map(sum_varargs, case.cast(x), *xs))
@@ -163,9 +167,13 @@ def test_max_and_min(
 
 @mark.parametrize("case", CASES)
 @given(
-    start=integers(0, MAX_SIZE), stop=none() | integers(0, MAX_SIZE), step=none() | integers(1, 10),
+    start=integers(0, MAX_SIZE),
+    stop=none() | integers(0, MAX_SIZE),
+    step=none() | integers(1, 10),
 )
-def test_range(case: Case, start: int, stop: Optional[int], step: Optional[int]) -> None:
+def test_range(
+    case: Case, start: int, stop: Optional[int], step: Optional[int],
+) -> None:
     if step is not None:
         assume(stop is not None)
     x = case.cls.range(start, stop, step)
@@ -185,7 +193,10 @@ def test_set(case: Case, x: List[int]) -> None:
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()), key=none() | just(neg), reverse=booleans())
 def test_sorted(
-    case: Case, x: List[int], key: Optional[Callable[[int], int]], reverse: bool,
+    case: Case,
+    x: List[int],
+    key: Optional[Callable[[int], int]],
+    reverse: bool,
 ) -> None:
     y = case.cls(x).sorted(key=key, reverse=reverse)
     assert isinstance(y, CTuple if case.cls is CTuple else CList)

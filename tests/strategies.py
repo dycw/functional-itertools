@@ -36,5 +36,7 @@ combinations_r = integers(0, 3)
 permutations_x = lists(integers(), max_size=5)
 permutations_r = none() | integers(0, 3)
 product_x = lists(integers(), min_size=1, max_size=3)
-product_xs = lists(lists(integers(), min_size=1, max_size=3), min_size=1, max_size=3)
+product_xs = lists(
+    lists(integers(), min_size=1, max_size=3), min_size=1, max_size=3,
+)
 product_repeat = integers(0, 3)

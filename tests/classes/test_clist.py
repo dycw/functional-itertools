@@ -28,7 +28,8 @@ from tests.strategies import CASES
 
 
 @given(
-    x=lists(integers()), index=integers() | tuples(integers(), integers()).map(lambda x: slice(*x)),
+    x=lists(integers()),
+    index=integers() | tuples(integers(), integers()).map(lambda x: slice(*x)),
 )
 def test_get_item(x: List[int], index: Union[int, slice]) -> None:
     y = CList(x)
@@ -63,16 +64,21 @@ def test_reversed(case: Case, x: List[int]) -> None:
         assert z == case.cast(reversed(x))
     else:
         with raises(
-            AttributeError, match=f"'{case.cls.__name__}' object has no attribute 'reversed'",
+            AttributeError,
+            match=f"'{case.cls.__name__}' object has no attribute 'reversed'",
         ):
             y.reversed()
 
 
 @given(x=lists(integers()), key=none() | just(neg), reverse=booleans())
-def test_sort(x: List[int], key: Optional[Callable[[int], int]], reverse: bool) -> None:
+def test_sort(
+    x: List[int], key: Optional[Callable[[int], int]], reverse: bool,
+) -> None:
     with warns(
         UserWarning,
-        match=escape("CList.sort is a non-functional method, did you mean CList.sorted instead?"),
+        match=escape(
+            "CList.sort is a non-functional method, did you mean CList.sorted instead?",
+        ),
     ):
         CList(x).sort(key=key, reverse=reverse)
 
