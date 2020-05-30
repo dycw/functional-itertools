@@ -23,7 +23,9 @@ from tests.test_utilities import sum_varargs
 @mark.parametrize("case", CASES)
 @mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=lists(integers()), xs=lists(lists(integers())))
-def test_map_dict(case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any]) -> None:
+def test_map_dict(
+    case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any],
+) -> None:
     y = case.cls(x).map_dict(sum_varargs, *xs, **kwargs)
     assert isinstance(y, CDict)
     z = case.cast(x)

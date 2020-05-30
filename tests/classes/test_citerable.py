@@ -19,7 +19,8 @@ from functional_itertools import CIterable
 def test_init(x: Union[int, List[int]]) -> None:
     if isinstance(x, int):
         with raises(
-            TypeError, match="CIterable expected an iterable, but 'int' object is not iterable",
+            TypeError,
+            match="CIterable expected an iterable, but 'int' object is not iterable",
         ):
             CIterable(x)  # type: ignore
     else:

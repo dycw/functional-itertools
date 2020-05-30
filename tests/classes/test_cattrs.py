@@ -60,7 +60,7 @@ def test_dict_nested_recurse(recurse: bool, expected: Dict[str, Any]) -> None:
     ],
 )
 def test_dict_simple_filter(
-    filter: Callable[[Attribute, Any], bool], expected: Dict[str, Any],  # noqa: A002
+    filter: Callable[[Attribute, Any], bool], expected: Dict[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=3).dict(filter=filter)
     assert isinstance(x, CDict)
@@ -74,13 +74,14 @@ def test_dict_simple_filter(
         (lambda k, v: k.name == "c", {"c": {}}),
         (lambda k, v: isinstance(v, int) and (v >= 2), {"b": 2}),
         (
-            lambda k, v: (isinstance(v, int) and ((v <= 1) or (v >= 5))) or isinstance(v, Bar),
+            lambda k, v: (isinstance(v, int) and ((v <= 1) or (v >= 5)))
+            or isinstance(v, Bar),
             {"a": 1, "c": {"f": 5}},
         ),
     ],
 )
 def test_dict_nested_filter(
-    filter: Callable[[Attribute, Any], bool], expected: Dict[str, Any],  # noqa: A002
+    filter: Callable[[Attribute, Any], bool], expected: Dict[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).dict(filter=filter)
     assert isinstance(x, CDict)
@@ -113,7 +114,8 @@ def test_tuple_simple() -> None:
 
 
 @mark.parametrize(
-    "recurse, expected", [(True, (1, 2, (3, 4, 5))), (False, (1, 2, Bar(d=3, e=4, f=5)))],
+    "recurse, expected",
+    [(True, (1, 2, (3, 4, 5))), (False, (1, 2, Bar(d=3, e=4, f=5)))],
 )
 def test_tuple_nested_recurse(recurse: bool, expected: tuple[str, Any]) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).tuple(recurse=recurse)
@@ -130,7 +132,7 @@ def test_tuple_nested_recurse(recurse: bool, expected: tuple[str, Any]) -> None:
     ],
 )
 def test_tuple_simple_filter(
-    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],  # noqa: A002
+    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=3).tuple(filter=filter)
     assert isinstance(x, CTuple)
@@ -144,13 +146,14 @@ def test_tuple_simple_filter(
         (lambda k, v: k.name == "c", ((),)),
         (lambda k, v: isinstance(v, int) and (v >= 2), (2,)),
         (
-            lambda k, v: (isinstance(v, int) and ((v <= 1) or (v >= 5))) or isinstance(v, Bar),
+            lambda k, v: (isinstance(v, int) and ((v <= 1) or (v >= 5)))
+            or isinstance(v, Bar),
             (1, (5,)),
         ),
     ],
 )
 def test_tuple_nested_filter(
-    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],  # noqa: A002
+    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).tuple(filter=filter)
     assert isinstance(x, CTuple)
