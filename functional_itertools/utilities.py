@@ -29,7 +29,9 @@ W = TypeVar("W")
 # dropper
 
 
-def _drop_object(*args: Any, _obj: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
+def _drop_object(
+    *args: Any, _obj: Any, **kwargs: Any,
+) -> Tuple[Tuple, Dict[str, Any]]:
     return (
         tuple(x for x in args if x is not _obj),
         {k: v for k, v in kwargs.items() if v is not _obj},
@@ -43,12 +45,16 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # helper functions
 
 
-def helper_filter_keys(item: Tuple[T, Any], *, func: Callable[[T], bool]) -> bool:
+def helper_filter_keys(
+    item: Tuple[T, Any], *, func: Callable[[T], bool],
+) -> bool:
     key, _ = item
     return func(key)
 
 
-def helper_filter_values(item: Tuple[Any, U], *, func: Callable[[U], bool]) -> bool:
+def helper_filter_values(
+    item: Tuple[Any, U], *, func: Callable[[U], bool],
+) -> bool:
     _, value = item
     return func(value)
 
@@ -64,21 +70,29 @@ def helper_map_dict(
         return x, func(x)
 
 
-def helper_starfilter(x: Tuple[T, ...], *, func: Callable[[Tuple[T, ...]], bool]) -> bool:
+def helper_starfilter(
+    x: Tuple[T, ...], *, func: Callable[[Tuple[T, ...]], bool],
+) -> bool:
     return func(*x)
 
 
-def helper_map_keys(item: Tuple[T, U], *, func: Callable[[T], V]) -> Tuple[V, U]:
+def helper_map_keys(
+    item: Tuple[T, U], *, func: Callable[[T], V],
+) -> Tuple[V, U]:
     key, value = item
     return func(key), value
 
 
-def helper_map_values(item: Tuple[T, U], *, func: Callable[[U], V]) -> Tuple[T, V]:
+def helper_map_values(
+    item: Tuple[T, U], *, func: Callable[[U], V],
+) -> Tuple[T, V]:
     key, value = item
     return key, func(value)
 
 
-def helper_map_items(item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]]) -> Tuple[V, W]:
+def helper_map_items(
+    item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]],
+) -> Tuple[V, W]:
     key, value = item
     return func(key, value)
 
@@ -92,7 +106,9 @@ def helper_cattrs_map_1(item: Tuple[str, Any]) -> bool:
 
 
 @contextmanager
-def suppress_daemonic_processes_with_children(error: AssertionError) -> Generator[None, None, None]:
+def suppress_daemonic_processes_with_children(
+    error: AssertionError,
+) -> Generator[None, None, None]:
     (msg,) = error.args
     if msg == "daemonic processes are not allowed to have children":
         yield
@@ -133,7 +149,9 @@ def _get_version() -> Version:
     try:
         return mapping[minor]
     except KeyError:  # pragma: no cover
-        raise UnsupportVersionError(f"Expected Python 3.6-3.8; got 3.{minor}") from None
+        raise UnsupportVersionError(
+            f"Expected Python 3.6-3.8; got 3.{minor}",
+        ) from None
 
 
 VERSION = _get_version()

@@ -94,7 +94,10 @@ def test_dotproduct(case: Case, pairs: Iterable[Tuple[int, int]]) -> None:
     x=lists(integers()), default=integers(), pred=none() | just(is_even),
 )
 def test_first_true(
-    case: Case, x: List[int], default: int, pred: Optional[Callable[[int], bool]],
+    case: Case,
+    x: List[int],
+    default: int,
+    pred: Optional[Callable[[int], bool]],
 ) -> None:
     y = case.cls(x).first_true(default=default, pred=pred)
     assert isinstance(y, int)
@@ -113,7 +116,9 @@ def test_flatten(case: Case, x: List[Tuple[int, ...]]) -> None:
 @given(
     x=lists(integers()), n=integers(0, 1000), fillvalue=none() | integers(),
 )
-def test_grouper(case: Case, x: List[int], n: int, fillvalue: Optional[int]) -> None:
+def test_grouper(
+    case: Case, x: List[int], n: int, fillvalue: Optional[int],
+) -> None:
     y = case.cls(x).grouper(n, fillvalue=fillvalue)
     assert isinstance(y, case.cls)
     z = list(y)
@@ -227,7 +232,9 @@ def test_powerset(case: Case, x: List[int]) -> None:
     z = list(y)
     for zi in z:
         assert isinstance(zi, CTuple)
-    assert case.cast(map(case.cast, z)) == case.cast(map(case.cast, powerset(x)))
+    assert case.cast(map(case.cast, z)) == case.cast(
+        map(case.cast, powerset(x)),
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -260,8 +267,12 @@ def test_random_combination(case: Case, x: List[int], r: int) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=combinations_x, r=combinations_r)
-def test_random_combination_with_replacement(case: Case, x: List[int], r: int) -> None:
-    assert isinstance(case.cls(x).random_combination_with_replacement(r), CTuple)
+def test_random_combination_with_replacement(
+    case: Case, x: List[int], r: int,
+) -> None:
+    assert isinstance(
+        case.cls(x).random_combination_with_replacement(r), CTuple,
+    )
 
 
 @mark.parametrize("case", CASES)
@@ -281,7 +292,9 @@ def test_random_permutation(case: Case, x: List[int], r: Optional[int]) -> None:
 @given(
     x=product_x, xs=product_xs, repeat=product_repeat,
 )
-def test_random_product(case: Case, x: List[int], xs: List[List[int]], repeat: int) -> None:
+def test_random_product(
+    case: Case, x: List[int], xs: List[List[int]], repeat: int,
+) -> None:
     assert isinstance(case.cls(x).random_product(*xs, repeat=repeat), CTuple)
 
 
@@ -335,7 +348,9 @@ def test_take(case: Case, x: List[int], n: int) -> None:
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()), key=none() | just(neg))
-def test_unique_everseen(case: Case, x: List[int], key: Optional[Callable[[int], int]]) -> None:
+def test_unique_everseen(
+    case: Case, x: List[int], key: Optional[Callable[[int], int]],
+) -> None:
     y = case.cls(x).unique_everseen(key=key)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(unique_everseen(x, key=key))
@@ -343,7 +358,9 @@ def test_unique_everseen(case: Case, x: List[int], key: Optional[Callable[[int],
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()), key=none() | just(neg))
-def test_unique_justseen(case: Case, x: List[int], key: Optional[Callable[[int], int]]) -> None:
+def test_unique_justseen(
+    case: Case, x: List[int], key: Optional[Callable[[int], int]],
+) -> None:
     y = case.cls(x).unique_justseen(key=key)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(unique_justseen(x, key=key))

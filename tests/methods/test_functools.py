@@ -35,13 +35,16 @@ from tests.strategies import CASES
 
 @mark.parametrize("case", CASES)
 @given(x=lists(integers()), initial=integers() | just(sentinel))
-def test_reduce(case: Case, x: List[int], initial: Union[int, Sentinel]) -> None:
+def test_reduce(
+    case: Case, x: List[int], initial: Union[int, Sentinel],
+) -> None:
     args, _ = drop_sentinel(initial)
     try:
         y = case.cls(x).reduce(add, initial=initial)
     except EmptyIterableError:
         with raises(
-            TypeError, match=escape("reduce() of empty sequence with no initial value"),
+            TypeError,
+            match=escape("reduce() of empty sequence with no initial value"),
         ):
             reduce(add, x, *args)
     else:
@@ -60,10 +63,18 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
 
 @mark.parametrize(
     "cls, cls_base, func",
-    [(CList, list, add), (CTuple, tuple, add), (CSet, set, or_), (CFrozenSet, frozenset, or_)],
+    [
+        (CList, list, add),
+        (CTuple, tuple, add),
+        (CSet, set, or_),
+        (CFrozenSet, frozenset, or_),
+    ],
 )
 @given(x=lists(lists(integers(), min_size=1), min_size=1))
 def test_reduce_returning_c_classes(
-    cls: Type, x: List[List[int]], cls_base: Type, func: Callable[[Any, Any], Any],
+    cls: Type,
+    x: List[List[int]],
+    cls_base: Type,
+    func: Callable[[Any, Any], Any],
 ) -> None:
     assert isinstance(CIterable(x).map(cls_base).reduce(func), cls)
