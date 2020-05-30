@@ -97,7 +97,6 @@ from more_itertools.recipes import unique_justseen
 from functional_itertools.errors import EmptyIterableError
 from functional_itertools.errors import MultipleElementsError
 from functional_itertools.errors import StopArgumentMissing
-from functional_itertools.errors import UnsupportVersionError
 from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import helper_cattrs_map_1
@@ -113,8 +112,6 @@ from functional_itertools.utilities import sentinel
 from functional_itertools.utilities import (
     suppress_daemonic_processes_with_children,
 )
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from functional_itertools.utilities import warn_non_functional
 
 
@@ -323,18 +320,7 @@ class CIterable(Iterable[T]):
         *,
         initial: Union[U, Sentinel] = sentinel,
     ) -> CIterable[Union[T, U]]:
-        if VERSION is Version.py37:
-            if initial is sentinel:
-                return CIterable(accumulate(self, func))
-            else:
-                raise ValueError(
-                    "The 'initial' argument is introduced in Python 3.8",
-                )
-        elif VERSION is Version.py38:
-            _, kwargs = drop_sentinel(initial=initial)
-            return CIterable(accumulate(self, func, **kwargs))
-        else:
-            raise UnsupportVersionError(VERSION)  # pragma: no cover
+        return CIterable(accumulate(self, func, initial=initial))
 
     def chain(
         self: CIterable[T], *iterables: Iterable[U],
