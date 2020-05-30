@@ -32,8 +32,6 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import MAX_SIZE
@@ -137,12 +135,7 @@ def test_map(
 @mark.parametrize("func", [max, min])
 @given(
     x=lists(integers()),
-    key=just({})
-    | (
-        just({"key": neg})
-        if VERSION is Version.py37
-        else fixed_dictionaries({"key": none() | just(neg)})
-    ),
+    key=just({}) | fixed_dictionaries({"key": none() | just(neg)}),
     default=just({}) | fixed_dictionaries({"default": integers()}),
 )
 def test_max_and_min(
