@@ -46,8 +46,6 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
-from functional_itertools.utilities import VERSION
-from functional_itertools.utilities import Version
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import combinations_r
@@ -65,9 +63,7 @@ from tests.test_utilities import is_even
 @mark.parametrize("case", CASES)
 @given(
     x=lists(integers()),
-    initial=just({})
-    if VERSION is Version.py37
-    else fixed_dictionaries({"initial": none() | integers()}),
+    initial=fixed_dictionaries({"initial": none() | integers()}),
 )
 def test_accumulate(case: Case, x: List[int], initial: Dict[str, Any]) -> None:
     y = case.cls(x).accumulate(add, **initial)
