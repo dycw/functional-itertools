@@ -48,6 +48,38 @@ def test_str(x: Set[int], cls: Type) -> None:
 # set and frozenset methods
 
 
+@given(x=sets(integers()), y=sets(integers()))
+@parametrize("cls", SET_CLASSES)
+def test_dunder_and(x: Set[int], y: Set[int], cls: Type) -> None:
+    z = cls(x) & y
+    assert isinstance(z, cls)
+    assert z == (x & y)
+
+
+@given(x=sets(integers()), y=sets(integers()))
+@parametrize("cls", SET_CLASSES)
+def test_dunder_or(x: Set[int], y: Set[int], cls: Type) -> None:
+    z = cls(x) | y
+    assert isinstance(z, cls)
+    assert z == (x | y)
+
+
+@given(x=sets(integers()), y=sets(integers()))
+@parametrize("cls", SET_CLASSES)
+def test_dunder_sub(x: Set[int], y: Set[int], cls: Type) -> None:
+    z = cls(x) - y
+    assert isinstance(z, cls)
+    assert z == (x - y)
+
+
+@given(x=sets(integers()), y=sets(integers()))
+@parametrize("cls", SET_CLASSES)
+def test_dunder_xor(x: Set[int], y: Set[int], cls: Type) -> None:
+    z = cls(x) ^ y
+    assert isinstance(z, cls)
+    assert z == (x ^ y)
+
+
 @given(x=sets(integers()))
 @parametrize("cls", SET_CLASSES)
 def test_copy(x: Set[int], cls: Type) -> None:
