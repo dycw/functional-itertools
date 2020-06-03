@@ -26,6 +26,7 @@ from pathlib import Path
 from re import search
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import FrozenSet
 from typing import Generic
@@ -444,7 +445,7 @@ class CIterable(Iterable[T]):
     def first_true(
         self: CIterable[T],
         *,
-        default: U = False,
+        default: U = False,  # type: ignore
         pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return first_true(self, default=default, pred=pred)
@@ -453,7 +454,7 @@ class CIterable(Iterable[T]):
         return CIterable(flatten(self))
 
     def grouper(
-        self: CIterable[T], n: int, *, fillvalue: U = None,
+        self: CIterable[T], n: int, *, fillvalue: Optional[U] = None,
     ) -> CIterable[CTuple[Union[T, U]]]:
         return CIterable(grouper(self, n, fillvalue=fillvalue)).map(CTuple)
 
@@ -690,9 +691,7 @@ class CIterable(Iterable[T]):
 
     # extra public
 
-    def append(
-        self: CIterable[T], value: U,
-    ) -> CIterable[Union[T, U]]:  # dead: disable
+    def append(self: CIterable[T], value: U) -> CIterable[Union[T, U]]:
         return self.chain([value])
 
     def map_dict(
@@ -726,7 +725,7 @@ class CIterable(Iterable[T]):
 class CList(List[T]):
     """A list with chainable methods."""
 
-    def __getitem__(
+    def __getitem__(  # type: ignore
         self: CList[T], item: Union[int, slice],
     ) -> Union[T, CList[T]]:
         out = super().__getitem__(item)
@@ -950,17 +949,16 @@ class CList(List[T]):
     def first_true(
         self: CList[T],
         *,
-        default: U = False,
+        default: U = False,  # type: ignore
         pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CList[Iterable[T]]) -> CList[T]:
-        return CList(self.iter().flatten())
-        return self.iter().flatten().list()
+        return cast(CList[T], self.iter().flatten().list())
 
     def grouper(
-        self: CList[T], n: int, *, fillvalue: Optional[T] = None,
+        self: CList[T], n: int, *, fillvalue: Optional[U] = None,
     ) -> CList[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).list()
 
@@ -1178,7 +1176,7 @@ class CList(List[T]):
 class CTuple(tuple, Generic[T]):
     """A homogenous tuple with chainable methods."""
 
-    def __getitem__(
+    def __getitem__(  # type: ignore
         self: CTuple[T], item: Union[int, slice],
     ) -> Union[T, CTuple[T]]:
         out = super().__getitem__(item)
@@ -1390,16 +1388,16 @@ class CTuple(tuple, Generic[T]):
     def first_true(
         self: CTuple[T],
         *,
-        default: U = False,
+        default: U = False,  # type: ignore
         pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CTuple[Iterable[T]]) -> CTuple[T]:
-        return self.iter().flatten().tuple()
+        return cast(CTuple[T], self.iter().flatten().tuple())
 
     def grouper(
-        self: CTuple[T], n: int, *, fillvalue: Optional[T] = None,
+        self: CTuple[T], n: int, *, fillvalue: Optional[U] = None,
     ) -> CTuple[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).map(CTuple).tuple()
 
@@ -1721,18 +1719,16 @@ class CSet(Set[T]):
     def copy(self: CSet[T]) -> CSet[T]:
         return CSet(super().copy())
 
-    def difference(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
+    def difference(self: CSet[T], *others: Iterable) -> CSet[T]:
         return CSet(super().difference(*others))
 
-    def intersection(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
+    def intersection(self: CSet[T], *others: Iterable) -> CSet[T]:
         return CSet(super().intersection(*others))
 
-    def symmetric_difference(
-        self: CSet[T], other: Iterable[U],
-    ) -> CSet[Union[T, U]]:
+    def symmetric_difference(self: CSet[T], other: Iterable[T]) -> CSet[T]:
         return CSet(super().symmetric_difference(other))
 
-    def union(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
+    def union(self: CSet[T], *others: Iterable[T]) -> CSet[T]:
         return CSet(super().union(*others))
 
     # set methods
@@ -1759,15 +1755,15 @@ class CSet(Set[T]):
         )
         super().intersection_update(*other)
 
-    def pop(self: CSet[T]) -> None:
+    def pop(self: CSet[T]) -> T:
         warn_non_functional(CSet, "pop")
-        super().pop()
+        return super().pop()
 
     def remove(self: CSet[T], element: T) -> None:
         warn_non_functional(CSet, "remove")
         super().remove(element)
 
-    def symmetric_difference_update(self: CSet[T], other: Iterable[U]) -> None:
+    def symmetric_difference_update(self: CSet[T], other: Iterable[T]) -> None:
         warn_non_functional(
             CSet,
             "symmetric_difference_update",
@@ -1882,16 +1878,16 @@ class CSet(Set[T]):
     def first_true(
         self: CSet[T],
         *,
-        default: U = False,
+        default: U = False,  # type: ignore
         pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CSet[Iterable[T]]) -> CSet[T]:
-        return self.iter().flatten().set()
+        return cast(CSet[T], self.iter().flatten().set())
 
     def grouper(
-        self: CSet[T], n: int, *, fillvalue: Optional[T] = None,
+        self: CSet[T], n: int, *, fillvalue: Optional[U] = None,
     ) -> CSet[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).set()
 
@@ -2199,24 +2195,20 @@ class CFrozenSet(FrozenSet[T]):
     def copy(self: CFrozenSet[T]) -> CFrozenSet[T]:
         return CFrozenSet(super().copy())
 
-    def difference(
-        self: CFrozenSet[T], *others: Iterable[U],
-    ) -> CFrozenSet[Union[T, U]]:
+    def difference(self: CFrozenSet[T], *others: Iterable) -> CFrozenSet[T]:
         return CFrozenSet(super().difference(*others))
 
     def intersection(
-        self: CFrozenSet[T], *others: Iterable[U],
-    ) -> CFrozenSet[Union[T, U]]:
+        self: CFrozenSet[T], *others: Iterable[T],
+    ) -> CFrozenSet[T]:
         return CFrozenSet(super().intersection(*others))
 
     def symmetric_difference(
-        self: CFrozenSet[T], other: Iterable[U],
-    ) -> CFrozenSet[Union[T, U]]:
+        self: CFrozenSet[T], other: Iterable[T],
+    ) -> CFrozenSet[T]:
         return CFrozenSet(super().symmetric_difference(other))
 
-    def union(
-        self: CFrozenSet[T], *others: Iterable[U],
-    ) -> CFrozenSet[Union[T, U]]:
+    def union(self: CFrozenSet[T], *others: Iterable[T]) -> CFrozenSet[T]:
         return CFrozenSet(super().union(*others))
 
     # functools
@@ -2335,16 +2327,16 @@ class CFrozenSet(FrozenSet[T]):
     def first_true(
         self: CFrozenSet[T],
         *,
-        default: U = False,
+        default: U = False,  # type: ignore
         pred: Optional[Callable[[T], Any]] = None,
     ) -> Union[T, U]:
         return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CFrozenSet[Iterable[T]]) -> CFrozenSet[T]:
-        return self.iter().flatten().frozenset()
+        return cast(CFrozenSet[T], self.iter().flatten().frozenset())
 
     def grouper(
-        self: CFrozenSet[T], n: int, *, fillvalue: Optional[T] = None,
+        self: CFrozenSet[T], n: int, *, fillvalue: Optional[U] = None,
     ) -> CFrozenSet[CTuple[Union[T, U]]]:
         return self.iter().grouper(n, fillvalue=fillvalue).frozenset()
 
@@ -2572,33 +2564,33 @@ class CFrozenSet(FrozenSet[T]):
 class CDict(Dict[T, U]):
     """A dictionary with chainable methods."""
 
-    def keys(self: CDict[T, Any]) -> CIterable[T]:
+    def keys(self: CDict[T, Any]) -> CIterable[T]:  # type: ignore
         return CIterable(super().keys())
 
-    def values(self: CDict[Any, U]) -> CIterable[U]:
+    def values(self: CDict[Any, U]) -> CIterable[U]:  # type: ignore
         return CIterable(super().values())
 
-    def items(self: CDict[T, U]) -> CIterable[Tuple[T, U]]:
+    def items(self: CDict[T, U]) -> CIterable[Tuple[T, U]]:  # type: ignore
         return CIterable(super().items())
 
     # built-ins
 
     def filter_keys(
         self: CDict[T, U], func: Callable[[T], bool],
-    ) -> CDict[T, U]:  # dead: disable
+    ) -> CDict[T, U]:
         return self.items().filter(partial(helper_filter_keys, func)).dict()
 
     def filter_values(
         self: CDict[T, U], func: Callable[[U], bool],
-    ) -> CDict[T, U]:  # dead: disable
+    ) -> CDict[T, U]:
         return self.items().filter(partial(helper_filter_values, func)).dict()
 
-    def filter_items(  # dead: disable
+    def filter_items(
         self: CDict[T, U], func: Callable[[T, U], bool],
     ) -> CDict[T, U]:
         return self.items().starfilter(func).dict()
 
-    def map_keys(  # dead: disable
+    def map_keys(
         self: CDict[T, U],
         func: Callable[[T], V],
         *,
@@ -2607,14 +2599,17 @@ class CDict(Dict[T, U]):
     ) -> CDict[V, U]:
         """Map a function of the form key_0 -> key_1 over the keys."""
 
-        return (
-            self.items()
-            .map(
-                partial(helper_map_keys, func),
-                parallel=parallel,
-                processes=processes,
-            )
-            .dict()
+        return cast(
+            CDict[V, U],
+            (
+                self.items()
+                .map(
+                    partial(helper_map_keys, func),
+                    parallel=parallel,
+                    processes=processes,
+                )
+                .dict()
+            ),
         )
 
     def map_values(
@@ -2626,17 +2621,20 @@ class CDict(Dict[T, U]):
     ) -> CDict[T, V]:
         """Map a function of the form value_0 -> value_1 over the values."""
 
-        return (
-            self.items()
-            .map(
-                partial(helper_map_values, func),
-                parallel=parallel,
-                processes=processes,
-            )
-            .dict()
+        return cast(
+            CDict[T, V],
+            (
+                self.items()
+                .map(
+                    partial(helper_map_values, func),
+                    parallel=parallel,
+                    processes=processes,
+                )
+                .dict()
+            ),
         )
 
-    def map_items(  # dead: disable
+    def map_items(
         self: CDict[T, U],
         func: Callable[[T, U], Tuple[V, W]],
         *,
@@ -2646,14 +2644,17 @@ class CDict(Dict[T, U]):
         """Map a function of the form (key_0, value_0) -> (key_1, value_1) over
         the items."""
 
-        return (
-            self.items()
-            .map(
-                partial(helper_map_items, func),
-                parallel=parallel,
-                processes=processes,
-            )
-            .dict()
+        return cast(
+            CDict[V, W],
+            (
+                self.items()
+                .map(
+                    partial(helper_map_items, func),
+                    parallel=parallel,
+                    processes=processes,
+                )
+                .dict()
+            ),
         )
 
 
@@ -2689,8 +2690,8 @@ class CAttrs(Generic[T]):
         filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
     ) -> CAttrs[U]:
         return _helper_cattrs_map(
+            func,
             self,
-            func=func,
             parallel=parallel,
             processes=processes,
             recurse=recurse,
@@ -2721,8 +2722,8 @@ def _helper_cattrs_dict(
     filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
 ) -> Any:
     if isinstance(x, CAttrs):
-        res: CDict[T] = asdict(
-            x, recurse=False, filter=filter, dict_factory=CDict,
+        res = cast(
+            CDict, asdict(x, recurse=False, filter=filter, dict_factory=CDict),
         )
         if recurse:
             return res.map_values(
@@ -2735,9 +2736,9 @@ def _helper_cattrs_dict(
 
 
 def _helper_cattrs_map(
+    func: Callable[..., U],
     x: Any,
     *,
-    func: Callable[..., U],
     parallel: bool = False,
     processes: Optional[int] = None,
     recurse: bool = True,
@@ -2754,7 +2755,7 @@ def _helper_cattrs_map(
             extra = is_attr_items.map_values(
                 partial(
                     _helper_cattrs_map,
-                    func=func,
+                    func,
                     parallel=parallel,
                     processes=processes,
                     recurse=recurse,
@@ -2769,7 +2770,7 @@ def _helper_cattrs_map(
 
 
 def _helper_cattrs_map_2(x: CIterable[Tuple[T, U]]) -> CDict[T, U]:
-    return x.dict()
+    return cast(CDict[T, U], x.dict())
 
 
 def _helper_cattrs_tuple(
@@ -2780,8 +2781,11 @@ def _helper_cattrs_tuple(
     tuple_factory: Type = CTuple,
 ) -> Any:
     if isinstance(x, CAttrs):
-        res: CTuple = astuple(
-            x, recurse=False, filter=filter, tuple_factory=tuple_factory,
+        res = cast(
+            CTuple,
+            astuple(
+                x, recurse=False, filter=filter, tuple_factory=tuple_factory,
+            ),
         )
         if recurse:
             return res.map(
