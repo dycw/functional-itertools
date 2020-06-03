@@ -6,7 +6,6 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
-from hypothesis import given
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from hypothesis.strategies import tuples
@@ -14,6 +13,7 @@ from pytest import mark
 
 from functional_itertools import CDict
 from functional_itertools import CIterable
+from tests import given
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.test_utilities import is_even

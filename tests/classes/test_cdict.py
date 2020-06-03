@@ -4,13 +4,13 @@ from operator import neg
 from typing import Any
 from typing import Dict
 
-from hypothesis import given
 from hypothesis.strategies import dictionaries
 from hypothesis.strategies import integers
 from pytest import mark
 
 from functional_itertools import CDict
 from functional_itertools import CIterable
+from tests import given
 from tests.test_utilities import is_even
 from tests.test_utilities import neg_key_and_value
 

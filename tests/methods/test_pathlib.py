@@ -5,11 +5,11 @@ from string import ascii_lowercase
 from tempfile import TemporaryDirectory
 from typing import List
 
-from hypothesis import given
 from hypothesis.strategies import lists
 from hypothesis.strategies import text
 from pytest import mark
 
+from tests import given
 from tests.strategies import Case
 from tests.strategies import CASES
 

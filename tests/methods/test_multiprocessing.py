@@ -4,12 +4,12 @@ from operator import neg
 from typing import List
 from typing import Tuple
 
-from hypothesis import given
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from pytest import mark
 
 from functional_itertools import CIterable
+from tests import given
 from tests.strategies import Case
 from tests.strategies import CASES
 

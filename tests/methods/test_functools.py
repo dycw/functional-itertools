@@ -12,12 +12,10 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-from hypothesis import given
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import tuples
-from pytest import mark
 from pytest import raises
 
 from functional_itertools import CFrozenSet
@@ -29,14 +27,16 @@ from functional_itertools import EmptyIterableError
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
+from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), initial=integers() | just(sentinel))
+@parametrize("case", CASES)
 def test_reduce(
-    case: Case, x: List[int], initial: Union[int, Sentinel],
+    x: List[int], initial: Union[int, Sentinel], case: Case,
 ) -> None:
     args, _ = drop_sentinel(initial)
     try:
@@ -61,7 +61,8 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
         CIterable(x).reduce(func)
 
 
-@mark.parametrize(
+@given(x=lists(lists(integers(), min_size=1), min_size=1))
+@parametrize(
     "cls, cls_base, func",
     [
         (CList, list, add),
@@ -70,10 +71,9 @@ def test_reduce_does_not_suppress_type_errors(x: Tuple[int, int]) -> None:
         (CFrozenSet, frozenset, or_),
     ],
 )
-@given(x=lists(lists(integers(), min_size=1), min_size=1))
 def test_reduce_returning_c_classes(
-    cls: Type,
     x: List[List[int]],
+    cls: Type,
     cls_base: Type,
     func: Callable[[Any, Any], Any],
 ) -> None:

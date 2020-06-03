@@ -28,7 +28,6 @@ from typing import Tuple
 from typing import Union
 
 from hypothesis import assume
-from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
@@ -45,6 +44,7 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
+from tests import given
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import combinations_r

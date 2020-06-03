@@ -144,7 +144,8 @@ class CIterable(Iterable[T]):
                 result = self.nth(item, default=sentinel)
             except ValueError:
                 raise ValueError(
-                    f"Indices for {name}.__getitem__ must be an integer: 0 <= x <= sys.maxsize.",
+                    f"Indices for {name}.__getitem__ must be an integer: "
+                    f"0 <= x <= sys.maxsize.",
                 ) from None
             else:
                 if result is sentinel:
@@ -169,35 +170,35 @@ class CIterable(Iterable[T]):
 
     # built-in
 
-    def all(self: CIterable) -> bool:
+    def all(self: CIterable) -> bool:  # noqa: A003
         return all(self)
 
-    def any(self: CIterable) -> bool:
+    def any(self: CIterable) -> bool:  # noqa: A003
         return any(self)
 
-    def dict(self: CIterable[Tuple[T, U]]) -> CDict[T, U]:
+    def dict(self: CIterable[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return CDict(dict(self))
 
-    def enumerate(
+    def enumerate(  # noqa: A003
         self: CIterable[T], *, start: int = 0,
     ) -> CIterable[Tuple[int, T]]:
         return CIterable(enumerate(self, start=start))
 
-    def filter(
+    def filter(  # noqa: A003
         self: CIterable[T], func: Optional[Callable[[T], bool]],
     ) -> CIterable[T]:
         return CIterable(filter(func, self))
 
-    def frozenset(self: CIterable[T]) -> CFrozenSet[T]:
+    def frozenset(self: CIterable[T]) -> CFrozenSet[T]:  # noqa: A003
         return CFrozenSet(self)
 
-    def iter(self: CIterable[T]) -> CIterable[T]:
+    def iter(self: CIterable[T]) -> CIterable[T]:  # noqa: A003
         return CIterable(self)
 
-    def list(self: CIterable[T]) -> CList[T]:
+    def list(self: CIterable[T]) -> CList[T]:  # noqa: A003
         return CList(self)
 
-    def map(
+    def map(  # noqa: A003
         self: CIterable[T],
         func: Callable[..., U],
         *iterables: Iterable,
@@ -225,7 +226,7 @@ class CIterable(Iterable[T]):
         else:
             return CIterable(map(func, self, *iterables))
 
-    def max(
+    def max(  # noqa: A003
         self: CIterable[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -234,7 +235,7 @@ class CIterable(Iterable[T]):
         _, kwargs = drop_sentinel(key=key, default=default)
         return max(self, **kwargs)
 
-    def min(
+    def min(  # noqa: A003
         self: CIterable[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -244,7 +245,7 @@ class CIterable(Iterable[T]):
         return min(self, **kwargs)
 
     @classmethod
-    def range(
+    def range(  # noqa: A003
         cls: Type[CIterable],
         start: int,
         stop: Optional[int] = None,
@@ -258,10 +259,10 @@ class CIterable(Iterable[T]):
             args, _ = drop_none(stop, step)
             return cls(range(start, *args))
 
-    def set(self: CIterable[T]) -> CSet[T]:
+    def set(self: CIterable[T]) -> CSet[T]:  # noqa: A003
         return CSet(self)
 
-    def sorted(
+    def sorted(  # noqa: A003
         self: CIterable[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -269,14 +270,16 @@ class CIterable(Iterable[T]):
     ) -> CList[T]:
         return CList(sorted(self, key=key, reverse=reverse))
 
-    def sum(self: CIterable[T], *, start: Union[T, int] = 0) -> Union[T, int]:
+    def sum(  # noqa: A003
+        self: CIterable[T], *, start: Union[T, int] = 0,
+    ) -> Union[T, int]:
         args, _ = drop_sentinel(start)
         return sum(self, *args)
 
-    def tuple(self: CIterable[T]) -> CTuple[T]:
+    def tuple(self: CIterable[T]) -> CTuple[T]:  # noqa: A003
         return CTuple(self)
 
-    def zip(
+    def zip(  # noqa: A003
         self: CIterable[T], *iterables: Iterable[U],
     ) -> CIterable[CTuple[Union[T, U]]]:
         return CIterable(zip(self, *iterables)).map(CTuple)
@@ -631,7 +634,8 @@ class CIterable(Iterable[T]):
             if msg == "too few items in iterable (expected 1)":
                 raise EmptyIterableError(msg) from None
             elif search(
-                "^Expected exactly one item in iterable, but got .*, .*, and perhaps more.$",
+                "^Expected exactly one item in iterable, but got .*, .*, and "
+                "perhaps more.$",
                 msg,
             ):
                 raise MultipleElementsError(msg) from None
@@ -736,37 +740,41 @@ class CList(List[T]):
 
     # built-in
 
-    def all(self: CList[Any]) -> bool:
+    def all(self: CList[Any]) -> bool:  # noqa: A003
         return self.iter().all()
 
-    def any(self: CList[Any]) -> bool:
+    def any(self: CList[Any]) -> bool:  # noqa: A003
         return self.iter().any()
 
     def copy(self: CList[T]) -> CList[T]:
         return CList(super().copy())
 
-    def dict(self: CList[Tuple[T, U]]) -> CDict[T, U]:
+    def dict(self: CList[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CList[T], *, start: int = 0) -> CList[Tuple[int, T]]:
+    def enumerate(  # noqa: A003
+        self: CList[T], *, start: int = 0,
+    ) -> CList[Tuple[int, T]]:
         return self.iter().enumerate(start=start).list()
 
-    def filter(self: CList[T], func: Optional[Callable[[T], bool]]) -> CList[T]:
+    def filter(  # noqa: A003
+        self: CList[T], func: Optional[Callable[[T], bool]],
+    ) -> CList[T]:
         return self.iter().filter(func).list()
 
-    def frozenset(self: CList[T]) -> CFrozenSet[T]:
+    def frozenset(self: CList[T]) -> CFrozenSet[T]:  # noqa: A003
         return self.iter().frozenset()
 
-    def iter(self: CList[T]) -> CIterable[T]:
+    def iter(self: CList[T]) -> CIterable[T]:  # noqa: A003
         return CIterable(self)
 
-    def len(self: CList[T]) -> int:
+    def len(self: CList[T]) -> int:  # noqa: A003
         return len(self)
 
-    def list(self: CFrozenSet[T]) -> CList[T]:
+    def list(self: CFrozenSet[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(
+    def map(  # noqa: A003
         self: CList[T],
         func: Callable[..., U],
         *iterables: Iterable,
@@ -779,7 +787,7 @@ class CList(List[T]):
             .list()
         )
 
-    def max(
+    def max(  # noqa: A003
         self: CList[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -787,7 +795,7 @@ class CList(List[T]):
     ) -> T:
         return self.iter().max(key=key, default=default)
 
-    def min(
+    def min(  # noqa: A003
         self: CList[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -796,7 +804,7 @@ class CList(List[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod
-    def range(
+    def range(  # noqa: A003
         cls: Type[CList],
         start: int,
         stop: Optional[int] = None,
@@ -804,10 +812,10 @@ class CList(List[T]):
     ) -> CList[int]:
         return cls(CIterable.range(start, stop=stop, step=step))
 
-    def reversed(self: CList[T]) -> CList[T]:
+    def reversed(self: CList[T]) -> CList[T]:  # noqa: A003
         return CList(reversed(self))
 
-    def set(self: CList[T]) -> CSet[T]:
+    def set(self: CList[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
     def sort(
@@ -819,7 +827,7 @@ class CList(List[T]):
         warn_non_functional(CList, "sort", "sorted")
         super().sort(key=key, reverse=reverse)
 
-    def sorted(
+    def sorted(  # noqa: A003
         self: CList[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -827,13 +835,15 @@ class CList(List[T]):
     ) -> CList[T]:
         return self.iter().sorted(key=key, reverse=reverse)
 
-    def sum(self: CList[T], *, start: Union[T, int] = 0) -> Union[T, int]:
+    def sum(  # noqa: A003
+        self: CList[T], *, start: Union[T, int] = 0,
+    ) -> Union[T, int]:
         return self.iter().sum(start=start)
 
-    def tuple(self: CList[T]) -> CTuple[T]:
+    def tuple(self: CList[T]) -> CTuple[T]:  # noqa: A003
         return self.iter().tuple()
 
-    def zip(
+    def zip(  # noqa: A003
         self: CList[T], *iterables: Iterable[U],
     ) -> CList[CTuple[Union[T, U]]]:
         return self.iter().zip(*iterables).list()
@@ -1181,36 +1191,38 @@ class CTuple(tuple, Generic[T]):
 
     # built-in
 
-    def all(self: CTuple[Any]) -> bool:
+    def all(self: CTuple[Any]) -> bool:  # noqa: A003
         return self.iter().all()
 
-    def any(self: CTuple[Any]) -> bool:
+    def any(self: CTuple[Any]) -> bool:  # noqa: A003
         return self.iter().any()
 
-    def dict(self: CTuple[Tuple[T, U]]) -> CDict[T, U]:
+    def dict(self: CTuple[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CTuple[T], *, start: int = 0) -> CTuple[Tuple[int, T]]:
+    def enumerate(  # noqa: A003
+        self: CTuple[T], *, start: int = 0,
+    ) -> CTuple[Tuple[int, T]]:
         return self.iter().enumerate(start=start).tuple()
 
-    def filter(
+    def filter(  # noqa: A003
         self: CTuple[T], func: Optional[Callable[[T], bool]],
     ) -> CTuple[T]:
         return self.iter().filter(func).tuple()
 
-    def frozenset(self: CTuple[T]) -> CFrozenSet[T]:
+    def frozenset(self: CTuple[T]) -> CFrozenSet[T]:  # noqa: A003
         return self.iter().frozenset()
 
-    def iter(self: CTuple[T]) -> CIterable[T]:
+    def iter(self: CTuple[T]) -> CIterable[T]:  # noqa: A003
         return CIterable(self)
 
-    def len(self: CTuple[T]) -> int:
+    def len(self: CTuple[T]) -> int:  # noqa: A003
         return len(self)
 
-    def list(self: CTuple[T]) -> CList[T]:
+    def list(self: CTuple[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(
+    def map(  # noqa: A003
         self: CTuple[T],
         func: Callable[..., U],
         *iterables: Iterable,
@@ -1223,7 +1235,7 @@ class CTuple(tuple, Generic[T]):
             .tuple()
         )
 
-    def max(
+    def max(  # noqa: A003
         self: CTuple[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -1231,7 +1243,7 @@ class CTuple(tuple, Generic[T]):
     ) -> T:
         return self.iter().max(key=key, default=default)
 
-    def min(
+    def min(  # noqa: A003
         self: CTuple[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -1240,7 +1252,7 @@ class CTuple(tuple, Generic[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod
-    def range(
+    def range(  # noqa: A003
         cls: Type[CTuple],
         start: int,
         stop: Optional[int] = None,
@@ -1248,13 +1260,13 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[int]:
         return cls(CIterable.range(start, stop=stop, step=step))
 
-    def reversed(self: CTuple[T]) -> CTuple[T]:
+    def reversed(self: CTuple[T]) -> CTuple[T]:  # noqa: A003
         return CTuple(reversed(self))
 
-    def set(self: CTuple[T]) -> CSet[T]:
+    def set(self: CTuple[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
-    def sorted(
+    def sorted(  # noqa: A003
         self: CTuple[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -1262,13 +1274,15 @@ class CTuple(tuple, Generic[T]):
     ) -> CTuple[T]:
         return self.iter().sorted(key=key, reverse=reverse).tuple()
 
-    def sum(self: CTuple[T], *, start: Union[T, int] = 0) -> Union[T, int]:
+    def sum(  # noqa: A003
+        self: CTuple[T], *, start: Union[T, int] = 0,
+    ) -> Union[T, int]:
         return self.iter().sum(start=start)
 
-    def tuple(self: CTuple[T]) -> CTuple[T]:
+    def tuple(self: CTuple[T]) -> CTuple[T]:  # noqa: A003
         return self.iter().tuple()
 
-    def zip(
+    def zip(  # noqa: A003
         self: CTuple[T], *iterables: Iterable[U],
     ) -> CTuple[CTuple[Union[T, U]]]:
         return self.iter().zip(*iterables).tuple()
@@ -1611,34 +1625,38 @@ class CSet(Set[T]):
 
     # built-in
 
-    def all(self: CSet[Any]) -> bool:
+    def all(self: CSet[Any]) -> bool:  # noqa: A003
         return self.iter().all()
 
-    def any(self: CSet[Any]) -> bool:
+    def any(self: CSet[Any]) -> bool:  # noqa: A003
         return self.iter().any()
 
-    def dict(self: CSet[Tuple[T, U]]) -> CDict[T, U]:
+    def dict(self: CSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(self: CSet[T], *, start: int = 0) -> CSet[Tuple[int, T]]:
+    def enumerate(  # noqa: A003
+        self: CSet[T], *, start: int = 0,
+    ) -> CSet[Tuple[int, T]]:
         return self.iter().enumerate(start=start).set()
 
-    def filter(self: CSet[T], func: Optional[Callable[[T], bool]]) -> CSet[T]:
+    def filter(  # noqa: A003
+        self: CSet[T], func: Optional[Callable[[T], bool]],
+    ) -> CSet[T]:
         return self.iter().filter(func).set()
 
-    def frozenset(self: CSet[T]) -> CFrozenSet[T]:
+    def frozenset(self: CSet[T]) -> CFrozenSet[T]:  # noqa: A003
         return self.iter().frozenset()
 
-    def iter(self: CSet[T]) -> CIterable[T]:
+    def iter(self: CSet[T]) -> CIterable[T]:  # noqa: A003
         return CIterable(self)
 
-    def len(self: CTuple[T]) -> int:
+    def len(self: CTuple[T]) -> int:  # noqa: A003
         return len(self)
 
-    def list(self: CSet[T]) -> CList[T]:
+    def list(self: CSet[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(
+    def map(  # noqa: A003
         self: CSet[T],
         func: Callable[..., U],
         *iterables: Iterable,
@@ -1651,7 +1669,7 @@ class CSet(Set[T]):
             .set()
         )
 
-    def max(
+    def max(  # noqa: A003
         self: CSet[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -1659,7 +1677,7 @@ class CSet(Set[T]):
     ) -> T:
         return self.iter().max(key=key, default=default)
 
-    def min(
+    def min(  # noqa: A003
         self: CSet[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -1668,7 +1686,7 @@ class CSet(Set[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod
-    def range(
+    def range(  # noqa: A003
         cls: Type[CSet],
         start: int,
         stop: Optional[int] = None,
@@ -1676,10 +1694,10 @@ class CSet(Set[T]):
     ) -> CSet[int]:
         return cls(CIterable.range(start, stop=stop, step=step))
 
-    def set(self: CSet[T]) -> CSet[T]:
+    def set(self: CSet[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
-    def sorted(
+    def sorted(  # noqa: A003
         self: CSet[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -1687,13 +1705,15 @@ class CSet(Set[T]):
     ) -> CList[T]:
         return self.iter().sorted(key=key, reverse=reverse)
 
-    def sum(self: CSet[T], *, start: Union[T, int] = 0) -> Union[T, int]:
+    def sum(  # noqa: A003
+        self: CSet[T], *, start: Union[T, int] = 0,
+    ) -> Union[T, int]:
         return self.iter().sum(start=start)
 
-    def tuple(self: CSet[T]) -> CTuple[T]:
+    def tuple(self: CSet[T]) -> CTuple[T]:  # noqa: A003
         return self.iter().tuple()
 
-    def zip(
+    def zip(  # noqa: A003
         self: CSet[T], *iterables: Iterable[U],
     ) -> CSet[CTuple[Union[T, U]]]:
         return self.iter().zip(*iterables).set()
@@ -2079,38 +2099,38 @@ class CFrozenSet(FrozenSet[T]):
 
     # built-in
 
-    def all(self: CFrozenSet[Any]) -> bool:
+    def all(self: CFrozenSet[Any]) -> bool:  # noqa: A003
         return self.iter().all()
 
-    def any(self: CFrozenSet[Any]) -> bool:
+    def any(self: CFrozenSet[Any]) -> bool:  # noqa: A003
         return self.iter().any()
 
-    def dict(self: CFrozenSet[Tuple[T, U]]) -> CDict[T, U]:
+    def dict(self: CFrozenSet[Tuple[T, U]]) -> CDict[T, U]:  # noqa: A003
         return self.iter().dict()
 
-    def enumerate(
+    def enumerate(  # noqa: A003
         self: CFrozenSet[T], *, start: int = 0,
     ) -> CFrozenSet[Tuple[int, T]]:
         return self.iter().enumerate(start=start).frozenset()
 
-    def filter(
+    def filter(  # noqa: A003
         self: CFrozenSet[T], func: Optional[Callable[[T], bool]],
     ) -> CFrozenSet[T]:
         return self.iter().filter(func).frozenset()
 
-    def frozenset(self: CFrozenSet[T]) -> CFrozenSet[T]:
+    def frozenset(self: CFrozenSet[T]) -> CFrozenSet[T]:  # noqa: A003
         return self.iter().frozenset()
 
-    def iter(self: CFrozenSet[T]) -> CIterable[T]:
+    def iter(self: CFrozenSet[T]) -> CIterable[T]:  # noqa: A003
         return CIterable(self)
 
-    def len(self: CList[T]) -> int:
+    def len(self: CList[T]) -> int:  # noqa: A003
         return len(self)
 
-    def list(self: CFrozenSet[T]) -> CList[T]:
+    def list(self: CFrozenSet[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
-    def map(
+    def map(  # noqa: A003
         self: CFrozenSet[T],
         func: Callable[..., U],
         *iterables: Iterable,
@@ -2123,7 +2143,7 @@ class CFrozenSet(FrozenSet[T]):
             .frozenset()
         )
 
-    def max(
+    def max(  # noqa: A003
         self: CFrozenSet[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -2131,7 +2151,7 @@ class CFrozenSet(FrozenSet[T]):
     ) -> T:
         return self.iter().max(key=key, default=default)
 
-    def min(
+    def min(  # noqa: A003
         self: CFrozenSet[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -2140,7 +2160,7 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().min(key=key, default=default)
 
     @classmethod
-    def range(
+    def range(  # noqa: A003
         cls: Type[CFrozenSet],
         start: int,
         stop: Optional[int] = None,
@@ -2148,10 +2168,10 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CFrozenSet[int]:
         return cls(CIterable.range(start, stop=stop, step=step))
 
-    def set(self: CFrozenSet[T]) -> CSet[T]:
+    def set(self: CFrozenSet[T]) -> CSet[T]:  # noqa: A003
         return self.iter().set()
 
-    def sorted(
+    def sorted(  # noqa: A003
         self: CFrozenSet[T],
         *,
         key: Optional[Callable[[T], Any]] = None,
@@ -2159,13 +2179,15 @@ class CFrozenSet(FrozenSet[T]):
     ) -> CList[T]:
         return self.iter().sorted(key=key, reverse=reverse)
 
-    def sum(self: CFrozenSet[T], *, start: Union[T, int] = 0) -> Union[T, int]:
+    def sum(  # noqa: A003
+        self: CFrozenSet[T], *, start: Union[T, int] = 0,
+    ) -> Union[T, int]:
         return self.iter().sum(start=start)
 
-    def tuple(self: CFrozenSet[T]) -> CTuple[T]:
+    def tuple(self: CFrozenSet[T]) -> CTuple[T]:  # noqa: A003
         return self.iter().tuple()
 
-    def zip(
+    def zip(  # noqa: A003
         self: CFrozenSet[T], *iterables: Iterable[U],
     ) -> CFrozenSet[CTuple[Union[T, U]]]:
         return self.iter().zip(*iterables).frozenset()
@@ -2626,7 +2648,8 @@ class CDict(Dict[T, U]):
         parallel: bool = False,
         processes: Optional[int] = None,
     ) -> CDict[V, W]:
-        """Map a function of the form (key_0, value_0) -> (key_1, value_1) over the items."""
+        """Map a function of the form (key_0, value_0) -> (key_1, value_1) over
+        the items."""
 
         return (
             self.items()
@@ -2644,31 +2667,31 @@ class CAttrs(Generic[T]):
 
     # built-in
 
-    def dict(
+    def dict(  # noqa: A003
         self: CAttrs[T],
         *,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
     ) -> CDict[str, T]:
         return _helper_cattrs_dict(self, recurse=recurse, filter=filter)
 
-    def list(
+    def list(  # noqa: A003
         self: CAttrs[T],
         *,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
     ) -> CList[T]:
         return _helper_cattrs_tuple(
             self, recurse=recurse, filter=filter, tuple_factory=CList,
         )
 
-    def map(
+    def map(  # noqa: A003
         self: CAttrs[T],
         func: Callable[..., U],
         parallel: bool = False,
         processes: Optional[int] = None,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
     ) -> CAttrs[U]:
         return _helper_cattrs_map(
             self,
@@ -2679,11 +2702,11 @@ class CAttrs(Generic[T]):
             filter=filter,
         )
 
-    def tuple(
+    def tuple(  # noqa: A003
         self: CAttrs[T],
         *,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
     ) -> CTuple[T]:
         return _helper_cattrs_tuple(self, recurse=recurse, filter=filter)
 
@@ -2700,7 +2723,7 @@ def _helper_cattrs_dict(
     x: Any,
     *,
     recurse: bool = True,
-    filter: Optional[Callable[[Attribute, Any], bool]] = None,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
 ) -> Any:
     if isinstance(x, CAttrs):
         res: CDict[T] = asdict(
@@ -2723,7 +2746,7 @@ def _helper_cattrs_map(
     parallel: bool = False,
     processes: Optional[int] = None,
     recurse: bool = True,
-    filter: Optional[Callable[[Attribute, Any], bool]] = None,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
 ) -> Any:
     if isinstance(x, CAttrs):
         not_attr_items, is_attr_items = (
@@ -2758,7 +2781,7 @@ def _helper_cattrs_tuple(
     x: Any,
     *,
     recurse: bool = True,
-    filter: Optional[Callable[[Attribute, Any], bool]] = None,
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
     tuple_factory: Type = CTuple,
 ) -> Any:
     if isinstance(x, CAttrs):

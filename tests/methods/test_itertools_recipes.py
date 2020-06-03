@@ -14,7 +14,6 @@ from typing import Optional
 from typing import Tuple
 
 from hypothesis import assume
-from hypothesis import given
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
 from hypothesis.strategies import integers
@@ -49,6 +48,7 @@ from pytest import mark
 
 from functional_itertools import CIterable
 from functional_itertools import CTuple
+from tests import given
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import combinations_r

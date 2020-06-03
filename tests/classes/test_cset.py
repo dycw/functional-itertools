@@ -7,7 +7,6 @@ from typing import FrozenSet
 from typing import Set
 from typing import Type
 
-from hypothesis import given
 from hypothesis.strategies import frozensets
 from hypothesis.strategies import integers
 from hypothesis.strategies import sets
@@ -17,6 +16,7 @@ from pytest import warns
 
 from functional_itertools import CFrozenSet
 from functional_itertools import CSet
+from tests import given
 
 
 SET_CLASSES = [CSet, CFrozenSet]
@@ -97,7 +97,8 @@ def test_copy(cls: Type, x: Set[int]) -> None:
 def test_update(x: Set[int], xs: Set[FrozenSet[int]]) -> None:
     with warns(
         UserWarning,
-        match="CSet.update is a non-functional method, did you mean CSet.union instead?",
+        match="CSet.update is a non-functional method, did you mean CSet.union "
+        "instead?",
     ):
         CSet(x).update(*xs)
 
@@ -106,7 +107,8 @@ def test_update(x: Set[int], xs: Set[FrozenSet[int]]) -> None:
 def test_intersection_update(x: Set[int], xs: Set[FrozenSet[int]]) -> None:
     with warns(
         UserWarning,
-        match="CSet.intersection_update is a non-functional method, did you mean CSet.intersection instead?",
+        match="CSet.intersection_update is a non-functional method, did you "
+        "mean CSet.intersection instead?",
     ):
         CSet(x).intersection_update(*xs)
 
@@ -115,7 +117,8 @@ def test_intersection_update(x: Set[int], xs: Set[FrozenSet[int]]) -> None:
 def test_difference_update(x: Set[int], xs: Set[FrozenSet[int]]) -> None:
     with warns(
         UserWarning,
-        match="CSet.difference_update is a non-functional method, did you mean CSet.difference instead?",
+        match="CSet.difference_update is a non-functional method, did you mean "
+        "CSet.difference instead?",
     ):
         CSet(x).difference_update(*xs)
 
