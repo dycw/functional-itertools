@@ -11,14 +11,12 @@ from typing import Tuple
 from typing import Union
 
 from hypothesis import assume
-from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import tuples
-from pytest import mark
 from pytest import raises
 
 from functional_itertools import CDict
@@ -31,6 +29,8 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
+from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import MAX_SIZE
@@ -38,65 +38,65 @@ from tests.test_utilities import is_even
 from tests.test_utilities import sum_varargs
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(booleans()))
-def test_all(case: Case, x: List[bool]) -> None:
+@parametrize("case", CASES)
+def test_all(x: List[bool], case: Case) -> None:
     y = case.cls(x).all()
     assert isinstance(y, bool)
     assert y == all(x)
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(booleans()))
-def test_any(case: Case, x: List[bool]) -> None:
+@parametrize("case", CASES)
+def test_any(x: List[bool], case: Case) -> None:
     y = case.cls(x).any()
     assert isinstance(y, bool)
     assert y == any(x)
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(tuples(integers(), integers())))
-def test_dict(case: Case, x: List[Tuple[int, int]]) -> None:
+@parametrize("case", CASES)
+def test_dict(x: List[Tuple[int, int]], case: Case) -> None:
     y = case.cls(x).dict()
     assert isinstance(y, CDict)
     assert y == dict(case.cast(x))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), start=integers())
-def test_enumerate(case: Case, x: List[int], start: int) -> None:
+@parametrize("case", CASES)
+def test_enumerate(x: List[int], start: int, case: Case) -> None:
     y = case.cls(x).enumerate(start=start)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(enumerate(case.cast(x), start=start))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_filter(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_filter(x: List[int], case: Case) -> None:
     y = case.cls(x).filter(is_even)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(filter(is_even, x))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_frozenset(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_frozenset(x: List[int], case: Case) -> None:
     y = case.cls(x).frozenset()
     assert isinstance(y, CFrozenSet)
     assert y == frozenset(y)
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_iter(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_iter(x: List[int], case: Case) -> None:
     y = case.cls(x).iter()
     assert isinstance(y, CIterable)
     assert case.cast(y) == case.cast(iter(x))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_len(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_len(x: List[int], case: Case) -> None:
     y = case.cls(x)
     if case.cls is CIterable:
         with raises(
@@ -109,34 +109,34 @@ def test_len(case: Case, x: List[int]) -> None:
         assert z == len(case.cast(x))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_list(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_list(x: List[int], case: Case) -> None:
     y = case.cls(x).list()
     assert isinstance(y, CList)
     assert case.cast(y) == case.cast(x)
 
 
-@mark.parametrize("case", CASES)
-@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(
     x=lists(integers()), xs=lists(lists(integers())),
 )
+@parametrize("case", CASES)
+@parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 def test_map(
-    case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any],
+    x: List[int], xs: List[List[int]], kwargs: Dict[str, Any], case: Case,
 ) -> None:
     y = case.cls(x).map(sum_varargs, *xs, **kwargs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(map(sum_varargs, case.cast(x), *xs))
 
 
-@mark.parametrize("case", CASES)
-@mark.parametrize("func", [max, min])
 @given(
     x=lists(integers()),
     key=none() | just(neg),
     default=just(sentinel) | integers(),
 )
+@parametrize("case", CASES)
+@parametrize("func", [max, min])
 def test_max_and_min(
     case: Case,
     func: Callable[..., int],
@@ -158,12 +158,12 @@ def test_max_and_min(
         assert y == func(x, key=key, **kwargs)
 
 
-@mark.parametrize("case", CASES)
 @given(
     start=integers(0, MAX_SIZE),
     stop=none() | integers(0, MAX_SIZE),
     step=none() | integers(1, 10),
 )
+@parametrize("case", CASES)
 def test_range(
     case: Case, start: int, stop: Optional[int], step: Optional[int],
 ) -> None:
@@ -175,47 +175,47 @@ def test_range(
     assert case.cast(x) == case.cast(range(start, *args))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_set(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_set(x: List[int], case: Case) -> None:
     y = case.cls(x).set()
     assert isinstance(y, CSet)
     assert y == set(x)
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), key=none() | just(neg), reverse=booleans())
+@parametrize("case", CASES)
 def test_sorted(
-    case: Case,
     x: List[int],
     key: Optional[Callable[[int], int]],
     reverse: bool,
+    case: Case,
 ) -> None:
     y = case.cls(x).sorted(key=key, reverse=reverse)
     assert isinstance(y, CTuple if case.cls is CTuple else CList)
     assert case.cast(y) == case.cast(sorted(x, key=key, reverse=reverse))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), start=integers() | just(sentinel))
-def test_sum(case: Case, x: List[int], start: Union[int, Sentinel]) -> None:
+@parametrize("case", CASES)
+def test_sum(x: List[int], start: Union[int, Sentinel], case: Case) -> None:
     y = case.cls(x).sum(start=start)
     assert isinstance(y, int)
     args, _ = drop_sentinel(start)
     assert y == sum(case.cast(x), *args)
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_tuple(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_tuple(x: List[int], case: Case) -> None:
     y = case.cls(x).tuple()
     assert isinstance(y, CTuple)
     assert y == tuple(case.cast(x))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), xs=lists(lists(integers())))
-def test_zip(case: Case, x: List[int], xs: List[List[int]]) -> None:
+@parametrize("case", CASES)
+def test_zip(x: List[int], xs: List[List[int]], case: Case) -> None:
     y = case.cls(x).zip(*xs)
     assert isinstance(y, case.cls)
     z = list(y)

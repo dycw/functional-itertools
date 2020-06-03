@@ -6,13 +6,13 @@ from sys import maxsize
 from typing import List
 from typing import Union
 
-from hypothesis import example
-from hypothesis import given
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from pytest import raises
 
 from functional_itertools import CIterable
+from tests import example
+from tests import given
 
 
 @given(x=integers() | lists(integers()))
@@ -20,7 +20,8 @@ def test_init(x: Union[int, List[int]]) -> None:
     if isinstance(x, int):
         with raises(
             TypeError,
-            match="CIterable expected an iterable, but 'int' object is not iterable",
+            match="CIterable expected an iterable, but 'int' object is not "
+            "iterable",
         ):
             CIterable(x)  # type: ignore
     else:
@@ -45,14 +46,15 @@ def test_getitem(x: List[int], index: Union[int, float]) -> None:
         else:
             with raises(
                 ValueError,
-                match="Indices for CIterable.__getitem__ must be an integer: 0 <= x <= sys.maxsize",
+                match="Indices for CIterable.__getitem__ must be an integer: "
+                "0 <= x <= sys.maxsize",
             ):
                 y[index]
     else:
         with raises(
             TypeError, match=escape("Expected an int or slice; got a(n) float"),
         ):
-            y[index]
+            y[index]  # type: ignore
 
 
 @given(x=lists(integers()))

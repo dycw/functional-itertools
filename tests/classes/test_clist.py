@@ -8,19 +8,19 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import integers
 from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import tuples
-from pytest import mark
 from pytest import raises
 from pytest import warns
 
 from functional_itertools import CList
 from functional_itertools import CTuple
+from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 
@@ -54,9 +54,9 @@ def test_copy(x: List[int]) -> None:
     assert y == x
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_reversed(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_reversed(x: List[int], case: Case) -> None:
     y = case.cls(x)
     if case.cls in {CList, CTuple}:
         z = y.reversed()
@@ -77,7 +77,8 @@ def test_sort(
     with warns(
         UserWarning,
         match=escape(
-            "CList.sort is a non-functional method, did you mean CList.sorted instead?",
+            "CList.sort is a non-functional method; did you mean CList.sorted "
+            "instead?",
         ),
     ):
         CList(x).sort(key=key, reverse=reverse)

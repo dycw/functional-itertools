@@ -5,12 +5,12 @@ from re import search
 from typing import FrozenSet
 from typing import Set
 
-from hypothesis import given
 from hypothesis import infer
 from hypothesis.strategies import integers
 from hypothesis.strategies import sets
 
 from functional_itertools import CFrozenSet
+from tests import given
 
 
 @given(x=infer)

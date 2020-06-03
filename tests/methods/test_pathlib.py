@@ -5,19 +5,19 @@ from string import ascii_lowercase
 from tempfile import TemporaryDirectory
 from typing import List
 
-from hypothesis import given
 from hypothesis.strategies import lists
 from hypothesis.strategies import text
-from pytest import mark
 
+from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 
 
-@mark.parametrize("case", CASES)
-@mark.parametrize("use_path", [True, False])
 @given(x=lists(text(alphabet=ascii_lowercase, min_size=1)))
-def test_iterdir(case: Case, x: List[str], use_path: bool) -> None:
+@parametrize("case", CASES)
+@parametrize("use_path", [True, False])
+def test_iterdir(x: List[str], use_path: bool, case: Case) -> None:
     with TemporaryDirectory() as temp_dir_str:
         temp_dir = Path(temp_dir_str)
         for i in x:

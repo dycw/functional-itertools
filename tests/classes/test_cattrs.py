@@ -4,16 +4,16 @@ from operator import neg
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Tuple
 from typing import TypeVar
 
 from attr import Attribute
 from attr import attrs
-from pytest import mark
 
 from functional_itertools import CAttrs
 from functional_itertools import CDict
 from functional_itertools import CTuple
-
+from tests import parametrize
 
 T = TypeVar("T")
 
@@ -38,7 +38,7 @@ def test_dict_simple() -> None:
     assert x == {"a": 1, "b": 2, "c": 3}
 
 
-@mark.parametrize(
+@parametrize(
     "recurse, expected",
     [
         (True, {"a": 1, "b": 2, "c": {"d": 3, "e": 4, "f": 5}}),
@@ -51,7 +51,7 @@ def test_dict_nested_recurse(recurse: bool, expected: Dict[str, Any]) -> None:
     assert x == expected
 
 
-@mark.parametrize(
+@parametrize(
     "filter, expected",
     [
         (lambda k, v: k.name == "a", {"a": 1}),
@@ -60,14 +60,15 @@ def test_dict_nested_recurse(recurse: bool, expected: Dict[str, Any]) -> None:
     ],
 )
 def test_dict_simple_filter(
-    filter: Callable[[Attribute, Any], bool], expected: Dict[str, Any],
+    filter: Callable[[Attribute, Any], bool],  # noqa: A002
+    expected: Dict[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=3).dict(filter=filter)
     assert isinstance(x, CDict)
     assert x == expected
 
 
-@mark.parametrize(
+@parametrize(
     "filter, expected",
     [
         (lambda k, v: k.name == "a", {"a": 1}),
@@ -81,7 +82,8 @@ def test_dict_simple_filter(
     ],
 )
 def test_dict_nested_filter(
-    filter: Callable[[Attribute, Any], bool], expected: Dict[str, Any],
+    filter: Callable[[Attribute, Any], bool],  # noqa: A002
+    expected: Dict[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).dict(filter=filter)
     assert isinstance(x, CDict)
@@ -94,7 +96,7 @@ def test_map_simple() -> None:
     assert x == Foo(a=-1, b=-2, c=-3)
 
 
-@mark.parametrize(
+@parametrize(
     "recurse, expected",
     [
         (True, Foo(a=-1, b=-2, c=Bar(d=-3, e=-4, f=-5))),
@@ -113,17 +115,17 @@ def test_tuple_simple() -> None:
     assert x == (1, 2, 3)
 
 
-@mark.parametrize(
+@parametrize(
     "recurse, expected",
     [(True, (1, 2, (3, 4, 5))), (False, (1, 2, Bar(d=3, e=4, f=5)))],
 )
-def test_tuple_nested_recurse(recurse: bool, expected: tuple[str, Any]) -> None:
+def test_tuple_nested_recurse(recurse: bool, expected: Tuple[str, Any]) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).tuple(recurse=recurse)
     assert isinstance(x, CTuple)
     assert x == expected
 
 
-@mark.parametrize(
+@parametrize(
     "filter, expected",
     [
         (lambda k, v: k.name == "a", (1,)),
@@ -132,14 +134,15 @@ def test_tuple_nested_recurse(recurse: bool, expected: tuple[str, Any]) -> None:
     ],
 )
 def test_tuple_simple_filter(
-    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],
+    filter: Callable[[Attribute, Any], bool],  # noqa: A002
+    expected: Tuple[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=3).tuple(filter=filter)
     assert isinstance(x, CTuple)
     assert x == expected
 
 
-@mark.parametrize(
+@parametrize(
     "filter, expected",
     [
         (lambda k, v: k.name == "a", (1,)),
@@ -153,7 +156,8 @@ def test_tuple_simple_filter(
     ],
 )
 def test_tuple_nested_filter(
-    filter: Callable[[Attribute, Any], bool], expected: tuple[str, Any],
+    filter: Callable[[Attribute, Any], bool],  # noqa: A002
+    expected: Tuple[str, Any],
 ) -> None:
     x = Foo(a=1, b=2, c=Bar(d=3, e=4, f=5)).tuple(filter=filter)
     assert isinstance(x, CTuple)

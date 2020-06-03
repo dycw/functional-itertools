@@ -28,7 +28,6 @@ from typing import Tuple
 from typing import Union
 
 from hypothesis import assume
-from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import data
 from hypothesis.strategies import DataObject
@@ -37,7 +36,6 @@ from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import tuples
-from pytest import mark
 
 from functional_itertools import CIterable
 from functional_itertools import CTuple
@@ -45,6 +43,8 @@ from functional_itertools.utilities import drop_none
 from functional_itertools.utilities import drop_sentinel
 from functional_itertools.utilities import Sentinel
 from functional_itertools.utilities import sentinel
+from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.strategies import combinations_r
@@ -59,11 +59,11 @@ from tests.strategies import product_xs
 from tests.test_utilities import is_even
 
 
-@mark.parametrize("case", CASES)
 @given(
     x=lists(integers()), initial=none() | integers(),
 )
-def test_accumulate(case: Case, x: List[int], initial: Optional[int]) -> None:
+@parametrize("case", CASES)
+def test_accumulate(x: List[int], initial: Optional[int], case: Case) -> None:
     y = case.cls(x).accumulate(add, initial=initial)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(
@@ -71,17 +71,17 @@ def test_accumulate(case: Case, x: List[int], initial: Optional[int]) -> None:
     )
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), xs=lists(lists(integers())))
-def test_chain(case: Case, x: List[int], xs: List[List[int]]) -> None:
+@parametrize("case", CASES)
+def test_chain(x: List[int], xs: List[List[int]], case: Case) -> None:
     y = case.cls(x).chain(*xs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(chain(case.cast(x), *xs))
 
 
-@mark.parametrize("case", CASES)
 @given(x=combinations_x, r=combinations_r)
-def test_combinations(case: Case, x: List[int], r: int) -> None:
+@parametrize("case", CASES)
+def test_combinations(x: List[int], r: int, case: Case) -> None:
     y = case.cls(x).combinations(r)
     assert isinstance(y, case.cls)
     z = list(y)
@@ -92,10 +92,10 @@ def test_combinations(case: Case, x: List[int], r: int) -> None:
     )
 
 
-@mark.parametrize("case", CASES)
 @given(x=combinations_x, r=combinations_r)
+@parametrize("case", CASES)
 def test_combinations_with_replacement(
-    case: Case, x: List[int], r: int,
+    x: List[int], r: int, case: Case,
 ) -> None:
     y = case.cls(x).combinations_with_replacement(r)
     assert isinstance(y, case.cls)
@@ -107,9 +107,9 @@ def test_combinations_with_replacement(
     )
 
 
-@mark.parametrize("case", CASES)
 @given(pairs=lists(tuples(integers(), booleans()), min_size=1))
-def test_compress(case: Case, pairs: List[Tuple[int, bool]]) -> None:
+@parametrize("case", CASES)
+def test_compress(pairs: List[Tuple[int, bool]], case: Case) -> None:
     x, selectors = zip(*pairs)
     y = case.cls(x).compress(selectors)
     assert isinstance(y, case.cls)
@@ -130,26 +130,26 @@ def test_cycle(x: List[int], n: int) -> None:
     assert list(y[:n]) == list(islice(cycle(x), n))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_dropwhile(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_dropwhile(x: List[int], case: Case) -> None:
     y = case.cls(x).dropwhile(is_even)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(dropwhile(is_even, case.cast(x)))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_filterfalse(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_filterfalse(x: List[int], case: Case) -> None:
     y = case.cls(x).filterfalse(is_even)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(filterfalse(is_even, case.cast(x)))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), key=none() | just(neg))
+@parametrize("case", CASES)
 def test_groupby(
-    case: Case, x: List[int], key: Optional[Callable[[int], int]],
+    x: List[int], key: Optional[Callable[[int], int]], case: Case,
 ) -> None:
     y = case.cls(x).groupby(key=key)
     assert isinstance(y, case.cls)
@@ -164,19 +164,19 @@ def test_groupby(
     )
 
 
-@mark.parametrize("case", CASES)
 @given(
     x=lists(integers()),
     start=integers(0, MAX_SIZE),
     stop=none() | integers(0, MAX_SIZE) | just(sentinel),
     step=none() | integers(1, 10) | just(sentinel),
 )
+@parametrize("case", CASES)
 def test_islice(
-    case: Case,
     x: List[int],
     start: int,
     stop: Union[Optional[int], Sentinel],
     step: Union[Optional[int], Sentinel],
+    case: Case,
 ) -> None:
     if step is not sentinel:
         assume(stop is not sentinel)
@@ -186,24 +186,24 @@ def test_islice(
     assert case.cast(y) == case.cast(islice(case.cast(x), start, *args))
 
 
-@mark.parametrize(
-    "args, expected",
+@parametrize(
+    "arg, args, expected",
     [
-        ((2,), ["A", "B"]),
-        ((2, 4), ["C", "D"]),
-        ((2, None), ["C", "D", "E", "F", "G"]),
-        ((0, None, 2), ["A", "C", "E", "G"]),
+        (2, (), ["A", "B"]),
+        (2, (4,), ["C", "D"]),
+        (2, (None,), ["C", "D", "E", "F", "G"]),
+        (0, (None, 2), ["A", "C", "E", "G"]),
     ],
 )
 def test_islice_deterministic(
-    args: Tuple[Optional[int], ...], expected: List[str],
+    arg: int, args: Tuple[Optional[int], ...], expected: List[str],
 ) -> None:
-    assert CIterable("ABCDEFG").islice(*args).list() == expected
+    assert CIterable("ABCDEFG").islice(arg, *args).list() == expected
 
 
-@mark.parametrize("case", CASES)
 @given(x=permutations_x, r=permutations_r)
-def test_permutations(case: Case, x: List[int], r: Optional[int]) -> None:
+@parametrize("case", CASES)
+def test_permutations(x: List[int], r: Optional[int], case: Case) -> None:
     y = case.cls(x).permutations(r=r)
     assert isinstance(y, case.cls)
     z = list(y)
@@ -212,12 +212,12 @@ def test_permutations(case: Case, x: List[int], r: Optional[int]) -> None:
     assert case.cast(z) == case.cast(permutations(case.cast(x), r=r))
 
 
-@mark.parametrize("case", CASES)
 @given(
     x=product_x, xs=product_xs, repeat=product_repeat,
 )
+@parametrize("case", CASES)
 def test_product(
-    case: Case, x: List[int], xs: List[List[int]], repeat: int,
+    x: List[int], xs: List[List[int]], repeat: int, case: Case,
 ) -> None:
     y = case.cls(x).product(*xs, repeat=repeat)
     assert isinstance(y, case.cls)
@@ -227,9 +227,9 @@ def test_product(
     assert case.cast(z) == case.cast(product(x, *xs, repeat=repeat))
 
 
-@mark.parametrize("case", CASES)
 @given(data=data(), x=integers(), n=islice_ints)
-def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
+@parametrize("case", CASES)
+def test_repeat(data: DataObject, x: int, n: int, case: Case) -> None:
     if case.cls is CIterable:
         times = data.draw(none() | integers(0, 10))
     else:
@@ -244,42 +244,42 @@ def test_repeat(case: Case, data: DataObject, x: int, n: int) -> None:
         assert case.cast(y) == case.cast(z)
 
 
-@mark.parametrize("case", CASES)
-@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=lists(tuples(integers(), integers())))
+@parametrize("case", CASES)
+@parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 def test_starmap(
-    case: Case, x: List[Tuple[int, int]], kwargs: Dict[str, Any],
+    x: List[Tuple[int, int]], case: Case, kwargs: Dict[str, Any],
 ) -> None:
     y = case.cls(x).starmap(max, **kwargs)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(starmap(max, x))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()))
-def test_takewhile(case: Case, x: List[int]) -> None:
+@parametrize("case", CASES)
+def test_takewhile(x: List[int], case: Case) -> None:
     y = case.cls(x).takewhile(is_even)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(takewhile(is_even, case.cast(x)))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(integers()), n=integers(0, 10))
-def test_tee(case: Case, x: List[int], n: int) -> None:
+@parametrize("case", CASES)
+def test_tee(x: List[int], n: int, case: Case) -> None:
     y = case.cls(x).tee(n=n)
     assert isinstance(y, CIterable)
     for yi in y:
         assert isinstance(yi, CIterable)
 
 
-@mark.parametrize("case", CASES)
 @given(
     x=lists(integers()),
     xs=lists(lists(integers())),
     fillvalue=none() | integers(),
 )
+@parametrize("case", CASES)
 def test_zip_longest(
-    case: Case, x: List[int], xs: List[List[int]], fillvalue: Optional[int],
+    x: List[int], xs: List[List[int]], fillvalue: Optional[int], case: Case,
 ) -> None:
     y = case.cls(x).zip_longest(*xs, fillvalue=fillvalue)
     assert isinstance(y, case.cls)
