@@ -9,22 +9,22 @@ from typing import Tuple
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from hypothesis.strategies import tuples
-from pytest import mark
 
 from functional_itertools import CDict
 from functional_itertools import CIterable
 from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 from tests.test_utilities import is_even
 from tests.test_utilities import sum_varargs
 
 
-@mark.parametrize("case", CASES)
-@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=lists(integers()), xs=lists(lists(integers())))
+@parametrize("case", CASES)
+@parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 def test_map_dict(
-    case: Case, x: List[int], xs: List[List[int]], kwargs: Dict[str, Any],
+    x: List[int], xs: List[List[int]], kwargs: Dict[str, Any], case: Case,
 ) -> None:
     y = case.cls(x).map_dict(sum_varargs, *xs, **kwargs)
     assert isinstance(y, CDict)
@@ -43,9 +43,9 @@ def test_pipe(x: List[int]) -> None:
     assert list(y) == list(permutations(x, r=2))
 
 
-@mark.parametrize("case", CASES)
 @given(x=lists(tuples(integers(), integers())))
-def test_starfilter(case: Case, x: List[Tuple[int, int]]) -> None:
+@parametrize("case", CASES)
+def test_starfilter(x: List[Tuple[int, int]], case: Case) -> None:
     def func(key: int, value: int) -> bool:
         return is_even(key) and is_even(value)
 
