@@ -10,13 +10,13 @@ from typing import Type
 from hypothesis.strategies import frozensets
 from hypothesis.strategies import integers
 from hypothesis.strategies import sets
-from pytest import mark
 from pytest import raises
 from pytest import warns
 
 from functional_itertools import CFrozenSet
 from functional_itertools import CSet
 from tests import given
+from tests import parametrize
 
 
 SET_CLASSES = [CSet, CFrozenSet]
@@ -25,9 +25,9 @@ SET_CLASSES = [CSet, CFrozenSet]
 # repr and str
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()))
-def test_repr(cls: Type, x: Set[int]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_repr(x: Set[int], cls: Type) -> None:
     y = repr(cls(x))
     name = cls.__name__
     if x:
@@ -36,9 +36,9 @@ def test_repr(cls: Type, x: Set[int]) -> None:
         assert y == f"{name}()"
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()))
-def test_str(cls: Type, x: Set[int]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_str(x: Set[int], cls: Type) -> None:
     y = str(cls(x))
     name = cls.__name__
     if x:
@@ -50,41 +50,41 @@ def test_str(cls: Type, x: Set[int]) -> None:
 # set and frozenset methods
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()), xs=sets(frozensets(integers())))
-def test_union(cls: type, x: Set[int], xs: Set[FrozenSet[int]]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_union(x: Set[int], xs: Set[FrozenSet[int]], cls: Type) -> None:
     y = cls(x).union(*xs)
     assert isinstance(y, cls)
     assert y == x.union(*xs)
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()), xs=sets(frozensets(integers())))
-def test_intersection(cls: Type, x: Set[int], xs: Set[FrozenSet[int]]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_intersection(x: Set[int], xs: Set[FrozenSet[int]], cls: Type) -> None:
     y = cls(x).intersection(*xs)
     assert isinstance(y, cls)
     assert y == x.intersection(*xs)
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()), xs=sets(frozensets(integers())))
-def test_difference(cls: Type, x: Set[int], xs: Set[FrozenSet[int]]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_difference(x: Set[int], xs: Set[FrozenSet[int]], cls: Type) -> None:
     y = cls(x).difference(*xs)
     assert isinstance(y, cls)
     assert y == x.difference(*xs)
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()), y=sets(integers()))
-def test_symmetric_difference(cls: Type, x: Set[int], y: Set[int]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_symmetric_difference(x: Set[int], y: Set[int], cls: Type) -> None:
     z = cls(x).symmetric_difference(y)
     assert isinstance(z, cls)
     assert z == x.symmetric_difference(y)
 
 
-@mark.parametrize("cls", SET_CLASSES)
 @given(x=sets(integers()))
-def test_copy(cls: Type, x: Set[int]) -> None:
+@parametrize("cls", SET_CLASSES)
+def test_copy(x: Set[int], cls: Type) -> None:
     y = cls(x).copy()
     assert isinstance(y, cls)
     assert y == x
