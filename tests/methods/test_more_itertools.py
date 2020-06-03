@@ -6,7 +6,9 @@ from operator import neg
 from re import escape
 from sys import maxsize
 from typing import Callable
+from typing import cast
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -166,7 +168,9 @@ def test_intersperse(e: int, x: List[int], n: int, case: Case) -> None:
 def test_iterate(start: int, n: int) -> None:
     y = CIterable.iterate(neg, start)
     assert isinstance(y, CIterable)
-    assert list(y[:n]) == list(islice(iterate(neg, start), n))
+    assert list(y[:n]) == list(
+        cast(Iterable[int], islice(iterate(neg, start), n)),
+    )
 
 
 @given(x=lists(integers()))

@@ -187,18 +187,18 @@ def test_islice(
 
 
 @parametrize(
-    "args, expected",
+    "arg, args, expected",
     [
-        ((2,), ["A", "B"]),
-        ((2, 4), ["C", "D"]),
-        ((2, None), ["C", "D", "E", "F", "G"]),
-        ((0, None, 2), ["A", "C", "E", "G"]),
+        (2, (), ["A", "B"]),
+        (2, (4,), ["C", "D"]),
+        (2, (None,), ["C", "D", "E", "F", "G"]),
+        (0, (None, 2), ["A", "C", "E", "G"]),
     ],
 )
 def test_islice_deterministic(
-    args: Tuple[Optional[int], ...], expected: List[str],
+    arg: int, args: Tuple[Optional[int], ...], expected: List[str],
 ) -> None:
-    assert CIterable("ABCDEFG").islice(*args).list() == expected
+    assert CIterable("ABCDEFG").islice(arg, *args).list() == expected
 
 
 @given(x=permutations_x, r=permutations_r)

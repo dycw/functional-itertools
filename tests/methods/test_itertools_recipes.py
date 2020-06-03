@@ -7,6 +7,7 @@ from operator import add
 from operator import mul
 from operator import neg
 from sys import maxsize
+from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import List
@@ -97,7 +98,7 @@ def test_dotproduct(pairs: Iterable[Tuple[int, int]], case: Case) -> None:
 def test_first_true(
     x: List[int],
     default: int,
-    pred: Optional[Callable[[int], bool]],
+    pred: Optional[Callable[[Any], Any]],
     case: Case,
 ) -> None:
     y = case.cls(x).first_true(default=default, pred=pred)

@@ -55,9 +55,7 @@ def helper_filter_values(
 
 def helper_map_dict(
     func: Callable[..., V], x: T, *iterables: U,
-) -> Union[
-    Tuple[T, V], Tuple[Union[T, U], V],
-]:
+) -> Tuple[Union[T, Tuple[Union[T, U], ...]], V]:
     if iterables:
         return tuple(chain([x], iterables)), func(x, *iterables)
     else:
@@ -65,7 +63,7 @@ def helper_map_dict(
 
 
 def helper_starfilter(
-    func: Callable[[Tuple[T, ...]], bool], x: Tuple[T, ...],
+    func: Callable[[Tuple[T, ...]], bool], x: Tuple[Tuple[T, ...], ...],
 ) -> bool:
     return func(*x)
 
