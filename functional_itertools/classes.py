@@ -956,6 +956,7 @@ class CList(List[T]):
         return self.iter().first_true(default=default, pred=pred)
 
     def flatten(self: CList[Iterable[T]]) -> CList[T]:
+        return CList(self.iter().flatten())
         return self.iter().flatten().list()
 
     def grouper(
@@ -1726,13 +1727,13 @@ class CSet(Set[T]):
     def intersection(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
         return CSet(super().intersection(*others))
 
-    def union(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
-        return CSet(super().union(*others))
-
     def symmetric_difference(
         self: CSet[T], other: Iterable[U],
     ) -> CSet[Union[T, U]]:
         return CSet(super().symmetric_difference(other))
+
+    def union(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
+        return CSet(super().union(*others))
 
     # set methods
 
@@ -2195,28 +2196,28 @@ class CFrozenSet(FrozenSet[T]):
 
     # set & frozenset methods
 
-    def union(
-        self: CFrozenSet[T], *others: Iterable[U],
-    ) -> CFrozenSet[Union[T, U]]:
-        return CFrozenSet(super().union(*others))
-
-    def intersection(
-        self: CFrozenSet[T], *others: Iterable[U],
-    ) -> CFrozenSet[Union[T, U]]:
-        return CFrozenSet(super().intersection(*others))
+    def copy(self: CFrozenSet[T]) -> CFrozenSet[T]:
+        return CFrozenSet(super().copy())
 
     def difference(
         self: CFrozenSet[T], *others: Iterable[U],
     ) -> CFrozenSet[Union[T, U]]:
         return CFrozenSet(super().difference(*others))
 
+    def intersection(
+        self: CFrozenSet[T], *others: Iterable[U],
+    ) -> CFrozenSet[Union[T, U]]:
+        return CFrozenSet(super().intersection(*others))
+
     def symmetric_difference(
         self: CFrozenSet[T], other: Iterable[U],
     ) -> CFrozenSet[Union[T, U]]:
         return CFrozenSet(super().symmetric_difference(other))
 
-    def copy(self: CFrozenSet[T]) -> CFrozenSet[T]:
-        return CFrozenSet(super().copy())
+    def union(
+        self: CFrozenSet[T], *others: Iterable[U],
+    ) -> CFrozenSet[Union[T, U]]:
+        return CFrozenSet(super().union(*others))
 
     # functools
 
