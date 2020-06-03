@@ -24,6 +24,7 @@ from itertools import zip_longest
 from multiprocessing import Pool
 from pathlib import Path
 from re import search
+from typing import AbstractSet
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -1749,6 +1750,18 @@ class CSet(Set[T]):
 
     # set methods
 
+    def __and__(self: CSet[T], other: AbstractSet) -> CSet[T]:
+        return CSet(super().__and__(other))
+
+    def __or__(self: CSet[T], other: AbstractSet[U]) -> CSet[Union[T, U]]:
+        return CSet(super().__or__(other))
+
+    def __sub__(self: CSet[T], other: AbstractSet) -> CSet[T]:
+        return CSet(super().__sub__(other))
+
+    def __xor__(self: CSet[T], other: AbstractSet[U]) -> CSet[Union[T, U]]:
+        return CSet(super().__xor__(other))
+
     def add(self: CSet[T], element: T) -> None:
         warn_non_functional(CSet, "add")
         super().add(element)
@@ -2207,6 +2220,22 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().zip(*iterables).frozenset()
 
     # set & frozenset methods
+
+    def __and__(self: CFrozenSet[T], other: AbstractSet) -> CFrozenSet[T]:
+        return CFrozenSet(super().__and__(other))
+
+    def __or__(
+        self: CFrozenSet[T], other: AbstractSet[U],
+    ) -> CFrozenSet[Union[T, U]]:
+        return CFrozenSet(super().__or__(other))
+
+    def __sub__(self: CFrozenSet[T], other: AbstractSet) -> CFrozenSet[T]:
+        return CFrozenSet(super().__sub__(other))
+
+    def __xor__(
+        self: CFrozenSet[T], other: AbstractSet[U],
+    ) -> CFrozenSet[Union[T, U]]:
+        return CFrozenSet(super().__xor__(other))
 
     def copy(self: CFrozenSet[T]) -> CFrozenSet[T]:
         return CFrozenSet(super().copy())
