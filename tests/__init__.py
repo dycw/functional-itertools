@@ -8,7 +8,6 @@ from pytest import mark
 
 
 TestLike = TypeVar("TestLike", bound=Callable[..., None])
-given: Callable[
-    ..., Callable[[TestLike], TestLike],
-] = hypothesis.given  # type: ignore
+example: Callable[..., Callable[[TestLike], TestLike]] = hypothesis.example
+given: Callable[..., Callable[[TestLike], TestLike]] = hypothesis.given
 parametrize: Callable[..., Callable[[TestLike], TestLike]] = mark.parametrize

@@ -6,15 +6,14 @@ from typing import Tuple
 
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
-from pytest import mark
 
 from functional_itertools import CIterable
 from tests import given
+from tests import parametrize
 from tests.strategies import Case
 from tests.strategies import CASES
 
 
-@mark.parametrize("case", CASES)
 @given(
     x=lists(
         lists(integers(), min_size=1, max_size=10).map(tuple),
@@ -22,7 +21,8 @@ from tests.strategies import CASES
         max_size=10,
     ),
 )
-def test_map_nested(case: Case, x: List[Tuple[int, ...]]) -> None:
+@parametrize("case", CASES)
+def test_map_nested(x: List[Tuple[int, ...]], case: Case) -> None:
     y = case.cls(x).map(_parallel_map_neg, parallel=True, processes=1)
     assert isinstance(y, case.cls)
     assert case.cast(y) == case.cast(max(map(neg, x_i)) for x_i in case.cast(x))

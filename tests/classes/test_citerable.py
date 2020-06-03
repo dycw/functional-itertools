@@ -6,12 +6,12 @@ from sys import maxsize
 from typing import List
 from typing import Union
 
-from hypothesis import example
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from pytest import raises
 
 from functional_itertools import CIterable
+from tests import example
 from tests import given
 
 
@@ -54,7 +54,7 @@ def test_getitem(x: List[int], index: Union[int, float]) -> None:
         with raises(
             TypeError, match=escape("Expected an int or slice; got a(n) float"),
         ):
-            y[index]
+            y[index]  # type: ignore
 
 
 @given(x=lists(integers()))

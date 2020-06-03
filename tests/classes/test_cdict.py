@@ -6,11 +6,11 @@ from typing import Dict
 
 from hypothesis.strategies import dictionaries
 from hypothesis.strategies import integers
-from pytest import mark
 
 from functional_itertools import CDict
 from functional_itertools import CIterable
 from tests import given
+from tests import parametrize
 from tests.test_utilities import is_even
 from tests.test_utilities import neg_key_and_value
 
@@ -63,24 +63,24 @@ def test_filter_items(x: Dict[int, int]) -> None:
     assert y == {k: v for k, v in x.items() if func(k, v)}
 
 
-@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=dictionaries(integers(), integers()))
+@parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 def test_map_keys(x: Dict[int, int], kwargs: Dict[str, Any]) -> None:
     y = CDict(x).map_keys(neg, **kwargs)
     assert isinstance(y, CDict)
     assert y == {neg(k): v for k, v in x.items()}
 
 
-@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=dictionaries(integers(), integers()))
+@parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 def test_map_values(x: Dict[int, int], kwargs: Dict[str, Any]) -> None:
     y = CDict(x).map_values(neg, **kwargs)
     assert isinstance(y, CDict)
     assert y == {k: neg(v) for k, v in x.items()}
 
 
-@mark.parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 @given(x=dictionaries(integers(), integers()))
+@parametrize("kwargs", [{}, {"parallel": True, "processes": 1}])
 def test_map_items(x: Dict[int, int], kwargs: Dict[str, Any]) -> None:
     y = CDict(x).map_items(neg_key_and_value, **kwargs)
     assert isinstance(y, CDict)
