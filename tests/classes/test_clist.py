@@ -77,7 +77,8 @@ def test_sort(
     with warns(
         UserWarning,
         match=escape(
-            "CList.sort is a non-functional method, did you mean CList.sorted instead?",
+            "CList.sort is a non-functional method; did you mean CList.sorted "
+            "instead?",
         ),
     ):
         CList(x).sort(key=key, reverse=reverse)

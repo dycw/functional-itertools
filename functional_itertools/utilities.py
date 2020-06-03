@@ -6,6 +6,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generator
+from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -40,22 +41,20 @@ def drop_none(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # helper functions
 
 
-def helper_filter_keys(
-    item: Tuple[T, Any], *, func: Callable[[T], bool],
-) -> bool:
+def helper_filter_keys(func: Callable[[T], bool], item: Tuple[T, Any]) -> bool:
     key, _ = item
     return func(key)
 
 
 def helper_filter_values(
-    item: Tuple[Any, U], *, func: Callable[[U], bool],
+    func: Callable[[U], bool], item: Tuple[Any, U],
 ) -> bool:
     _, value = item
     return func(value)
 
 
 def helper_map_dict(
-    x: T, *iterables: U, func: Callable[..., V],
+    func: Callable[..., V], x: T, *iterables: U,
 ) -> Union[
     Tuple[T, V], Tuple[Union[T, U], V],
 ]:
@@ -66,27 +65,25 @@ def helper_map_dict(
 
 
 def helper_starfilter(
-    x: Tuple[T, ...], *, func: Callable[[Tuple[T, ...]], bool],
+    func: Callable[[Tuple[T, ...]], bool], x: Tuple[T, ...],
 ) -> bool:
     return func(*x)
 
 
-def helper_map_keys(
-    item: Tuple[T, U], *, func: Callable[[T], V],
-) -> Tuple[V, U]:
+def helper_map_keys(func: Callable[[T], V], item: Tuple[T, U]) -> Tuple[V, U]:
     key, value = item
     return func(key), value
 
 
 def helper_map_values(
-    item: Tuple[T, U], *, func: Callable[[U], V],
+    func: Callable[[U], V], item: Tuple[T, U],
 ) -> Tuple[T, V]:
     key, value = item
     return key, func(value)
 
 
 def helper_map_items(
-    item: Tuple[T, U], *, func: Callable[[T, U], Tuple[V, W]],
+    func: Callable[[T, U], Tuple[V, W]], item: Tuple[T, U],
 ) -> Tuple[V, W]:
     key, value = item
     return func(key, value)
@@ -131,8 +128,11 @@ def drop_sentinel(*args: Any, **kwargs: Any) -> Tuple[Tuple, Dict[str, Any]]:
 # warn
 
 
-def warn_non_functional(cls: Type, incorrect: str, suggestion: str) -> None:
+def warn_non_functional(
+    cls: Type, incorrect: str, *, suggestion: Optional[str] = None,
+) -> None:
     name = cls.__name__
-    warn(
-        f"{name}.{incorrect} is a non-functional method, did you mean {name}.{suggestion} instead?",
-    )
+    msg = f"{name}.{incorrect} is a non-functional method"
+    if suggestion is not None:
+        msg += f"; did you mean {name}.{suggestion} instead?"
+    warn(msg)

@@ -148,7 +148,7 @@ class CIterable(Iterable[T]):
                     f"0 <= x <= sys.maxsize.",
                 ) from None
             else:
-                if result is sentinel:
+                if isinstance(result, Sentinel):
                     raise IndexError(f"{name} index out of range")
                 else:
                     return result
@@ -215,7 +215,7 @@ class CIterable(Iterable[T]):
                         )
                 except AssertionError as error:
                     with suppress_daemonic_processes_with_children(error):
-                        return self.starmap(func, zip(self, *iterables))
+                        return self.zip(*iterables).starmap(func)
             else:
                 try:
                     with Pool(processes=processes) as pool:
@@ -321,8 +321,8 @@ class CIterable(Iterable[T]):
         self: CIterable[T],
         func: Callable[[T, T], T] = add,
         *,
-        initial: Union[U, Sentinel] = sentinel,
-    ) -> CIterable[Union[T, U]]:
+        initial: Optional[T] = None,
+    ) -> CIterable[T]:
         return CIterable(accumulate(self, func, initial=initial))
 
     def chain(
@@ -618,10 +618,7 @@ class CIterable(Iterable[T]):
         return CIterable(map_except(func, self, *exceptions))
 
     def nth_or_last(
-        self: CIterable[T],
-        n: int,
-        *,
-        default: Optional[U, Sentinel] = sentinel,
+        self: CIterable[T], n: int, *, default: Union[U, Sentinel] = sentinel,
     ) -> Union[T, U]:
         _, kwargs = drop_sentinel(default=default)
         return nth_or_last(self, n, **kwargs)
@@ -700,12 +697,12 @@ class CIterable(Iterable[T]):
 
     def map_dict(
         self: CIterable[T],
-        func: Callable[..., V],
-        *iterables: Iterable[U],
+        func: Callable[..., U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
-        wrapped = partial(helper_map_dict, func=func)
+    ) -> CDict[T, U]:
+        wrapped = partial(helper_map_dict, func)
         return self.map(
             wrapped, *iterables, parallel=parallel, processes=processes,
         ).dict()
@@ -723,7 +720,7 @@ class CIterable(Iterable[T]):
     def starfilter(
         self: CIterable[Tuple[T, ...]], func: Callable[[Tuple[T, ...]], bool],
     ) -> CIterable[Tuple[T, ...]]:
-        return self.filter(partial(helper_starfilter, func=func))
+        return self.filter(partial(helper_starfilter, func))
 
 
 class CList(List[T]):
@@ -771,7 +768,7 @@ class CList(List[T]):
     def len(self: CList[T]) -> int:  # noqa: A003
         return len(self)
 
-    def list(self: CFrozenSet[T]) -> CList[T]:  # noqa: A003
+    def list(self: CList[T]) -> CList[T]:  # noqa: A003
         return self.iter().list()
 
     def map(  # noqa: A003
@@ -823,8 +820,8 @@ class CList(List[T]):
         *,
         key: Optional[Callable[[T], Any]] = None,
         reverse: bool = False,
-    ) -> CList[T]:
-        warn_non_functional(CList, "sort", "sorted")
+    ) -> None:
+        warn_non_functional(CList, "sort", suggestion="sorted")
         super().sort(key=key, reverse=reverse)
 
     def sorted(  # noqa: A003
@@ -864,8 +861,8 @@ class CList(List[T]):
         self: CList[T],
         func: Callable[[T, T], T] = add,
         *,
-        initial: Union[U, Sentinel] = sentinel,
-    ) -> CList[Union[T, U]]:
+        initial: Optional[T] = None,
+    ) -> CList[T]:
         return self.iter().accumulate(func, initial=initial).list()
 
     def chain(self: CList[T], *iterables: Iterable[U]) -> CList[Union[T, U]]:
@@ -1103,7 +1100,7 @@ class CList(List[T]):
         return self.iter().map_except(func, *exceptions).list()
 
     def nth_or_last(
-        self: CList[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+        self: CList[T], n: int, *, default: Union[U, Sentinel] = sentinel,
     ) -> Union[T, U]:
         return self.iter().nth_or_last(n, default=default)
 
@@ -1153,11 +1150,11 @@ class CList(List[T]):
 
     def map_dict(
         self: CList[T],
-        func: Callable[..., V],
-        *iterables: Iterable[U],
+        func: Callable[..., U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+    ) -> CDict[T, U]:
         return self.iter().map_dict(
             func, *iterables, parallel=parallel, processes=processes,
         )
@@ -1303,8 +1300,8 @@ class CTuple(tuple, Generic[T]):
         self: CTuple[T],
         func: Callable[[T, T], T] = add,
         *,
-        initial: Union[U, Sentinel] = sentinel,
-    ) -> CTuple[Union[T, U]]:
+        initial: Optional[T] = None,
+    ) -> CTuple[T]:
         return self.iter().accumulate(func, initial=initial).tuple()
 
     def chain(self: CTuple[T], *iterables: Iterable[U]) -> CTuple[Union[T, U]]:
@@ -1544,7 +1541,7 @@ class CTuple(tuple, Generic[T]):
         return self.iter().map_except(func, *exceptions).tuple()
 
     def nth_or_last(
-        self: CTuple[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+        self: CTuple[T], n: int, *, default: Union[U, Sentinel] = sentinel,
     ) -> Union[T, U]:
         return self.iter().nth_or_last(n, default=default)
 
@@ -1596,11 +1593,11 @@ class CTuple(tuple, Generic[T]):
 
     def map_dict(
         self: CTuple[T],
-        func: Callable[..., V],
-        *iterables: Iterable[U],
+        func: Callable[..., U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+    ) -> CDict[T, U]:
         return self.iter().map_dict(
             func, *iterables, parallel=parallel, processes=processes,
         )
@@ -1720,62 +1717,66 @@ class CSet(Set[T]):
 
     # set & frozenset methods
 
-    def union(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
-        return CSet(super().union(*others))
+    def copy(self: CSet[T]) -> CSet[T]:
+        return CSet(super().copy())
+
+    def difference(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
+        return CSet(super().difference(*others))
 
     def intersection(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
         return CSet(super().intersection(*others))
 
-    def difference(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
-        return CSet(super().difference(*others))
+    def union(self: CSet[T], *others: Iterable[U]) -> CSet[Union[T, U]]:
+        return CSet(super().union(*others))
 
     def symmetric_difference(
         self: CSet[T], other: Iterable[U],
     ) -> CSet[Union[T, U]]:
         return CSet(super().symmetric_difference(other))
 
-    def copy(self: CSet[T]) -> CSet[T]:
-        return CSet(super().copy())
-
     # set methods
 
-    def update(self: CSet[T], *other: Iterable[U]) -> None:
-        warn_non_functional(CSet, "update", "union")
-        super().update(*other)
+    def add(self: CSet[T], element: T) -> None:
+        warn_non_functional(CSet, "add")
+        super().add(element)
 
-    def intersection_update(self: CSet[T], *other: Iterable[U]) -> None:
-        warn_non_functional(CSet, "intersection_update", "intersection")
-        super().intersection_update(*other)
+    def clear(self: CSet[T]) -> None:
+        warn_non_functional(CSet, "clear")
+        super().clear()
 
     def difference_update(self: CSet[T], *other: Iterable[U]) -> None:
-        warn_non_functional(CSet, "difference_update", "difference")
+        warn_non_functional(CSet, "difference_update", suggestion="difference")
         super().difference_update(*other)
+
+    def discard(self: CSet[T], element: T) -> None:
+        warn_non_functional(CSet, "discard")
+        super().discard(element)
+
+    def intersection_update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(
+            CSet, "intersection_update", suggestion="intersection",
+        )
+        super().intersection_update(*other)
+
+    def pop(self: CSet[T]) -> None:
+        warn_non_functional(CSet, "pop")
+        super().pop()
+
+    def remove(self: CSet[T], element: T) -> None:
+        warn_non_functional(CSet, "remove")
+        super().remove(element)
 
     def symmetric_difference_update(self: CSet[T], other: Iterable[U]) -> None:
         warn_non_functional(
-            CSet, "symmetric_difference_update", "symmetric_difference",
+            CSet,
+            "symmetric_difference_update",
+            suggestion="symmetric_difference",
         )
         super().symmetric_difference_update(other)
 
-    def add(self: CSet[T], element: T) -> CSet[T]:
-        super().add(element)
-        return self
-
-    def remove(self: CSet[T], element: T) -> CSet[T]:
-        super().remove(element)
-        return self
-
-    def discard(self: CSet[T], element: T) -> CSet[T]:
-        super().discard(element)
-        return self
-
-    def pop(self: CSet[T]) -> CSet[T]:
-        super().pop()
-        return self
-
-    def clear(self: CSet[T]) -> CSet[T]:
-        super().clear()
-        return self
+    def update(self: CSet[T], *other: Iterable[U]) -> None:
+        warn_non_functional(CSet, "update", suggestion="union")
+        super().update(*other)
 
     # functools
 
@@ -1793,8 +1794,8 @@ class CSet(Set[T]):
         self: CSet[T],
         func: Callable[[T, T], T] = add,
         *,
-        initial: Union[U, Sentinel] = sentinel,
-    ) -> CSet[Union[T, U]]:
+        initial: Optional[T] = None,
+    ) -> CSet[T]:
         return self.iter().accumulate(func, initial=initial).set()
 
     def chain(self: CSet[T], *iterables: Iterable[U]) -> CSet[Union[T, U]]:
@@ -2022,7 +2023,7 @@ class CSet(Set[T]):
         return self.iter().map_except(func, *exceptions).set()
 
     def nth_or_last(
-        self: CSet[T], n: int, *, default: Optional[U, Sentinel] = sentinel,
+        self: CSet[T], n: int, *, default: Union[U, Sentinel] = sentinel,
     ) -> Union[T, U]:
         return self.iter().nth_or_last(n, default=default)
 
@@ -2070,11 +2071,11 @@ class CSet(Set[T]):
 
     def map_dict(
         self: CSet[T],
-        func: Callable[..., V],
-        *iterables: Iterable[U],
+        func: Callable[..., U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+    ) -> CDict[T, U]:
         return self.iter().map_dict(
             func, *iterables, parallel=parallel, processes=processes,
         )
@@ -2233,8 +2234,8 @@ class CFrozenSet(FrozenSet[T]):
         self: CFrozenSet[T],
         func: Callable[[T, T], T] = add,
         *,
-        initial: Union[U, Sentinel] = sentinel,
-    ) -> CFrozenSet[Union[T, U]]:
+        initial: Optional[T] = None,
+    ) -> CFrozenSet[T]:
         return self.iter().accumulate(func, initial=initial).frozenset()
 
     def chain(
@@ -2487,10 +2488,7 @@ class CFrozenSet(FrozenSet[T]):
         return self.iter().map_except(func, *exceptions).frozenset()
 
     def nth_or_last(
-        self: CFrozenSet[T],
-        n: int,
-        *,
-        default: Optional[U, Sentinel] = sentinel,
+        self: CFrozenSet[T], n: int, *, default: Union[U, Sentinel] = sentinel,
     ) -> Union[T, U]:
         return self.iter().nth_or_last(n, default=default)
 
@@ -2546,11 +2544,11 @@ class CFrozenSet(FrozenSet[T]):
 
     def map_dict(
         self: CFrozenSet[T],
-        func: Callable[..., V],
-        *iterables: Iterable[U],
+        func: Callable[..., U],
+        *iterables: Iterable,
         parallel: bool = False,
         processes: Optional[int] = None,
-    ) -> Union[CDict[T, V], CDict[Tuple[Union[T, U], V]]]:
+    ) -> CDict[T, U]:
         return self.iter().map_dict(
             func, *iterables, parallel=parallel, processes=processes,
         )
@@ -2587,16 +2585,12 @@ class CDict(Dict[T, U]):
     def filter_keys(
         self: CDict[T, U], func: Callable[[T], bool],
     ) -> CDict[T, U]:  # dead: disable
-        return (
-            self.items().filter(partial(helper_filter_keys, func=func)).dict()
-        )
+        return self.items().filter(partial(helper_filter_keys, func)).dict()
 
     def filter_values(
         self: CDict[T, U], func: Callable[[U], bool],
     ) -> CDict[T, U]:  # dead: disable
-        return (
-            self.items().filter(partial(helper_filter_values, func=func)).dict()
-        )
+        return self.items().filter(partial(helper_filter_values, func)).dict()
 
     def filter_items(  # dead: disable
         self: CDict[T, U], func: Callable[[T, U], bool],
@@ -2615,7 +2609,7 @@ class CDict(Dict[T, U]):
         return (
             self.items()
             .map(
-                partial(helper_map_keys, func=func),
+                partial(helper_map_keys, func),
                 parallel=parallel,
                 processes=processes,
             )
@@ -2634,7 +2628,7 @@ class CDict(Dict[T, U]):
         return (
             self.items()
             .map(
-                partial(helper_map_values, func=func),
+                partial(helper_map_values, func),
                 parallel=parallel,
                 processes=processes,
             )
@@ -2654,7 +2648,7 @@ class CDict(Dict[T, U]):
         return (
             self.items()
             .map(
-                partial(helper_map_items, func=func),
+                partial(helper_map_items, func),
                 parallel=parallel,
                 processes=processes,
             )
@@ -2671,7 +2665,7 @@ class CAttrs(Generic[T]):
         self: CAttrs[T],
         *,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
     ) -> CDict[str, T]:
         return _helper_cattrs_dict(self, recurse=recurse, filter=filter)
 
@@ -2679,7 +2673,7 @@ class CAttrs(Generic[T]):
         self: CAttrs[T],
         *,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
     ) -> CList[T]:
         return _helper_cattrs_tuple(
             self, recurse=recurse, filter=filter, tuple_factory=CList,
@@ -2691,7 +2685,7 @@ class CAttrs(Generic[T]):
         parallel: bool = False,
         processes: Optional[int] = None,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
     ) -> CAttrs[U]:
         return _helper_cattrs_map(
             self,
@@ -2706,7 +2700,7 @@ class CAttrs(Generic[T]):
         self: CAttrs[T],
         *,
         recurse: bool = True,
-        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+        filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
     ) -> CTuple[T]:
         return _helper_cattrs_tuple(self, recurse=recurse, filter=filter)
 
@@ -2723,7 +2717,7 @@ def _helper_cattrs_dict(
     x: Any,
     *,
     recurse: bool = True,
-    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
 ) -> Any:
     if isinstance(x, CAttrs):
         res: CDict[T] = asdict(
@@ -2746,7 +2740,7 @@ def _helper_cattrs_map(
     parallel: bool = False,
     processes: Optional[int] = None,
     recurse: bool = True,
-    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
 ) -> Any:
     if isinstance(x, CAttrs):
         not_attr_items, is_attr_items = (
@@ -2781,11 +2775,11 @@ def _helper_cattrs_tuple(
     x: Any,
     *,
     recurse: bool = True,
-    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa:
+    filter: Optional[Callable[[Attribute, Any], bool]] = None,  # noqa: A002
     tuple_factory: Type = CTuple,
 ) -> Any:
     if isinstance(x, CAttrs):
-        res: CTuple[T] = astuple(
+        res: CTuple = astuple(
             x, recurse=False, filter=filter, tuple_factory=tuple_factory,
         )
         if recurse:
